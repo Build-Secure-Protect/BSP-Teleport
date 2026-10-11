@@ -16,8 +16,9 @@ Forge mod for Minecraft 1.20.1: cross-server teleports, homes and warps for the 
 
 ## Conventions
 - Java 17, Forge 47.4.10, official mappings, MIT license. Mod id `bsp_teleport`, package `com.mrgregles.bsp_teleport`.
-- Every call into BSP-Core goes through `compat/BspCore.java`.
-- BSP-Core is compiled against from `../BSP-Core/build/libs` (version in `gradle.properties`). Build BSP-Core first.
+- Every call into BSP-Core goes through `compat/BspCore.java`; every call into BSP Region Guard (optional at runtime) goes through `compat/RegionGuard.java`, whose nested `Impl` is the only class naming Region Guard types.
+- Other mods call this mod through the `api` package only (`BspTeleportApi`, `Destination`); see `docs/API.md`.
+- BSP-Core is compiled against from `../BSP-Core/build/libs`, Region Guard from `../BSP-Region Guard/build/libs` (versions in `gradle.properties`). Build those first.
 - Network: Velocity proxy, Mohist backends, Proxy Compatible Forge. MySQL for data, Redis for cross-server messages, own table prefix.
 
 ## Build

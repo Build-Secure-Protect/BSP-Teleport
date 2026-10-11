@@ -29,3 +29,11 @@ description='''${mod_description}'''
     versionRange="${bsp_core_version_range}"
     ordering="AFTER"
     side="BOTH"
+
+# Optional. Region Guard declares itself AFTER bsp_teleport, so this side must not also say AFTER.
+[[dependencies.${mod_id}]]
+    modId="bsp_region_guard"
+    mandatory=false
+    versionRange="${region_guard_version_range}"
+    ordering="NONE"
+    side="BOTH"
