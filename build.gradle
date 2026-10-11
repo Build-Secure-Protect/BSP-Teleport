@@ -41,7 +41,7 @@ minecraft {
 
 repositories {
     // BSP-Core has no published artifact: its built jar is picked up from the sibling repo.
-    flatDir { dirs bsp_core_libs }
+    flatDir { dirs bsp_core_libs, region_guard_libs }
 }
 
 dependencies {
@@ -49,6 +49,9 @@ dependencies {
 
     // The full jar (not -slim) so dev runs also get the MySQL driver BSP-Core ships.
     implementation fg.deobf("blank:bsp-core:${bsp_core_version}")
+
+    // Optional at runtime: only compat/RegionGuard touches it, and only when the mod is loaded.
+    compileOnly fg.deobf("blank:bsp-region-guard:${region_guard_version}")
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -59,6 +62,7 @@ tasks.named('processResources', ProcessResources).configure {
             mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
             mod_authors: mod_authors, mod_description: mod_description,
             bsp_core_version_range: bsp_core_version_range,
+            region_guard_version_range: region_guard_version_range,
     ]
     inputs.properties replaceProperties
     filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {

@@ -1,19 +1,19 @@
 package com.mrgregles.bsp_teleport.spike;
 
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mrgregles.bsp_teleport.BSPTeleport;
+import com.mrgregles.bsp_teleport.api.BspTeleportApi;
+import com.mrgregles.bsp_teleport.api.Destination;
 import com.mrgregles.bsp_teleport.compat.BspCore;
-import io.netty.buffer.Unpooled;
+import com.mrgregles.bsp_teleport.compat.RegionGuard;
+import com.mrgregles.bsp_teleport.network.ProxyMessenger;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.commands.arguments.coordinates.Vec3Argument;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -30,13 +30,11 @@ import java.lang.reflect.Method;
  *
  * <ul>
  *   <li>{@code /bsptp spike connect <server>}: ask the proxy to move the player.</li>
+ *   <li>{@code /bsptp spike teleport <server> <world> <x y z>}: a forced cross-server teleport with a landing.</li>
  *   <li>{@code /bsptp spike perm <node>}: read a LuckPerms permission and say which route answered.</li>
  * </ul>
  */
 public final class SpikeCommands {
-    /** The proxy plugin-message channel. Velocity answers it while {@code bungee-plugin-message-channel} is on. */
-    private static final ResourceLocation PROXY_CHANNEL = new ResourceLocation("bungeecord", "main");
-
     /** A node registered with Forge, to see whether LuckPerms on Mohist answers Forge's permission API at all. */
     private static final PermissionNode<Boolean> FORGE_NODE = new PermissionNode<>(
             BSPTeleport.MODID, "spike", PermissionTypes.BOOLEAN, (player, uuid, context) -> false);
@@ -55,6 +53,11 @@ public final class SpikeCommands {
                         .then(Commands.literal("connect")
                                 .then(Commands.argument("server", StringArgumentType.word())
                                         .executes(SpikeCommands::connect)))
+                        .then(Commands.literal("teleport")
+                                .then(Commands.argument("server", StringArgumentType.word())
+                                        .then(Commands.argument("world", StringArgumentType.string())
+                                                .then(Commands.argument("pos", Vec3Argument.vec3())
+                                                        .executes(SpikeCommands::teleport)))))
                         .then(Commands.literal("perm")
                                 .then(Commands.argument("node", StringArgumentType.word())
                                         .executes(SpikeCommands::perm)))));
@@ -68,17 +71,24 @@ public final class SpikeCommands {
         ServerPlayer player = context.getSource().getPlayerOrException();
         String server = StringArgumentType.getString(context, "server");
 
-        // The proxy protocol uses Java's DataOutput strings, not Minecraft's length-prefixed ones.
-        ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("Connect");
-        out.writeUTF(server);
-        player.connection.send(new ClientboundCustomPayloadPacket(
-                PROXY_CHANNEL, new FriendlyByteBuf(Unpooled.wrappedBuffer(out.toByteArray()))));
-
+        ProxyMessenger.connect(player, server);
         BSPTeleport.LOGGER.info("[spike] Sent Connect '{}' for {}", server, player.getGameProfile().getName());
         context.getSource().sendSuccess(() -> Component.literal(
                 "Asked the proxy to move you to '" + server + "'. If nothing happens in a few seconds, it failed."), false);
         return 1;
+    }
+
+    /** The whole cross-server flow: landing announced through Region Guard's store, then the proxy move. */
+    private static int teleport(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        String server = StringArgumentType.getString(context, "server");
+        String world = StringArgumentType.getString(context, "world");
+        Vec3 pos = Vec3Argument.getVec3(context, "pos");
+        Destination destination = new Destination(server, world, pos.x, pos.y, pos.z, "Spike teleport landed.");
+        boolean started = BspTeleportApi.get().teleport(player, destination);
+        say(context, "Teleport to " + destination.server() + " " + destination.world() + " " + pos + ": " + (started ? "started" : "failed")
+                + (RegionGuard.isPresent() ? "" : " (no Region Guard here, so no landing was announced)"));
+        return started ? 1 : 0;
     }
 
     private static int perm(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
