@@ -12,10 +12,10 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
                        List<HomeEntry> homes, List<WarpEntry> warps, List<PlayerEntry> players, List<String> rtpServers,
                        @Nullable RequestEntry request, boolean admin) {
 
-    public record HomeEntry(String name, String server, String world, int x, int y, int z, boolean locked, boolean nearRaid) {
+    public record HomeEntry(String name, String server, String world, int x, int y, int z, boolean locked, boolean nearRaid, String icon) {
     }
 
-    public record WarpEntry(String name, String server, String world, int x, int y, int z, int cost, boolean nearRaid) {
+    public record WarpEntry(String name, String server, String world, int x, int y, int z, int cost, boolean nearRaid, String icon) {
     }
 
     public record PlayerEntry(String name, String server) {
@@ -40,7 +40,7 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
         buf.writeVarInt(coins);
         buf.writeVarInt(homes.size());
         for (HomeEntry h : homes) {
-            buf.writeUtf(h.name()).writeUtf(h.server()).writeUtf(h.world());
+            buf.writeUtf(h.name()).writeUtf(h.server()).writeUtf(h.world()).writeUtf(h.icon());
             buf.writeInt(h.x());
             buf.writeInt(h.y());
             buf.writeInt(h.z());
@@ -49,7 +49,7 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
         }
         buf.writeVarInt(warps.size());
         for (WarpEntry w : warps) {
-            buf.writeUtf(w.name()).writeUtf(w.server()).writeUtf(w.world());
+            buf.writeUtf(w.name()).writeUtf(w.server()).writeUtf(w.world()).writeUtf(w.icon());
             buf.writeInt(w.x());
             buf.writeInt(w.y());
             buf.writeInt(w.z());
@@ -79,12 +79,14 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
         int n = buf.readVarInt();
         List<HomeEntry> homes = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
-            homes.add(new HomeEntry(buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readBoolean(), buf.readBoolean()));
+            String hn = buf.readUtf(), hs = buf.readUtf(), hw = buf.readUtf(), hi = buf.readUtf();
+            homes.add(new HomeEntry(hn, hs, hw, buf.readInt(), buf.readInt(), buf.readInt(), buf.readBoolean(), buf.readBoolean(), hi));
         }
         n = buf.readVarInt();
         List<WarpEntry> warps = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
-            warps.add(new WarpEntry(buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readVarInt(), buf.readBoolean()));
+            String wn = buf.readUtf(), ws = buf.readUtf(), ww = buf.readUtf(), wi = buf.readUtf();
+            warps.add(new WarpEntry(wn, ws, ww, buf.readInt(), buf.readInt(), buf.readInt(), buf.readVarInt(), buf.readBoolean(), wi));
         }
         n = buf.readVarInt();
         List<PlayerEntry> players = new ArrayList<>(n);

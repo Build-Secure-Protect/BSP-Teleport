@@ -267,13 +267,19 @@ public final class Messenger {
 
     /** Asks {@code targetServer} for a random spot; the answer comes back as RTP_RESULT for the player. */
     public static boolean requestRandomSpot(ServerPlayer player, String targetServer) {
-        return send(new Message(Message.Type.RTP_REQUEST, Message.To.SERVER, targetServer).put("player", player.getGameProfile().getName()));
+        return send(new Message(Message.Type.RTP_REQUEST, Message.To.SERVER, targetServer).put("player", player.getGameProfile().getName()).put("uuid", player.getUUID().toString()));
     }
 
     private static void onRtpRequest(MinecraftServer server, Message m) {
         Message reply = new Message(Message.Type.RTP_RESULT, Message.To.PLAYER, m.get("player"));
         ServerLevel level = RandomTeleport.arrivalWorld(server);
-        Position spot = RandomTeleport.enabled() && level != null ? RandomTeleport.find(level, null) : null;
+        UUID owner = null;
+        try {
+            owner = m.get("uuid").isEmpty() ? null : UUID.fromString(m.get("uuid"));
+        } catch (IllegalArgumentException ignored) {
+            // an old sender without the uuid: no raid avoidance for them
+        }
+        Position spot = RandomTeleport.enabled() && level != null ? RandomTeleport.find(level, null, owner) : null;
         if (spot == null) {
             reply.put("error", RandomTeleport.enabled() ? "rtp.no_spot" : "rtp.disabled_there");
         } else {

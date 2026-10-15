@@ -41,6 +41,11 @@ public final class AdminCommands {
                     com.mrgregles.bsp_teleport.admin.AdminService.open(ctx.getSource().getPlayerOrException());
                     return 1;
                 }))
+                .then(Commands.literal("reload").executes(ctx -> {
+                    com.mrgregles.bsp_teleport.TeleportConfig.reload(ctx.getSource().getServer());
+                    ctx.getSource().sendSuccess(() -> Component.translatable("message.bsp_teleport.admin.reloaded"), true);
+                    return 1;
+                }))
                 .then(Commands.literal("status").executes(AdminCommands::status))
                 .then(Commands.literal("players").executes(AdminCommands::players))
                 .then(Commands.literal("send")

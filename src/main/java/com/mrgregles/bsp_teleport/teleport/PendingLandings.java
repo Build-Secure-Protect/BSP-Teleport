@@ -61,7 +61,7 @@ public final class PendingLandings {
         Storage.takePending(player.getUUID(), destination -> {
             if (destination != null && !player.hasDisconnected()) {
                 PENDING.remove(player.getUUID());
-                TeleportService.moveHere(player, destination);
+                TeleportService.moveHere(player, raidChecked(player, destination));
             }
         });
     }
@@ -82,6 +82,21 @@ public final class PendingLandings {
         long now = System.currentTimeMillis();
         PENDING.entrySet().removeIf(e -> e.getValue().expiresAt() < now);
         RECENT_JOINS.entrySet().removeIf(e -> now - e.getValue() > 3_600_000L);
+    }
+
+    /**
+     * The sending server checked the raid rule against its cache; this server sees its own steals live. A landing
+     * that would now be near the player's totem being stolen (D39, R6) goes to this server's spawn instead, if it has
+     * one, with the same message.
+     */
+    private static Destination raidChecked(ServerPlayer player, Destination destination) {
+        int distance = TeleportConfig.getOr(TeleportConfig.RAID_HOME_DISTANCE, 150);
+        if (!com.mrgregles.bsp_teleport.compat.BspCore.nearRaid(player.server, player.getUUID(), "", destination.world(), destination.x(), destination.z(), distance)) {
+            return destination;
+        }
+        player.displayClientMessage(net.minecraft.network.chat.Component.translatable("message.bsp_teleport.blocked_raid", distance), false);
+        com.mrgregles.bsp_teleport.data.Position spawn = TeleportActions.spawnPosition(player);
+        return spawn != null && spawn.isLocal() ? spawn.toDestination("") : destination;
     }
 
     private static void landFromMemory(ServerPlayer player) {

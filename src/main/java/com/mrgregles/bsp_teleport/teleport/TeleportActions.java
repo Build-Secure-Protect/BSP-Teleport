@@ -97,6 +97,20 @@ public final class TeleportActions {
         return true;
     }
 
+    /** Sets or clears a home's icon; the band passes the held item. */
+    public static boolean setHomeIcon(ServerPlayer player, String name, String icon) {
+        TeleportData data = TeleportData.get(player.server);
+        Home home = data.home(player.getUUID(), name);
+        if (home == null) {
+            return fail(player, "home.unknown", name);
+        }
+        Home edited = home.withIcon(icon);
+        data.putHome(player.getUUID(), home.name(), edited);
+        Storage.homeSaved(player.getUUID(), edited);
+        tell(player, "home.edited", edited.name());
+        return true;
+    }
+
     // Warps
 
     /** The warps this player may use. */

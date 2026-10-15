@@ -13,7 +13,7 @@ public record AdminData(String server, boolean readOnly, String storage, String 
     public record Setting(String id, String value, String kind, int min, int max, int step) {
     }
 
-    public record WarpRow(String name, String server, int cost, boolean restricted) {
+    public record WarpRow(String name, String server, int cost, boolean restricted, String icon) {
     }
 
     public record ServerRow(String name, boolean up, boolean here, List<String> players) {
@@ -33,7 +33,7 @@ public record AdminData(String server, boolean readOnly, String storage, String 
         }
         buf.writeVarInt(warps.size());
         for (WarpRow w : warps) {
-            buf.writeUtf(w.name()).writeUtf(w.server());
+            buf.writeUtf(w.name()).writeUtf(w.server()).writeUtf(w.icon());
             buf.writeVarInt(w.cost());
             buf.writeBoolean(w.restricted());
         }
@@ -59,7 +59,8 @@ public record AdminData(String server, boolean readOnly, String storage, String 
         n = buf.readVarInt();
         List<WarpRow> warps = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
-            warps.add(new WarpRow(buf.readUtf(), buf.readUtf(), buf.readVarInt(), buf.readBoolean()));
+            String wn = buf.readUtf(), ws = buf.readUtf(), wi = buf.readUtf();
+            warps.add(new WarpRow(wn, ws, buf.readVarInt(), buf.readBoolean(), wi));
         }
         n = buf.readVarInt();
         List<ServerRow> servers = new ArrayList<>(n);

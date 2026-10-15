@@ -123,15 +123,12 @@ public final class RegionGuard {
             }
         }
 
-        /** Not on Region Guard's API yet (TR4): read from its config class by reflection, and give up quietly if that changes. */
+        /** Region Guard's {@code storage.serverId} (API version 5, TR4); null on an older Region Guard. */
         @Nullable
         static String serverId() {
             try {
-                Class<?> config = Class.forName("com.mrgregles.bsp_region_guard.RegionGuardConfig");
-                Object value = config.getField("STORAGE_SERVER_ID").get(null);
-                Object id = value.getClass().getMethod("get").invoke(value);
-                return id == null ? null : id.toString();
-            } catch (ReflectiveOperationException | LinkageError | RuntimeException e) {
+                return com.mrgregles.bsp_region_guard.api.RegionGuardApi.get().serverId();
+            } catch (LinkageError | RuntimeException e) {
                 return null;
             }
         }

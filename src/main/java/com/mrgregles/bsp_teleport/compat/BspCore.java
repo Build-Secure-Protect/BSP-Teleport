@@ -98,23 +98,38 @@ public final class BspCore {
 
     // Raids (D18)
 
-    /** Whether one of the player's totems on this server is being stolen right now. */
+    /** Whether one of the player's totems, on any server of the network, is being stolen right now (R6). */
     public static boolean beingRaided(ServerPlayer player) {
-        return BspTotems.beingStolen(player.server, player.getUUID()).isPresent();
+        return beingRaided(player.server, player.getUUID());
+    }
+
+    public static boolean beingRaided(net.minecraft.server.MinecraftServer server, UUID owner) {
+        return !BspTotems.stealsAnywhere(server, owner).isEmpty();
     }
 
     /**
-     * Whether a spot is within {@code distance} blocks (horizontally, same dimension) of one of the player's totems
-     * that is being stolen right now. False when no steal is running.
+     * Whether a spot on {@code targetServer} (the proxy name, or empty for this server) in {@code dimensionId} is
+     * within {@code distance} blocks, horizontally, of one of {@code owner}'s totems being stolen right now, on any
+     * server (R6). A remote steal may lag the cache by {@code storage.noticeSeconds} without Redis.
      */
-    public static boolean nearRaid(ServerPlayer player, ServerLevel level, double x, double z, int distance) {
-        Optional<BspTotems.Steal> steal = BspTotems.beingStolen(player.server, player.getUUID());
-        if (steal.isEmpty() || !steal.get().where().dimension().equals(level.dimension())) {
-            return false;
+    public static boolean nearRaid(net.minecraft.server.MinecraftServer server, UUID owner, String targetServer, String dimensionId, double x, double z, int distance) {
+        String target = targetServer.isEmpty() ? TeleportConfig.serverName() : targetServer;
+        for (BspTotems.StealAnywhere steal : BspTotems.stealsAnywhere(server, owner)) {
+            if (!proxyNameFor(steal.serverId()).equals(target) || !steal.dimension().location().toString().equals(dimensionId)) {
+                continue;
+            }
+            BlockPos t = steal.pos();
+            double dx = t.getX() + 0.5 - x, dz = t.getZ() + 0.5 - z;
+            if (dx * dx + dz * dz < (double) distance * distance) {
+                return true;
+            }
         }
-        BlockPos t = steal.get().where().pos();
-        double dx = t.getX() + 0.5 - x, dz = t.getZ() + 0.5 - z;
-        return dx * dx + dz * dz < (double) distance * distance;
+        return false;
+    }
+
+    /** The same check for a spot on this server. */
+    public static boolean nearRaid(ServerPlayer player, ServerLevel level, double x, double z, int distance) {
+        return nearRaid(player.server, player.getUUID(), "", level.dimension().location().toString(), x, z, distance);
     }
 
     /** Seconds left of the no-teleport window after the player stole a totem; 0 when none. */
@@ -191,6 +206,7 @@ public final class BspCore {
     }
 
     public static Optional<String> describeSteal(ServerPlayer player) {
-        return BspTotems.beingStolen(player.server, player.getUUID()).map(s -> s.thiefName() + " at " + s.where().pos().toShortString());
+        return BspTotems.stealsAnywhere(player.server, player.getUUID()).stream().findFirst()
+                .map(s -> s.thiefName() + " at " + s.pos().toShortString() + " on " + proxyNameFor(s.serverId()));
     }
 }

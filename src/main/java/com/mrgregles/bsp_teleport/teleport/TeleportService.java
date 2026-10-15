@@ -141,6 +141,7 @@ public final class TeleportService implements BspTeleportApi {
         player.teleportTo(level, destination.x(), destination.y(), destination.z(), yaw, pitch);
         player.fallDistance = 0f;
         protect(player, destination.protect());
+        com.mrgregles.bsp_teleport.util.Sounds.arrived(player);
         if (!destination.message().isEmpty()) {
             player.displayClientMessage(Component.literal(destination.message()), false);
         }

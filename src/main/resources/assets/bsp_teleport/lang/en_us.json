@@ -54,6 +54,11 @@
   "screen.bsp_teleport.admin.setting.rtpMaxRadius": "Random: farthest from spawn",
   "screen.bsp_teleport.admin.setting.requestSeconds": "Request expiry seconds",
   "screen.bsp_teleport.admin.setting.globalSpawnWarp": "Global spawn warp (empty: own spawn)",
+  "screen.bsp_teleport.admin.setting.rtpMinY": "Random: lowest Y",
+  "screen.bsp_teleport.admin.setting.rtpMaxY": "Random: highest Y",
+  "screen.bsp_teleport.admin.setting.backRestrictedWorlds": "/back never returns to (worlds, comma-separated)",
+  "screen.bsp_teleport.admin.setting.sounds": "Sounds",
+  "screen.bsp_teleport.admin.reload": "Reload file",
   "screen.bsp_teleport.admin.saved": "Saved to the config file.",
   "screen.bsp_teleport.band.go": "Go",
   "screen.bsp_teleport.band.del": "Del",
@@ -174,5 +179,6 @@
   "message.bsp_teleport.admin.asking": "Asking where %s is...",
   "message.bsp_teleport.admin.no_offline": "No last position is known for %s.",
   "message.bsp_teleport.admin.sent_all": "Sent %s players to %s.",
+  "message.bsp_teleport.admin.reloaded": "Config file re-read.",
   "message.bsp_teleport.admin.sent_all_remote": "Told %s to send its players to %s."
 }

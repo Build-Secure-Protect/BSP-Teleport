@@ -25,6 +25,7 @@ public final class TeleportConfig {
 
     public static final ForgeConfigSpec.ConfigValue<String> GLOBAL_SPAWN_WARP;
     public static final ForgeConfigSpec.IntValue RAID_HOME_DISTANCE, RAID_RANDOM_DISTANCE;
+    public static final ForgeConfigSpec.BooleanValue SOUNDS;
 
     public static final ForgeConfigSpec.IntValue HOME_SLOTS;
 
@@ -91,6 +92,10 @@ public final class TeleportConfig {
                 .defineInRange("randomDistance", 200, 0, 10_000);
         b.pop();
 
+        b.push("sounds");
+        SOUNDS = b.comment("Play sounds for the warm-up countdown, arrival, a cancelled teleport and a received request.").define("enabled", true);
+        b.pop();
+
         b.push("spawn");
         GLOBAL_SPAWN_WARP = b.comment("Name of a warp that /spawn uses on every server, or empty to use each server's own /setspawn point.")
                 .define("globalWarp", "");
@@ -142,6 +147,15 @@ public final class TeleportConfig {
 
     public static String serverName() {
         return getOr(SERVER_NAME, "server-1");
+    }
+
+    /** Re-reads the config file from disk ({@code /bsptp reload}). Forge also does this by itself when the file changes. */
+    public static void reload(net.minecraft.server.MinecraftServer server) {
+        java.nio.file.Path path = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).resolve("serverconfig").resolve("bsp_teleport-server.toml");
+        com.electronwill.nightconfig.core.file.CommentedFileConfig file = com.electronwill.nightconfig.core.file.CommentedFileConfig.builder(path)
+                .sync().autosave().writingMode(com.electronwill.nightconfig.core.io.WritingMode.REPLACE).build();
+        file.load();
+        SPEC.setConfig(file);
     }
 
     public static boolean mysql() {

@@ -109,6 +109,7 @@ public final class TeleportRequests {
         }
         OPEN.put(key(target), request);
         tell(target, request.here() ? "request.received_here" : "request.received", Component.literal(request.fromName()));
+        com.mrgregles.bsp_teleport.util.Sounds.request(target);
     }
 
     // Answering

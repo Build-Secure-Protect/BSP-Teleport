@@ -15,6 +15,10 @@ public enum AdminAction {
     WARP_RESTRICT,
     /** name */
     DEL_WARP,
+    /** name: the warp's icon becomes the item the admin holds (empty hand clears it) */
+    WARP_ICON,
+    /** re-read the config file */
+    RELOAD,
     /** name */
     GO_WARP,
     /** server */

@@ -8,6 +8,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -139,6 +140,7 @@ public class BandScreen extends Screen {
             String sub = where(h.server(), h.world(), h.x(), h.y(), h.z());
             int nameColour = h.locked() ? MUTED : h.nearRaid() ? BAD : TEXT;
             row(g, y, h.name(), sub, nameColour, h.server().equals(data.server()) ? MUTED : VIO);
+            icon(g, y, h.icon(), com.mrgregles.bsp_teleport.util.Icons.DEFAULT_HOME, () -> send(BandAction.HOME_ICON, h.name()));
             int bx = left + W - 10;
             bx = button(g, bx, y + 4, Component.translatable("screen.bsp_teleport.band.del").getString(), DIM, MUTED, () -> send(BandAction.DEL_HOME, h.name()));
             if (h.locked()) {
@@ -176,6 +178,7 @@ public class BandScreen extends Screen {
                 sub += "  " + Component.translatable("screen.bsp_teleport.band.coins", w.cost()).getString();
             }
             row(g, y, w.name(), sub, w.nearRaid() ? BAD : TEXT, w.server().equals(data.server()) ? MUTED : VIO);
+            icon(g, y, w.icon(), com.mrgregles.bsp_teleport.util.Icons.DEFAULT_WARP, null);
             if (w.nearRaid()) {
                 button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.near_raid").getString(), BAD, BAD, null);
             } else {
@@ -257,8 +260,18 @@ public class BandScreen extends Screen {
     private void row(GuiGraphics g, int y, String name, String sub, int nameColour, int subColour) {
         g.fill(left + 10, y, left + W - 10, y + ROW_H, DIM);
         g.fill(left + 11, y + 1, left + W - 11, y + ROW_H - 1, SLOT);
-        g.drawString(font, name, left + 14, y + 3, nameColour, false);
-        small(g, sub, left + 14, y + 12, subColour);
+        boolean withIcon = tab == Tab.HOMES || tab == Tab.WARPS;
+        int tx = withIcon ? left + 32 : left + 14;
+        g.drawString(font, name, tx, y + 3, nameColour, false);
+        small(g, sub, tx, y + 12, subColour);
+    }
+
+    /** The item icon at the row's left; clicking it (when {@code onClick} is given) makes it the held item. */
+    private void icon(GuiGraphics g, int y, String icon, String fallback, @Nullable Runnable onClick) {
+        g.renderItem(com.mrgregles.bsp_teleport.util.Icons.stack(icon, fallback), left + 13, y + 2);
+        if (onClick != null) {
+            hits.add(new Hit(left + 12, y + 1, 18, 18, onClick));
+        }
     }
 
     /** A small right-aligned button; returns the x where the next one to its left ends. */
