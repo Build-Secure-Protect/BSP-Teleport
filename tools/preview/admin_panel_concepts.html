@@ -1,0 +1,112 @@
+<title>Teleport Admin Panel Concepts</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: dark board like the band concept page. One section of three working mocks of the admin panel in the Holo
+   HUD colours (violet border: BSP-Core uses violet for operator screens), one of shared rules, one of decisions. */
+:root{ --bg:#0f1115; --panel:#171a21; --line:#2a2f3a; --fg:#e8eaf0; --muted:#9aa3b5; --tq:#19d3b0; --on:#0b0d11;
+  --h-bg:#10151c; --h-fg:#e6eaf2; --h-muted:#9aa3b5; --h-slot:#0c0e12; --h-dim:#2a2f3a; --h-tq:#19d3b0; --h-vio:#b58cff; --h-gold:#ffd23a; --h-bad:#ff6b5c; --h-ok:#8fe04a;
+  --display:"Silkscreen","Courier New",monospace; --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme:dark; }
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){ --bg:#f3f1ea; --panel:#fff; --line:#d9d4c7; --fg:#1a1b20; --muted:#5f6472; --tq:#0c8f78; --on:#fff; color-scheme:light; } }
+:root[data-theme="light"]{ --bg:#f3f1ea; --panel:#fff; --line:#d9d4c7; --fg:#1a1b20; --muted:#5f6472; --tq:#0c8f78; --on:#fff; color-scheme:light; }
+body{ background:var(--bg); color:var(--fg); font-family:var(--body); margin:0; font-size:14px; line-height:1.5; }
+.wrap{ max-width:1100px; margin:0 auto; padding-block:28px 56px; padding-inline:16px; display:flex; flex-direction:column; gap:30px; }
+h1{ font-family:var(--display); font-size:clamp(20px,3vw,28px); margin:0 0 6px; color:var(--tq); text-wrap:balance; }
+h2{ font-family:var(--display); font-size:15px; margin:0 0 10px; letter-spacing:.04em; text-transform:uppercase; }
+h3{ font-size:14px; margin:0 0 4px; }
+p{ margin:0; max-width:70ch; } .lede{ color:var(--muted); }
+.card{ background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:14px 16px; }
+.card ol{ margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px; }
+.ctl{ display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; } .key{ color:var(--muted); font-size:12.5px; }
+.grid{ display:grid; grid-template-columns:1fr; gap:22px; }
+.opt{ display:flex; flex-direction:column; gap:10px; min-width:0; }
+.opt .cap{ color:var(--muted); font-size:12.5px; max-width:80ch; }
+.opt .name{ font-family:var(--display); font-size:13px; color:var(--tq); }
+.hud{ background:var(--h-bg); color:var(--h-fg); border:2px solid var(--h-vio); font-family:var(--display); font-size:11px; line-height:1.25; width:100%; max-width:700px; box-sizing:border-box; padding:10px 10px 12px; position:relative; min-height:320px; }
+.hud .ttl{ text-transform:uppercase; letter-spacing:.06em; font-size:12px; font-weight:700; display:flex; justify-content:space-between; gap:8px; align-items:center; color:var(--h-vio); }
+.hud .help{ font-size:8.5px; color:var(--h-muted); margin-top:2px; }
+.hud .tabs{ display:flex; gap:4px; flex-wrap:wrap; }
+.hud .tab{ background:var(--h-slot); border:1px solid var(--h-dim); padding:2px 8px; font-size:9px; text-transform:uppercase; color:var(--h-muted); }
+.hud .tab.on{ border-color:var(--h-vio); color:var(--h-vio); }
+.hud .list{ display:flex; flex-direction:column; gap:4px; margin-top:8px; }
+.hud .row{ display:grid; grid-template-columns:1fr auto; gap:6px; align-items:center; background:var(--h-slot); border:1px solid var(--h-dim); padding:4px 6px; min-width:0; }
+.hud .row .n{ font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hud .row .s{ font-size:8.5px; color:var(--h-muted); } .hud .row .s b{ color:var(--h-vio); font-weight:400; } .hud .row .s em{ color:var(--h-gold); font-style:normal; } .hud .row .s i{ color:var(--h-bad); font-style:normal; }
+.hud .acts{ display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end; }
+.hud .b{ background:var(--h-slot); border:1px solid var(--h-tq); color:var(--h-tq); padding:2px 6px; font-size:9px; text-transform:uppercase; }
+.hud .b.dim{ border-color:var(--h-dim); color:var(--h-muted); } .hud .b.bad{ border-color:var(--h-bad); color:var(--h-bad); } .hud .b.gold{ border-color:var(--h-gold); color:var(--h-gold); } .hud .b.vio{ border-color:var(--h-vio); color:var(--h-vio); } .hud .b.ok{ border-color:var(--h-ok); color:var(--h-ok); }
+.hud .foot{ position:absolute; left:10px; right:10px; bottom:8px; display:flex; justify-content:space-between; gap:8px; font-size:8.5px; color:var(--h-muted); align-items:center; flex-wrap:wrap; }
+.hud .foot .ok{ color:var(--h-ok); } .hud .foot .bad{ color:var(--h-bad); }
+/* settings rows */
+.hud .set{ display:grid; grid-template-columns:1fr auto; gap:6px; align-items:center; background:var(--h-slot); border:1px solid var(--h-dim); padding:3px 6px; }
+.hud .set .v{ display:flex; gap:3px; align-items:center; } .hud .set .v span{ min-width:34px; text-align:center; color:var(--h-gold); }
+.hud .set .s{ font-size:8.5px; color:var(--h-muted); }
+/* B console */
+.hud.console{ max-width:760px; } .console .body{ display:grid; grid-template-columns:120px 1fr; gap:8px; margin-top:8px; min-width:0; }
+.console .nav{ display:flex; flex-direction:column; gap:3px; } .console .nav .it{ background:var(--h-slot); border:1px solid var(--h-dim); padding:4px 6px; font-size:9px; text-transform:uppercase; color:var(--h-muted); } .console .nav .it.on{ border-color:var(--h-vio); color:var(--h-vio); }
+.console .log{ background:var(--h-slot); border:1px solid var(--h-dim); padding:4px 6px; font-size:8.5px; color:var(--h-muted); margin-top:6px; } .console .log b{ color:var(--h-tq); font-weight:400; }
+@media (max-width:560px){ .console .body{ grid-template-columns:1fr; } }
+/* C map */
+.map .stage{ position:relative; height:200px; margin-top:8px; background:var(--h-slot); border:1px solid var(--h-dim); overflow:hidden; }
+.map .node{ position:absolute; transform:translate(-50%,-50%); background:var(--h-bg); border:1px solid var(--h-tq); padding:4px 6px; text-align:center; min-width:70px; }
+.map .node .c{ font-size:8.5px; color:var(--h-muted); } .map .node.here{ border-color:var(--h-gold); } .map .node.down{ border-color:var(--h-bad); opacity:.7; } .map .node.on{ background:var(--h-tq); color:var(--on); }
+.map .link{ position:absolute; height:1px; background:var(--h-dim); transform-origin:0 0; }
+.map .side{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; } @media (max-width:560px){ .map .side{ grid-template-columns:1fr; } }
+.map .side h4{ margin:0 0 4px; font-size:9px; text-transform:uppercase; color:var(--h-muted); letter-spacing:.06em; }
+@media (prefers-reduced-motion: no-preference){ .hud .b{ transition:opacity .15s; } }
+</style>
+<div class="wrap">
+<section><h1>Teleport Admin Panel Concepts</h1>
+<p class="lede">The admin panel for BSP-Teleport, opened with <code>/bsptp admin</code> or from an ADMIN tab the band shows to admins. It covers four jobs: the settings in <code>bsp_teleport-server.toml</code> that admins change often, the warps, the servers of the network (who is where, evacuate, send everyone home) and the players (bring, go to, where they logged out). Drawn in the Holo HUD style with BSP-Core's violet operator border. Three layouts, same content.</p>
+<div class="card"><div class="ctl"><span class="key"><b>State:</b></span>
+<label><input type="checkbox" id="down"> survival-2 is restarting</label>
+<label><input type="checkbox" id="redis" checked> Redis connected</label></div></div></section>
+
+<section><h2>The three layouts</h2>
+<div class="grid" id="screens"></div>
+<div class="card" style="margin-top:4px"><h3>What all three share</h3><ol>
+<li><b>Settings</b> change the live server config and save it, so a restart keeps them. Each value shows its name, its meaning in one line and - / + or a switch. The totem-driven numbers (home slots, Swift Travel) are read-only here with a note that the totem sets them.</li>
+<li><b>Warps</b>: set a warp where the admin stands (name, cost, restricted), move or delete one, and see which server it is on. The band's WARPS tab shows the same list to players.</li>
+<li><b>Servers</b>: each server of the network with its player count, up or down, and three actions: <i>bring everyone here</i> (the restart evacuation, saves their /back), <i>send everyone to</i> another server, and <i>go there</i>. This server is marked.</li>
+<li><b>Players</b>: everyone on the network with their server; bring, go to, or go to where they last logged out.</li>
+<li><b>Status line</b> at the bottom: storage, Redis, this server's name.</li>
+<li>Only BSP-Core admins (or the <code>bsp_teleport.admin</code> node) can open it; moderators see it read-only, as on BSP-Core's panel.</li></ol></div></section>
+
+<section><h2>Decided (owner, 2026-10-15)</h2><div class="card"><ol>
+<li><b>Layout:</b> C, Map.</li>
+<li><b>Settings on the panel:</b> warm-up, cooldown, cancel on damage, cancel on move, skip-cooldown coins, raid distances, random teleport on/off and radii, request expiry, global spawn warp. Saved to the config file at once. Credentials stay in the file.</li>
+<li><b>Moderators:</b> read-only.</li>
+<li><b>Opens from:</b> <code>/bsptp admin</code> and an ADMIN tab on the band.</li>
+<li><b>Confirmation:</b> a Yes / No popup before anything that moves more than one player, and before deleting a warp.</li></ol></div></section>
+</div>
+<script>
+(function(){
+  var S={ down:false, redis:true };
+  var SERVERS=[ {n:'hub', c:3, here:false}, {n:'survival-1', c:7, here:true}, {n:'survival-2', c:4, here:false, down:true}, {n:'creative', c:1, here:false} ];
+  var PLAYERS=[ {n:'Alex', s:'survival-1'}, {n:'Sam', s:'hub'}, {n:'Kai', s:'survival-2'}, {n:'Robin', s:'creative'} ];
+  var WARPS=[ {n:'hub', s:'hub', cost:0, r:false}, {n:'shop', s:'survival-1', cost:50, r:false}, {n:'vip', s:'survival-1', cost:0, r:true} ];
+  var SETTINGS=[ {n:'Warm-up', s:'seconds standing still before a teleport', v:'5 s'}, {n:'Cooldown', s:'seconds between teleports', v:'60 s'}, {n:'Cancel on damage', s:'a hit cancels the warm-up', sw:true}, {n:'Cancel on move', s:'moving a block cancels it', sw:true}, {n:'Skip cooldown', s:'coins /tpnow charges, 0 is off', v:'0'}, {n:'Raid: home distance', s:'nothing lands this close to a stolen totem', v:'150'}, {n:'Raid: random distance', s:'/rtp keeps this far from it', v:'200'}, {n:'Random teleport', s:'on this server', sw:true}, {n:'Random radius', s:'min to max from spawn', v:'500 - 5000'}, {n:'Request expiry', s:'seconds a request stays open', v:'60 s'}, {n:'Global spawn warp', s:'empty means each server uses its own /setspawn', v:'-'} ];
+  function esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function serverRow(sv){ var down=sv.down&&S.down; var cls='row'; var state=down?'<i>restarting</i>':sv.here?'<em>this server</em>':'up'; var acts=down?'<span class="b dim">bring here</span><span class="b dim">send to</span><span class="b dim">go</span>':sv.here?'<span class="b vio">send everyone to...</span>':'<span class="b vio">bring everyone here</span><span class="b dim">send to...</span><span class="b">go</span>'; return '<div class="'+cls+'"><div><div class="n">'+sv.n+'</div><div class="s">'+(down?0:sv.c)+' players  '+state+'</div></div><div class="acts">'+acts+'</div></div>'; }
+  function playerRow(p){ var gone=S.down&&p.s==='survival-2'; return '<div class="row"><div><div class="n">'+p.n+'</div><div class="s">'+(gone?'<i>offline (survival-2 restarting)</i>':'<b>'+p.s+'</b>')+'</div></div><div class="acts">'+(gone?'<span class="b dim">bring</span><span class="b dim">go to</span><span class="b">last position</span>':'<span class="b vio">bring</span><span class="b">go to</span><span class="b dim">last position</span>')+'</div></div>'; }
+  function warpRow(w){ return '<div class="row"><div><div class="n">'+w.n+(w.r?'  <span style="color:var(--h-vio)">restricted</span>':'')+'</div><div class="s"><b>'+w.s+'</b>'+(w.cost?'  <em>'+w.cost+' coins</em>':'')+'</div></div><div class="acts"><span class="b">go</span><span class="b dim">move here</span><span class="b gold">cost</span><span class="b bad">del</span></div></div>'; }
+  function settingRow(st){ var v=st.sw!==undefined?'<span class="b '+(st.sw?'ok':'dim')+'">'+(st.sw?'on':'off')+'</span>':'<span class="b dim">-</span><span>'+st.v+'</span><span class="b dim">+</span>'; return '<div class="set"><div><div class="n">'+st.n+'</div><div class="s">'+esc(st.s)+'</div></div><div class="v">'+v+'</div></div>'; }
+  function foot(){ return '<div class="foot"><span>this server: survival-1</span><span class="ok">storage: mysql ok</span><span class="'+(S.redis?'ok':'bad')+'">redis: '+(S.redis?'listening':'not connected')+'</span></div>'; }
+
+  function tabs(){ return '<div class="hud"><div class="ttl"><span>Teleport Admin</span><div class="tabs"><span class="tab">settings</span><span class="tab">warps</span><span class="tab on">servers</span><span class="tab">players</span></div></div><div class="help">Bring everyone here before a restart; they use /back afterwards.</div><div class="list">'+SERVERS.map(serverRow).join('')+'</div><div class="list" style="margin-top:10px"><div class="row"><div><div class="n">set warp here</div><div class="s">name, cost, restricted</div></div><div class="acts"><span class="b gold">set</span></div></div></div>'+foot()+'</div>'; }
+  function console_(){ return '<div class="hud console"><div class="ttl"><span>Teleport Admin</span><span class="help">survival-1</span></div><div class="body"><div class="nav"><span class="it">settings</span><span class="it">warps</span><span class="it on">servers</span><span class="it">players</span><span class="it">status</span></div><div><div class="list" style="margin-top:0">'+SERVERS.map(serverRow).join('')+'</div><div class="log"><b>12:04</b> Sam joined hub<br><b>12:03</b> brought 4 players from survival-2 (Mrgregles)<br><b>12:01</b> warp shop cost set to 50<br><b>11:58</b> redis reconnected</div></div></div>'+foot()+'</div>'; }
+  function map(){
+    var pos={ hub:[50,30], 'survival-1':[22,70], 'survival-2':[78,70], creative:[50,88] };
+    var links=[['hub','survival-1'],['hub','survival-2'],['hub','creative']];
+    var ln=links.map(function(l){ var a=pos[l[0]], b=pos[l[1]]; var dx=(b[0]-a[0])*6.6, dy=(b[1]-a[1])*2; var len=Math.sqrt(dx*dx+dy*dy), ang=Math.atan2(dy,dx)*180/Math.PI; return '<span class="link" style="left:'+a[0]+'%;top:'+a[1]+'%;width:'+len+'px;transform:rotate('+ang+'deg)"></span>'; }).join('');
+    var nodes=SERVERS.map(function(sv){ var down=sv.down&&S.down; var cls='node'+(sv.here?' here':'')+(down?' down':''); return '<div class="'+cls+'" style="left:'+pos[sv.n][0]+'%;top:'+pos[sv.n][1]+'%"><div>'+sv.n+'</div><div class="c">'+(down?'restarting':(sv.c+' players'))+'</div></div>'; }).join('');
+    return '<div class="hud map"><div class="ttl"><span>Teleport Admin</span><div class="tabs"><span class="tab on">network</span><span class="tab">settings</span><span class="tab">warps</span></div></div><div class="help">Click a server, then an action. Gold is this server.</div><div class="stage">'+ln+nodes+'</div><div class="side"><div><h4>survival-2 (selected)</h4><div class="list" style="margin-top:0"><div class="row"><div><div class="n">'+(S.down?'restarting':'4 players')+'</div><div class="s">Kai, Jo, Max, Pip</div></div><div class="acts"><span class="b vio">bring everyone here</span><span class="b dim">send to...</span></div></div></div></div><div><h4>Players here</h4><div class="list" style="margin-top:0">'+PLAYERS.slice(0,2).map(playerRow).join('')+'</div></div></div>'+foot()+'</div>'; }
+
+  var OPTS=[ {name:'A. Tabs', cap:'Four tabs, one list at a time, same bones as the band and the totem screen. Shown on the SERVERS tab with the evacuation buttons; the set-warp row sits under the list on the WARPS tab (shown here for scale).', draw:tabs},
+             {name:'B. Console', cap:'A left-hand menu and a wide pane, plus a short log of what the panel did and what the network reported. Suits an admin who keeps it open while running the server.', draw:console_},
+             {name:'C. Map', cap:'The network drawn as nodes with player counts, this server in gold, a restarting server in red; click a node to act on it. Settings and warps are tabs. The most visual, the least room for lists.', draw:map} ];
+  var screens=document.getElementById('screens');
+  function render(){ screens.innerHTML=''; OPTS.forEach(function(o){ var d=document.createElement('div'); d.className='opt'; d.innerHTML='<div class="name">'+o.name+'</div>'+o.draw()+'<div class="cap">'+o.cap+'</div>'; screens.appendChild(d); }); }
+  ['down','redis'].forEach(function(id){ document.getElementById(id).addEventListener('change',function(e){ S[id]=e.target.checked; render(); }); });
+  render();
+})();
+</script>

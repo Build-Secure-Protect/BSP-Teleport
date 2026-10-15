@@ -3,6 +3,8 @@ package com.mrgregles.bsp_teleport.teleport;
 import com.mrgregles.bsp_teleport.BSPTeleport;
 import com.mrgregles.bsp_teleport.TeleportConfig;
 import com.mrgregles.bsp_teleport.api.Destination;
+import com.mrgregles.bsp_teleport.storage.Storage;
+import com.mrgregles.bsp_teleport.util.Scheduler;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;
@@ -16,10 +18,10 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Landings waiting for their player to arrive on this server.
  *
- * <p>A cross-server teleport is two halves: the source server announces the landing and sends the player through
- * the proxy; this server lands them when they log in. The announcement and the player can arrive in either order
- * (the message store is polled), so both sides check: a landing for a player who is already here is applied at
- * once if they joined recently, and a player who joins is landed if their announcement is already here.
+ * <p>With the shared database, the source server wrote a row and this server reads it when the player logs in.
+ * Without it, Region Guard's message store carries the announcement, which can arrive before or after the player
+ * (it is polled), so both orders are handled: a landing for a player already here is applied at once if they joined
+ * recently, and a player who joins is landed if their announcement is already here.
  */
 public final class PendingLandings {
     private static final Map<UUID, Entry> PENDING = new ConcurrentHashMap<>();
@@ -31,7 +33,7 @@ public final class PendingLandings {
     private PendingLandings() {
     }
 
-    /** Records a landing for a player expected to arrive; applies it now if they are already here. */
+    /** Records a landing announced through a message store; applies it now if the player is already here. */
     public static void expect(UUID uuid, Destination destination) {
         long window = TeleportConfig.getOr(TeleportConfig.LANDING_SECONDS, 120) * 1000L;
         PENDING.put(uuid, new Entry(destination, System.currentTimeMillis() + window));
@@ -43,7 +45,7 @@ public final class PendingLandings {
             ServerPlayer player = server.getPlayerList().getPlayer(uuid);
             Long joined = RECENT_JOINS.get(uuid);
             if (player != null && joined != null && System.currentTimeMillis() - joined < window) {
-                land(player);
+                landFromMemory(player);
             }
         });
     }
@@ -53,12 +55,24 @@ public final class PendingLandings {
             return;
         }
         RECENT_JOINS.put(player.getUUID(), System.currentTimeMillis());
-        // One tick later: the client is not ready for a dimension change inside the login event itself.
-        player.server.execute(() -> land(player));
+        com.mrgregles.bsp_teleport.data.TeleportData.get(player.server).rememberName(player.getUUID(), player.getGameProfile().getName());
+        // A tick later: the client is not ready for a dimension change inside the login event itself.
+        Scheduler.later(1, () -> landFromMemory(player));
+        Storage.takePending(player.getUUID(), destination -> {
+            if (destination != null && !player.hasDisconnected()) {
+                PENDING.remove(player.getUUID());
+                TeleportService.moveHere(player, destination);
+            }
+        });
     }
 
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         RECENT_JOINS.remove(event.getEntity().getUUID());
+        if (event.getEntity() instanceof ServerPlayer player && !player.isDeadOrDying()) {
+            com.mrgregles.bsp_teleport.data.Position where = com.mrgregles.bsp_teleport.data.Position.of(player);
+            com.mrgregles.bsp_teleport.data.TeleportData.get(player.server).setOffline(player.getUUID(), where);
+            Storage.offlineSet(player.getUUID(), where);
+        }
     }
 
     public static void onServerTick(TickEvent.ServerTickEvent event) {
@@ -70,9 +84,9 @@ public final class PendingLandings {
         RECENT_JOINS.entrySet().removeIf(e -> now - e.getValue() > 3_600_000L);
     }
 
-    private static void land(ServerPlayer player) {
+    private static void landFromMemory(ServerPlayer player) {
         Entry entry = PENDING.remove(player.getUUID());
-        if (entry == null) {
+        if (entry == null || player.hasDisconnected()) {
             return;
         }
         if (entry.expiresAt() < System.currentTimeMillis()) {

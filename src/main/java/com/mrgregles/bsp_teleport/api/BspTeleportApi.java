@@ -2,6 +2,8 @@ package com.mrgregles.bsp_teleport.api;
 
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.function.BiConsumer;
+
 /**
  * What other mods may call. Everything outside this package may change without notice.
  *
@@ -30,4 +32,16 @@ public interface BspTeleportApi {
 
     /** Sends every player on this server to another server. Safe to call while the server is stopping. */
     int sendAllToServer(String server);
+
+    /**
+     * Sends a line to every other server on the mod's Redis channel; {@code handler} on those servers receives
+     * {@code (sourceServer, payload)} on the server thread. False when messaging is off.
+     */
+    boolean publish(String channel, String payload);
+
+    /** Registers a handler for a channel. One handler per channel; the last registration wins. */
+    void subscribe(String channel, BiConsumer<String, String> handler);
+
+    /** Whether Redis messaging is configured and started. */
+    boolean messagingAvailable();
 }

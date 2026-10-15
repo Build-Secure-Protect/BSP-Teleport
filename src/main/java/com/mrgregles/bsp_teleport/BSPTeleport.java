@@ -2,11 +2,21 @@ package com.mrgregles.bsp_teleport;
 
 import com.mojang.logging.LogUtils;
 import com.mrgregles.bsp_teleport.api.BspTeleportApiSetter;
+import com.mrgregles.bsp_teleport.command.AdminCommands;
+import com.mrgregles.bsp_teleport.command.TeleportCommands;
+import com.mrgregles.bsp_teleport.compat.BspCore;
 import com.mrgregles.bsp_teleport.compat.RegionGuard;
-import com.mrgregles.bsp_teleport.spike.SpikeCommands;
+import com.mrgregles.bsp_teleport.request.TeleportRequests;
+import com.mrgregles.bsp_teleport.network.BandPackets;
+import com.mrgregles.bsp_teleport.network.Messenger;
+import com.mrgregles.bsp_teleport.registry.ModItems;
+import com.mrgregles.bsp_teleport.storage.Storage;
 import com.mrgregles.bsp_teleport.teleport.PendingLandings;
 import com.mrgregles.bsp_teleport.teleport.TeleportService;
+import com.mrgregles.bsp_teleport.teleport.Teleports;
+import com.mrgregles.bsp_teleport.util.Scheduler;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -26,12 +36,34 @@ public class BSPTeleport {
     public BSPTeleport(FMLJavaModLoadingContext context) {
         context.registerConfig(ModConfig.Type.SERVER, TeleportConfig.SPEC);
         BspTeleportApiSetter.set(TeleportService.INSTANCE);
+        ModItems.ITEMS.register(context.getModEventBus());
+        ModItems.TABS.register(context.getModEventBus());
+        BandPackets.register();
 
+        // Storage and messaging first: their join handlers fill the caches the others read.
+        MinecraftForge.EVENT_BUS.addListener(Storage::onServerStarted);
+        MinecraftForge.EVENT_BUS.addListener(Storage::onServerStopping);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, Storage::onPlayerLoggedIn);
+        MinecraftForge.EVENT_BUS.addListener(Storage::onPlayerLoggedOut);
+        MinecraftForge.EVENT_BUS.addListener(Messenger::onServerStarted);
+        MinecraftForge.EVENT_BUS.addListener(Messenger::onServerStopping);
+        MinecraftForge.EVENT_BUS.addListener(Messenger::onPlayerLoggedIn);
+        MinecraftForge.EVENT_BUS.addListener(Messenger::onPlayerLoggedOut);
+        MinecraftForge.EVENT_BUS.addListener(Messenger::onServerTick);
+
+        MinecraftForge.EVENT_BUS.addListener(Scheduler::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(PendingLandings::onPlayerLoggedIn);
         MinecraftForge.EVENT_BUS.addListener(PendingLandings::onPlayerLoggedOut);
         MinecraftForge.EVENT_BUS.addListener(PendingLandings::onServerTick);
-        MinecraftForge.EVENT_BUS.addListener(SpikeCommands::onRegisterCommands);
-        MinecraftForge.EVENT_BUS.addListener(SpikeCommands::onPermissionNodes);
+        MinecraftForge.EVENT_BUS.addListener(Teleports::onServerTick);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, Teleports::onHurt);
+        MinecraftForge.EVENT_BUS.addListener(Teleports::onDeath);
+        MinecraftForge.EVENT_BUS.addListener(Teleports::onLoggedOut);
+        MinecraftForge.EVENT_BUS.addListener(TeleportRequests::onServerTick);
+        MinecraftForge.EVENT_BUS.addListener(TeleportCommands::onRegisterCommands);
+        MinecraftForge.EVENT_BUS.addListener(AdminCommands::onRegisterCommands);
+        MinecraftForge.EVENT_BUS.addListener(AdminCommands::onPermissionNodes);
+        BspCore.init();
         RegionGuard.init();
     }
 }
