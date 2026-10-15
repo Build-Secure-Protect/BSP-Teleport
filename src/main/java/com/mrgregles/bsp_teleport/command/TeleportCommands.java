@@ -80,6 +80,7 @@ public final class TeleportCommands {
                         .then(Commands.literal("rename").then(Commands.argument("new", StringArgumentType.word())
                                 .executes(ctx -> editHome(ctx, "rename", StringArgumentType.getString(ctx, "new")))))
                         .then(Commands.literal("relocate").executes(ctx -> editHome(ctx, "relocate", "")))
+                        .then(Commands.literal("icon").executes(ctx -> editHome(ctx, "icon", "")))
                         .then(Commands.literal("description").then(Commands.argument("text", StringArgumentType.greedyString())
                                 .executes(ctx -> editHome(ctx, "description", StringArgumentType.getString(ctx, "text")))))
                         .then(Commands.literal("public").then(Commands.argument("public", BoolArgumentType.bool())
@@ -184,6 +185,7 @@ public final class TeleportCommands {
             }
             case "description" -> edited = home.withDescription(value.length() > Home.MAX_DESCRIPTION ? value.substring(0, Home.MAX_DESCRIPTION) : value);
             case "public" -> edited = home.withPublic(Boolean.parseBoolean(value));
+            case "icon" -> edited = home.withIcon(com.mrgregles.bsp_teleport.util.Icons.heldItemId(player));
             default -> {
                 tell(player, "home.info", home.name(), home.position().describe(), home.isPublic() ? "public" : "private",
                         home.description().isEmpty() ? "-" : home.description());

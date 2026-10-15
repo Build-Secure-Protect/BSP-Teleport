@@ -111,6 +111,15 @@ public final class RandomTeleport {
     /** A safe landing position, or null when none was found in the configured number of tries. */
     @Nullable
     public static Position find(ServerLevel level, @Nullable ServerPlayer player) {
+        return find(level, player, player == null ? null : player.getUUID());
+    }
+
+    /**
+     * As above; {@code raidOwner} is the player the spot is for, who may be on another server (a remote {@code /rtp}
+     * request): their totems being stolen are kept {@code raid.randomDistance} away.
+     */
+    @Nullable
+    public static Position find(ServerLevel level, @Nullable ServerPlayer player, @Nullable java.util.UUID raidOwner) {
         int min = TeleportConfig.getOr(TeleportConfig.RTP_MIN_RADIUS, 500);
         int max = Math.max(min + 1, TeleportConfig.getOr(TeleportConfig.RTP_MAX_RADIUS, 5000));
         int tries = TeleportConfig.getOr(TeleportConfig.RTP_TRIES, 20);
@@ -146,7 +155,8 @@ public final class RandomTeleport {
             if (!Rules.canTeleportTo(level, new BlockPos(x, y, z), player)) {
                 continue;
             }
-            if (player != null && BspCore.nearRaid(player, level, x + 0.5, z + 0.5, TeleportConfig.getOr(TeleportConfig.RAID_RANDOM_DISTANCE, 200))) {
+            if (raidOwner != null && BspCore.nearRaid(level.getServer(), raidOwner, "", level.dimension().location().toString(), x + 0.5, z + 0.5,
+                    TeleportConfig.getOr(TeleportConfig.RAID_RANDOM_DISTANCE, 200))) {
                 continue;
             }
             float yaw = player == null ? 0f : player.getYRot();

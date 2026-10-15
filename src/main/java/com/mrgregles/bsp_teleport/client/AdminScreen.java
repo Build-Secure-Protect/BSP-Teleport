@@ -278,7 +278,7 @@ public class AdminScreen extends Screen {
                     button(g, bx, y + 1, "-", DIM, TQ, data.readOnly() ? null : () -> send(AdminAction.SET_SETTING, s.id() + ";" + Math.max(s.min(), v - s.step())));
                 }
                 default -> {
-                    small(g, s.value().isEmpty() ? "-" : s.value(), bx - 60, y + 4, GOLD);
+                    small(g, clip(s.value().isEmpty() ? "-" : s.value(), 90), bx - 110, y + 4, GOLD);
                     if (!data.readOnly()) {
                         button(g, bx, y + 1, Component.translatable("screen.bsp_teleport.admin.set").getString(), GOLD, GOLD, () -> {
                             send(AdminAction.SET_SETTING, s.id() + ";" + textBox.getValue().trim());
@@ -292,6 +292,7 @@ public class AdminScreen extends Screen {
         textBox.setY(top + H - 42);
         if (!data.readOnly()) {
             small(g, Component.translatable("screen.bsp_teleport.admin.saved").getString(), left + 136, top + H - 38, MUTED);
+            button(g, left + W - 10, top + H - 41, Component.translatable("screen.bsp_teleport.admin.reload").getString(), DIM, MUTED, () -> send(AdminAction.RELOAD, ""));
         }
     }
 
@@ -308,10 +309,14 @@ public class AdminScreen extends Screen {
             }
             g.fill(left + 10, y, left + W - 10, y + 16, DIM);
             g.fill(left + 11, y + 1, left + W - 11, y + 15, SLOT);
-            g.drawString(font, w.name(), left + 14, y + 4, TEXT, false);
+            g.renderItem(com.mrgregles.bsp_teleport.util.Icons.stack(w.icon(), com.mrgregles.bsp_teleport.util.Icons.DEFAULT_WARP), left + 12, y);
+            if (!data.readOnly()) {
+                hits.add(new Hit(left + 11, y, 18, 16, () -> send(AdminAction.WARP_ICON, w.name())));
+            }
+            g.drawString(font, w.name(), left + 30, y + 4, TEXT, false);
             String sub = (w.server().equals(data.server()) ? "" : w.server() + "  ") + (w.cost() > 0 ? w.cost() + "c  " : "")
                     + Component.translatable(w.restricted() ? "screen.bsp_teleport.admin.restricted" : "screen.bsp_teleport.admin.open").getString();
-            small(g, sub, left + 14 + font.width(w.name()) + 6, y + 5, w.server().equals(data.server()) ? MUTED : VIO);
+            small(g, sub, left + 30 + font.width(w.name()) + 6, y + 5, w.server().equals(data.server()) ? MUTED : VIO);
             int bx = left + W - 14;
             if (!data.readOnly()) {
                 bx = button(g, bx, y + 2, Component.translatable("screen.bsp_teleport.admin.del").getString(), BAD, BAD, () -> ask(

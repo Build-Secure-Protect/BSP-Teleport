@@ -7,6 +7,7 @@ import com.mrgregles.bsp_teleport.compat.BspCore;
 import com.mrgregles.bsp_teleport.data.Position;
 import com.mrgregles.bsp_teleport.data.TeleportData;
 import com.mrgregles.bsp_teleport.data.Warp;
+import com.mrgregles.bsp_teleport.util.Icons;
 import com.mrgregles.bsp_teleport.network.BandPackets;
 import com.mrgregles.bsp_teleport.network.Messenger;
 import com.mrgregles.bsp_teleport.network.PlayerDirectory;
@@ -65,15 +66,26 @@ public final class AdminService {
                 open(player);
             }
             case MOVE_WARP -> {
-                editWarp(player, a, w -> new Warp(w.name(), Position.of(player), w.cost(), w.restricted()));
+                editWarp(player, a, w -> w.withPosition(Position.of(player)));
                 open(player);
             }
             case WARP_COST -> {
-                editWarp(player, a, w -> new Warp(w.name(), w.position(), Math.max(0, parseInt(b, w.cost())), w.restricted()));
+                editWarp(player, a, w -> w.withCost(Math.max(0, parseInt(b, w.cost()))));
                 open(player);
             }
             case WARP_RESTRICT -> {
-                editWarp(player, a, w -> new Warp(w.name(), w.position(), w.cost(), Boolean.parseBoolean(b)));
+                editWarp(player, a, w -> w.withRestricted(Boolean.parseBoolean(b)));
+                open(player);
+            }
+            case WARP_ICON -> {
+                // The icon becomes what the admin holds; an empty hand clears it.
+                String icon = Icons.heldItemId(player);
+                editWarp(player, a, w -> w.withIcon(icon));
+                open(player);
+            }
+            case RELOAD -> {
+                TeleportConfig.reload(player.server);
+                player.displayClientMessage(Component.translatable("message.bsp_teleport.admin.reloaded"), false);
                 open(player);
             }
             case DEL_WARP -> {
@@ -132,7 +144,11 @@ public final class AdminService {
             new Entry("rtpMinRadius", TeleportConfig.RTP_MIN_RADIUS, "INT", 0, 1000000, 100),
             new Entry("rtpMaxRadius", TeleportConfig.RTP_MAX_RADIUS, "INT", 1, 1000000, 500),
             new Entry("requestSeconds", TeleportConfig.REQUEST_SECONDS, "INT", 5, 600, 5),
-            new Entry("globalSpawnWarp", TeleportConfig.GLOBAL_SPAWN_WARP, "TEXT", 0, 16, 0));
+            new Entry("globalSpawnWarp", TeleportConfig.GLOBAL_SPAWN_WARP, "TEXT", 0, 16, 0),
+            new Entry("rtpMinY", TeleportConfig.RTP_MIN_Y, "INT", -2048, 2048, 8),
+            new Entry("rtpMaxY", TeleportConfig.RTP_MAX_Y, "INT", -2048, 2048, 8),
+            new Entry("backRestrictedWorlds", TeleportConfig.BACK_RESTRICTED_WORLDS, "LIST", 0, 255, 0),
+            new Entry("sounds", TeleportConfig.SOUNDS, "BOOL", 0, 1, 1));
 
     @SuppressWarnings("unchecked")
     private static void setSetting(ServerPlayer player, String id, String value) {
@@ -144,6 +160,15 @@ public final class AdminService {
                 switch (e.kind()) {
                     case "INT" -> ((ForgeConfigSpec.ConfigValue<Integer>) e.value()).set(Math.max(e.min(), Math.min(e.max(), Integer.parseInt(value.trim()))));
                     case "BOOL" -> ((ForgeConfigSpec.ConfigValue<Boolean>) e.value()).set(Boolean.parseBoolean(value.trim()));
+                    case "LIST" -> {
+                        List<String> items = new ArrayList<>();
+                        for (String part : value.split(",")) {
+                            if (!part.trim().isEmpty()) {
+                                items.add(part.trim());
+                            }
+                        }
+                        ((ForgeConfigSpec.ConfigValue<List<? extends String>>) e.value()).set(items);
+                    }
                     default -> ((ForgeConfigSpec.ConfigValue<String>) e.value()).set(value.trim());
                 }
                 TeleportConfig.SPEC.save();
@@ -158,11 +183,13 @@ public final class AdminService {
     public static AdminData build(ServerPlayer player) {
         List<AdminData.Setting> settings = new ArrayList<>();
         for (Entry e : SETTINGS) {
-            settings.add(new AdminData.Setting(e.id(), String.valueOf(TeleportConfig.getOr((ForgeConfigSpec.ConfigValue<Object>) e.value(), "")), e.kind(), e.min(), e.max(), e.step()));
+            Object raw = TeleportConfig.getOr((ForgeConfigSpec.ConfigValue<Object>) e.value(), "");
+            String shown = raw instanceof List<?> list ? String.join(",", list.stream().map(String::valueOf).toList()) : String.valueOf(raw);
+            settings.add(new AdminData.Setting(e.id(), shown, e.kind(), e.min(), e.max(), e.step()));
         }
         List<AdminData.WarpRow> warps = new ArrayList<>();
         for (Warp w : TeleportData.get(player.server).warps()) {
-            warps.add(new AdminData.WarpRow(w.name(), w.position().server(), w.cost(), w.restricted()));
+            warps.add(new AdminData.WarpRow(w.name(), w.position().server(), w.cost(), w.restricted(), w.icon()));
         }
         List<AdminData.ServerRow> servers = new ArrayList<>();
         List<String> here = new ArrayList<>();

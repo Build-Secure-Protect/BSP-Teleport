@@ -95,6 +95,7 @@ MESSAGES = {
     "admin.asking": "Asking where %s is...",
     "admin.no_offline": "No last position is known for %s.",
     "admin.sent_all": "Sent %s players to %s.",
+    "admin.reloaded": "Config file re-read.",
     "admin.sent_all_remote": "Told %s to send its players to %s.",
 }
 
@@ -156,6 +157,11 @@ OTHER = {
     "screen.bsp_teleport.admin.setting.rtpMaxRadius": "Random: farthest from spawn",
     "screen.bsp_teleport.admin.setting.requestSeconds": "Request expiry seconds",
     "screen.bsp_teleport.admin.setting.globalSpawnWarp": "Global spawn warp (empty: own spawn)",
+    "screen.bsp_teleport.admin.setting.rtpMinY": "Random: lowest Y",
+    "screen.bsp_teleport.admin.setting.rtpMaxY": "Random: highest Y",
+    "screen.bsp_teleport.admin.setting.backRestrictedWorlds": "/back never returns to (worlds, comma-separated)",
+    "screen.bsp_teleport.admin.setting.sounds": "Sounds",
+    "screen.bsp_teleport.admin.reload": "Reload file",
     "screen.bsp_teleport.admin.saved": "Saved to the config file.",
     "screen.bsp_teleport.band.go": "Go",
     "screen.bsp_teleport.band.del": "Del",

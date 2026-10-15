@@ -104,9 +104,9 @@ final class MySqlStore implements AutoCloseable {
                     + "cooldown_until BIGINT NOT NULL DEFAULT 0, back VARCHAR(255) NULL, offline VARCHAR(255) NULL, ignoring BOOLEAN NOT NULL DEFAULT FALSE, "
                     + "last_server VARCHAR(64) NOT NULL DEFAULT '', updated_ms BIGINT NOT NULL DEFAULT 0, INDEX (name))");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("homes") + " (owner CHAR(36) NOT NULL, name VARCHAR(16) NOT NULL, position VARCHAR(255) NOT NULL, "
-                    + "created_ms BIGINT NOT NULL, description VARCHAR(255) NOT NULL DEFAULT '', public BOOLEAN NOT NULL DEFAULT FALSE, PRIMARY KEY (owner, name), INDEX (public))");
+                    + "created_ms BIGINT NOT NULL, description VARCHAR(255) NOT NULL DEFAULT '', public BOOLEAN NOT NULL DEFAULT FALSE, icon VARCHAR(96) NOT NULL DEFAULT '', PRIMARY KEY (owner, name), INDEX (public))");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("warps") + " (name VARCHAR(16) NOT NULL PRIMARY KEY, position VARCHAR(255) NOT NULL, "
-                    + "cost INT NOT NULL DEFAULT 0, restricted BOOLEAN NOT NULL DEFAULT FALSE)");
+                    + "cost INT NOT NULL DEFAULT 0, restricted BOOLEAN NOT NULL DEFAULT FALSE, icon VARCHAR(96) NOT NULL DEFAULT '')");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("spawns") + " (server VARCHAR(64) NOT NULL PRIMARY KEY, position VARCHAR(255) NOT NULL)");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("pending") + " (uuid CHAR(36) NOT NULL PRIMARY KEY, destination VARCHAR(512) NOT NULL, created_ms BIGINT NOT NULL)");
         }
@@ -202,11 +202,11 @@ final class MySqlStore implements AutoCloseable {
 
     List<Home> loadHomes(UUID owner) throws SQLException {
         List<Home> homes = new ArrayList<>();
-        try (PreparedStatement ps = conn().prepareStatement("SELECT name, position, created_ms, description, public FROM " + t("homes") + " WHERE owner = ? ORDER BY created_ms, name")) {
+        try (PreparedStatement ps = conn().prepareStatement("SELECT name, position, created_ms, description, public, icon FROM " + t("homes") + " WHERE owner = ? ORDER BY created_ms, name")) {
             ps.setString(1, owner.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    homes.add(new Home(rs.getString(1), Position.parse(rs.getString(2)), rs.getLong(3), rs.getString(4), rs.getBoolean(5)));
+                    homes.add(new Home(rs.getString(1), Position.parse(rs.getString(2)), rs.getLong(3), rs.getString(4), rs.getBoolean(5), rs.getString(6)));
                 }
             }
         }
@@ -216,12 +216,12 @@ final class MySqlStore implements AutoCloseable {
     /** Every public home with its owner's name: {@code (ownerName, home)} pairs. */
     List<PublicHome> loadPublicHomes() throws SQLException {
         List<PublicHome> homes = new ArrayList<>();
-        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT h.owner, u.name, h.name, h.position, h.created_ms, h.description FROM "
+        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT h.owner, u.name, h.name, h.position, h.created_ms, h.description, h.icon FROM "
                 + t("homes") + " h LEFT JOIN " + t("users") + " u ON u.uuid = h.owner WHERE h.public = TRUE ORDER BY u.name, h.name")) {
             while (rs.next()) {
                 String owner = rs.getString(2);
                 homes.add(new PublicHome(UUID.fromString(rs.getString(1)), owner == null ? "?" : owner,
-                        new Home(rs.getString(3), Position.parse(rs.getString(4)), rs.getLong(5), rs.getString(6), true)));
+                        new Home(rs.getString(3), Position.parse(rs.getString(4)), rs.getLong(5), rs.getString(6), true, rs.getString(7))));
             }
         }
         return homes;
@@ -231,14 +231,15 @@ final class MySqlStore implements AutoCloseable {
     }
 
     void saveHome(UUID owner, Home home) throws SQLException {
-        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("homes") + " (owner, name, position, created_ms, description, public) VALUES (?, ?, ?, ?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE position = VALUES(position), description = VALUES(description), public = VALUES(public)")) {
+        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("homes") + " (owner, name, position, created_ms, description, public, icon) VALUES (?, ?, ?, ?, ?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE position = VALUES(position), description = VALUES(description), public = VALUES(public), icon = VALUES(icon)")) {
             ps.setString(1, owner.toString());
             ps.setString(2, home.name());
             ps.setString(3, home.position().serialize());
             ps.setLong(4, home.createdAt());
             ps.setString(5, home.description());
             ps.setBoolean(6, home.isPublic());
+            ps.setString(7, home.icon());
             ps.executeUpdate();
         }
     }
@@ -261,21 +262,22 @@ final class MySqlStore implements AutoCloseable {
 
     List<Warp> loadWarps() throws SQLException {
         List<Warp> warps = new ArrayList<>();
-        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT name, position, cost, restricted FROM " + t("warps") + " ORDER BY name")) {
+        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT name, position, cost, restricted, icon FROM " + t("warps") + " ORDER BY name")) {
             while (rs.next()) {
-                warps.add(new Warp(rs.getString(1), Position.parse(rs.getString(2)), rs.getInt(3), rs.getBoolean(4)));
+                warps.add(new Warp(rs.getString(1), Position.parse(rs.getString(2)), rs.getInt(3), rs.getBoolean(4), rs.getString(5)));
             }
         }
         return warps;
     }
 
     void saveWarp(Warp warp) throws SQLException {
-        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("warps") + " (name, position, cost, restricted) VALUES (?, ?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE position = VALUES(position), cost = VALUES(cost), restricted = VALUES(restricted)")) {
+        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("warps") + " (name, position, cost, restricted, icon) VALUES (?, ?, ?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE position = VALUES(position), cost = VALUES(cost), restricted = VALUES(restricted), icon = VALUES(icon)")) {
             ps.setString(1, warp.name());
             ps.setString(2, warp.position().serialize());
             ps.setInt(3, warp.cost());
             ps.setBoolean(4, warp.restricted());
+            ps.setString(5, warp.icon());
             ps.executeUpdate();
         }
     }

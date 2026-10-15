@@ -8,6 +8,7 @@ import com.mrgregles.bsp_teleport.compat.BspCore;
 import com.mrgregles.bsp_teleport.data.Position;
 import com.mrgregles.bsp_teleport.perm.Permissions;
 import com.mrgregles.bsp_teleport.storage.Storage;
+import com.mrgregles.bsp_teleport.util.Sounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -78,11 +79,11 @@ public final class Teleports {
             tell(player, "blocked_thief", thief);
             return false;
         }
-        // D39: during a raid every teleport still works, except one that would land near the totem being stolen.
-        if (!destination.crossServer() && kind != TeleportKind.RANDOM && BspCore.beingRaided(player)) {
-            ServerLevel target = TeleportService.levelOf(player.server, destination.world());
+        // D39: during a raid every teleport still works, except one that would land near the totem being stolen,
+        // on this server or on another (R6).
+        if (kind != TeleportKind.RANDOM && BspCore.beingRaided(player)) {
             int distance = TeleportConfig.getOr(TeleportConfig.RAID_HOME_DISTANCE, 150);
-            if (target != null && BspCore.nearRaid(player, target, destination.x(), destination.z(), distance)) {
+            if (BspCore.nearRaid(player.server, player.getUUID(), destination.server(), destination.world(), destination.x(), destination.z(), distance)) {
                 tell(player, "blocked_raid", distance);
                 return false;
             }
@@ -121,6 +122,7 @@ public final class Teleports {
         }
         PENDING.put(id, pending);
         player.displayClientMessage(Component.translatable("message.bsp_teleport.warmup", warmup), true);
+        Sounds.countdown(player, warmup, warmup);
         return true;
     }
 
@@ -156,6 +158,8 @@ public final class Teleports {
             return false;
         }
         tell(player, reasonKey);
+        player.displayClientMessage(Component.translatable("message.bsp_teleport.cancelled"), true);
+        Sounds.cancelled(player);
         return true;
     }
 
@@ -239,6 +243,8 @@ public final class Teleports {
             if (cancelOnMove && player.position().distanceToSqr(p.start()) > 1.0) {
                 it.remove();
                 tell(player, "cancelled_move");
+                player.displayClientMessage(Component.translatable("message.bsp_teleport.cancelled"), true);
+                Sounds.cancelled(player);
                 continue;
             }
             if (p.ticksLeft() <= 1) {
@@ -249,7 +255,9 @@ public final class Teleports {
             Pending next = p.tick();
             entry.setValue(next);
             if (next.ticksLeft() % 20 == 0) {
-                player.displayClientMessage(Component.translatable("message.bsp_teleport.warmup", next.ticksLeft() / 20), true);
+                int secondsLeft = next.ticksLeft() / 20;
+                player.displayClientMessage(Component.translatable("message.bsp_teleport.warmup", secondsLeft), true);
+                Sounds.countdown(player, secondsLeft, TeleportConfig.getOr(TeleportConfig.WARMUP_SECONDS, 5));
             }
         }
     }

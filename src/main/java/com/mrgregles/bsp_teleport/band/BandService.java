@@ -63,6 +63,11 @@ public final class BandService {
                 open(player);
             }
             case TPNOW -> Teleports.payAndRetry(player);
+            case ADMIN -> com.mrgregles.bsp_teleport.admin.AdminService.open(player);
+            case HOME_ICON -> {
+                TeleportActions.setHomeIcon(player, arg, com.mrgregles.bsp_teleport.util.Icons.heldItemId(player));
+                open(player);
+            }
         }
     }
 
@@ -78,13 +83,13 @@ public final class BandService {
             Home h = mine.get(i);
             Position p = h.position();
             homes.add(new BandData.HomeEntry(h.name(), p.server(), p.world(), (int) Math.floor(p.x()), (int) Math.floor(p.y()), (int) Math.floor(p.z()),
-                    i >= slots, raid && nearRaid(player, p, raidDistance)));
+                    i >= slots, raid && nearRaid(player, p, raidDistance), h.icon()));
         }
         List<BandData.WarpEntry> warps = new ArrayList<>();
         for (Warp w : TeleportActions.usableWarps(player)) {
             Position p = w.position();
             warps.add(new BandData.WarpEntry(w.name(), p.server(), p.world(), (int) Math.floor(p.x()), (int) Math.floor(p.y()), (int) Math.floor(p.z()),
-                    w.cost(), raid && nearRaid(player, p, raidDistance)));
+                    w.cost(), raid && nearRaid(player, p, raidDistance), w.icon()));
         }
         List<BandData.PlayerEntry> players = new ArrayList<>();
         for (ServerPlayer other : player.server.getPlayerList().getPlayers()) {
