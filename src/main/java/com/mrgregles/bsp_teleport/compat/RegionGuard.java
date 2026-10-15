@@ -1,6 +1,7 @@
 package com.mrgregles.bsp_teleport.compat;
 
 import com.mrgregles.bsp_teleport.BSPTeleport;
+import com.mrgregles.bsp_teleport.TeleportConfig;
 import com.mrgregles.bsp_teleport.api.BspTeleportApi;
 import com.mrgregles.bsp_teleport.api.Destination;
 import com.mrgregles.bsp_teleport.teleport.PendingLandings;
@@ -10,6 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.ModList;
 
+import javax.annotation.Nullable;
 import java.util.UUID;
 
 /**
@@ -40,16 +42,41 @@ public final class RegionGuard {
         }
     }
 
-    public static boolean canTeleportFrom(ServerLevel level, BlockPos pos, ServerPlayer player) {
+    public static boolean canTeleportFrom(ServerLevel level, BlockPos pos, @Nullable ServerPlayer player) {
         return !PRESENT || Impl.allowsTeleportOut(level, pos, player);
     }
 
-    public static boolean canTeleportTo(ServerLevel level, BlockPos pos, ServerPlayer player) {
+    public static boolean canTeleportTo(ServerLevel level, BlockPos pos, @Nullable ServerPlayer player) {
         return !PRESENT || Impl.allowsTeleportIn(level, pos, player);
     }
 
-    public static boolean canSetHome(ServerLevel level, BlockPos pos, ServerPlayer player) {
+    public static boolean canSetHome(ServerLevel level, BlockPos pos, @Nullable ServerPlayer player) {
         return !PRESENT || Impl.allowsSetHome(level, pos, player);
+    }
+
+    /** Seconds of arrival protection for a Region Guard trigger landing (edge travel lands at a guessed height). */
+    public static final int TRIGGER_PROTECT_SECONDS = 3;
+
+    /** This world's Region Guard border as {minX, minZ, maxX, maxZ}, or null when it has none or Region Guard is absent or older. */
+    @Nullable
+    public static double[] border(ServerLevel level) {
+        return PRESENT ? Impl.border(level) : null;
+    }
+
+    /** Region Guard's {@code storage.serverId} on this server, or null when unknown. */
+    @Nullable
+    public static String serverId() {
+        return PRESENT ? Impl.serverId() : null;
+    }
+
+    /** At start: both mods must call this server by the same name, or edge travel and cross-server triggers go astray. */
+    public static void checkServerName() {
+        String theirs = serverId();
+        String ours = TeleportConfig.serverName();
+        if (theirs != null && !theirs.equals(ours)) {
+            BSPTeleport.LOGGER.warn("BSP-Teleport's network.serverName is '{}' but Region Guard's storage.serverId is '{}'. "
+                    + "They must be equal on every server (and equal to the Velocity server name), or Region Guard's cross-server triggers and edge links will send players to the wrong place.", ours, theirs);
+        }
     }
 
     /** Tells the destination server to land this player on arrival. False when there is no store to tell it through. */
@@ -64,24 +91,48 @@ public final class RegionGuard {
             MinecraftForge.EVENT_BUS.addListener(Impl::onRemoteMessage);
         }
 
-        static boolean allowsTeleportOut(ServerLevel level, BlockPos pos, ServerPlayer player) {
+        static boolean allowsTeleportOut(ServerLevel level, BlockPos pos, @Nullable ServerPlayer player) {
             return allows(level, pos, com.mrgregles.bsp_region_guard.flag.Flags.TELEPORT_OUT, player);
         }
 
-        static boolean allowsTeleportIn(ServerLevel level, BlockPos pos, ServerPlayer player) {
+        static boolean allowsTeleportIn(ServerLevel level, BlockPos pos, @Nullable ServerPlayer player) {
             return allows(level, pos, com.mrgregles.bsp_region_guard.flag.Flags.TELEPORT_IN, player);
         }
 
-        static boolean allowsSetHome(ServerLevel level, BlockPos pos, ServerPlayer player) {
+        static boolean allowsSetHome(ServerLevel level, BlockPos pos, @Nullable ServerPlayer player) {
             return allows(level, pos, com.mrgregles.bsp_region_guard.flag.Flags.SET_HOME, player);
         }
 
-        private static boolean allows(ServerLevel level, BlockPos pos, com.mrgregles.bsp_region_guard.flag.StateFlag flag, ServerPlayer player) {
+        private static boolean allows(ServerLevel level, BlockPos pos, com.mrgregles.bsp_region_guard.flag.StateFlag flag, @Nullable ServerPlayer player) {
             try {
                 return com.mrgregles.bsp_region_guard.api.RegionGuardApi.get().regions().allows(level, pos, flag, player);
             } catch (RuntimeException e) {
                 BSPTeleport.LOGGER.warn("Region Guard check failed, allowing: {}", e.toString());
                 return true;
+            }
+        }
+
+        @Nullable
+        static double[] border(ServerLevel level) {
+            try {
+                com.mrgregles.bsp_region_guard.api.Border b = com.mrgregles.bsp_region_guard.api.RegionGuardApi.get().regions().border(level);
+                return b == null ? null : new double[] {b.minX(), b.minZ(), b.maxX(), b.maxZ()};
+            } catch (LinkageError | RuntimeException e) {
+                // Region Guard before API version 2 has no border(): treat as no border.
+                return null;
+            }
+        }
+
+        /** Not on Region Guard's API yet (TR4): read from its config class by reflection, and give up quietly if that changes. */
+        @Nullable
+        static String serverId() {
+            try {
+                Class<?> config = Class.forName("com.mrgregles.bsp_region_guard.RegionGuardConfig");
+                Object value = config.getField("STORAGE_SERVER_ID").get(null);
+                Object id = value.getClass().getMethod("get").invoke(value);
+                return id == null ? null : id.toString();
+            } catch (ReflectiveOperationException | LinkageError | RuntimeException e) {
+                return null;
             }
         }
 
@@ -94,14 +145,18 @@ public final class RegionGuard {
             }
         }
 
-        /** A region trigger with a cross-server destination is ours: take it over and move the player. */
+        /**
+         * A region trigger with a cross-server destination is ours, whatever its cause (ENTER, EXIT, TIMER, SHUTDOWN,
+         * EDGE, or anything added later): take it over and move the player to exactly the x/z given. Region Guard on the
+         * arriving server fixes the height for edge travel, so the landing gets a few seconds of protection.
+         */
         static void onTrigger(com.mrgregles.bsp_region_guard.api.event.RegionTriggerEvent event) {
             if (!event.crossServer()) {
                 return;
             }
             event.setCanceled(true);
             Destination destination = new Destination(event.destinationServer(), event.destinationWorld(),
-                    event.x(), event.y(), event.z(), event.message());
+                    event.x(), event.y(), event.z(), event.message()).withProtect(TRIGGER_PROTECT_SECONDS);
             BspTeleportApi.get().teleport(event.player(), destination);
         }
 

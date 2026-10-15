@@ -16,7 +16,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.event.RegisterCommandsEvent;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraftforge.server.permission.PermissionAPI;
 import net.minecraftforge.server.permission.events.PermissionGatherEvent;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
@@ -46,9 +46,9 @@ public final class SpikeCommands {
         event.addNodes(FORGE_NODE);
     }
 
-    public static void onRegisterCommands(RegisterCommandsEvent event) {
-        event.getDispatcher().register(Commands.literal("bsptp")
-                .then(Commands.literal("spike")
+    /** The {@code spike} subtree, hung under {@code /bsptp} by {@code AdminCommands}. */
+    public static LiteralArgumentBuilder<CommandSourceStack> tree() {
+        return Commands.literal("spike")
                         .requires(SpikeCommands::allowed)
                         .then(Commands.literal("connect")
                                 .then(Commands.argument("server", StringArgumentType.word())
@@ -60,7 +60,7 @@ public final class SpikeCommands {
                                                         .executes(SpikeCommands::teleport)))))
                         .then(Commands.literal("perm")
                                 .then(Commands.argument("node", StringArgumentType.word())
-                                        .executes(SpikeCommands::perm)))));
+                                        .executes(SpikeCommands::perm)));
     }
 
     private static boolean allowed(CommandSourceStack source) {

@@ -1,0 +1,143 @@
+<title>Teleport Bracelet Concepts</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: dark board like BSP-Core's concept pages. Section 1: three bracelet item icons. Section 2: three working
+   mocks of the player screen the bracelet opens, drawn in the Holo HUD colours, with state toggles. Section 3: the decisions to make. */
+:root{ --bg:#0f1115; --panel:#171a21; --line:#2a2f3a; --fg:#e8eaf0; --muted:#9aa3b5; --tq:#19d3b0; --on:#0b0d11;
+  --h-bg:#10151c; --h-fg:#e6eaf2; --h-muted:#9aa3b5; --h-slot:#0c0e12; --h-dim:#2a2f3a; --h-tq:#19d3b0; --h-vio:#b58cff; --h-gold:#ffd23a; --h-bad:#ff6b5c; --h-ok:#8fe04a;
+  --display:"Silkscreen","Courier New",monospace; --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme:dark; }
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){ --bg:#f3f1ea; --panel:#fff; --line:#d9d4c7; --fg:#1a1b20; --muted:#5f6472; --tq:#0c8f78; --on:#fff; color-scheme:light; } }
+:root[data-theme="light"]{ --bg:#f3f1ea; --panel:#fff; --line:#d9d4c7; --fg:#1a1b20; --muted:#5f6472; --tq:#0c8f78; --on:#fff; color-scheme:light; }
+body{ background:var(--bg); color:var(--fg); font-family:var(--body); margin:0; font-size:14px; line-height:1.5; }
+.wrap{ max-width:1040px; margin:0 auto; padding-block:28px 56px; padding-inline:16px; display:flex; flex-direction:column; gap:30px; }
+h1{ font-family:var(--display); font-size:clamp(20px,3vw,28px); margin:0 0 6px; color:var(--tq); text-wrap:balance; }
+h2{ font-family:var(--display); font-size:15px; margin:0 0 10px; letter-spacing:.04em; text-transform:uppercase; }
+h3{ font-size:14px; margin:0 0 4px; }
+p{ margin:0; max-width:70ch; } .lede{ color:var(--muted); }
+.card{ background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:14px 16px; }
+.card ol{ margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px; }
+.ctl{ display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; } .key{ color:var(--muted); font-size:12.5px; }
+.tb{ font:inherit; font-size:12.5px; padding:4px 10px; border:1px solid var(--line); background:transparent; color:var(--fg); border-radius:4px; cursor:pointer; } .tb.on{ border-color:var(--tq); color:var(--tq); } .tb:focus-visible{ outline:2px solid var(--tq); }
+.grid3{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; }
+.opt{ display:flex; flex-direction:column; gap:10px; min-width:0; }
+.opt .cap{ color:var(--muted); font-size:12.5px; }
+.opt .name{ font-family:var(--display); font-size:13px; color:var(--tq); }
+/* pixel icons */
+.icons{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; }
+.px{ display:grid; grid-template-columns:repeat(16,1fr); width:160px; aspect-ratio:1; max-width:100%; image-rendering:pixelated; background:var(--h-slot); border:1px solid var(--h-dim); }
+.px i{ display:block; }
+.icon-row{ display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
+.px.small{ width:48px; }
+/* Holo HUD mocks: every in-game mock is a .hud panel, 2x scale of a 256-wide screen */
+.hud{ background:var(--h-bg); color:var(--h-fg); border:2px solid var(--h-tq); font-family:var(--display); font-size:11px; line-height:1.25; width:100%; max-width:520px; box-sizing:border-box; padding:10px 10px 12px; position:relative; min-height:300px; }
+.hud .ttl{ text-transform:uppercase; letter-spacing:.06em; font-size:12px; font-weight:700; display:flex; justify-content:space-between; gap:8px; align-items:center; }
+.hud .help{ font-size:8.5px; color:var(--h-muted); margin-top:2px; }
+.hud .tabs{ display:flex; gap:4px; }
+.hud .tab{ background:var(--h-slot); border:1px solid var(--h-dim); padding:2px 8px; font-size:9px; text-transform:uppercase; color:var(--h-muted); }
+.hud .tab.on{ border-color:var(--h-tq); color:var(--h-tq); }
+.hud .list{ display:flex; flex-direction:column; gap:4px; margin-top:8px; }
+.hud .row{ display:grid; grid-template-columns:1fr auto; gap:6px; align-items:center; background:var(--h-slot); border:1px solid var(--h-dim); padding:4px 6px; min-width:0; }
+.hud .row.locked{ opacity:.55; } .hud .row .n{ font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hud .row .s{ font-size:8.5px; color:var(--h-muted); } .hud .row .s b{ color:var(--h-vio); font-weight:400; } .hud .row .s em{ color:var(--h-gold); font-style:normal; }
+.hud .acts{ display:flex; gap:4px; }
+.hud .b{ background:var(--h-slot); border:1px solid var(--h-tq); color:var(--h-tq); padding:2px 6px; font-size:9px; text-transform:uppercase; }
+.hud .b.dim{ border-color:var(--h-dim); color:var(--h-muted); } .hud .b.bad{ border-color:var(--h-bad); color:var(--h-bad); } .hud .b.gold{ border-color:var(--h-gold); color:var(--h-gold); } .hud .b.ok{ border-color:var(--h-ok); color:var(--h-ok); }
+.hud .foot{ position:absolute; left:10px; right:10px; bottom:8px; display:flex; justify-content:space-between; gap:8px; font-size:8.5px; color:var(--h-muted); align-items:center; }
+.hud .cd{ height:4px; background:var(--h-dim); flex:1; max-width:120px; } .hud .cd i{ display:block; height:100%; background:var(--h-tq); }
+.hud .cd.hot i{ background:var(--h-bad); }
+.hud .req{ margin-top:8px; border:1px solid var(--h-vio); background:var(--h-slot); padding:5px 6px; display:flex; justify-content:space-between; gap:6px; align-items:center; }
+.hud .req .n{ color:var(--h-vio); }
+/* B: board */
+.hud.board{ max-width:700px; } .board .cols{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px; min-width:0; } .board .col h4{ margin:0 0 4px; font-size:9px; text-transform:uppercase; color:var(--h-muted); letter-spacing:.06em; }
+.board .col .list{ margin-top:0; } .board .bar{ display:flex; gap:4px; flex-wrap:wrap; margin-top:8px; }
+@media (max-width:560px){ .board .cols{ grid-template-columns:1fr; } }
+/* C: ring */
+.ring .stage{ position:relative; height:230px; margin-top:6px; }
+.ring .me{ position:absolute; left:50%; top:50%; width:10px; height:10px; background:var(--h-gold); transform:translate(-50%,-50%); }
+.ring .orbit{ position:absolute; left:50%; top:50%; width:170px; height:170px; border:1px dashed var(--h-dim); border-radius:50%; transform:translate(-50%,-50%); }
+.ring .dot{ position:absolute; transform:translate(-50%,-50%); background:var(--h-slot); border:1px solid var(--h-tq); padding:2px 5px; font-size:8.5px; white-space:nowrap; }
+.ring .dot.on{ background:var(--h-tq); color:var(--on); font-weight:700; } .ring .dot.far{ border-color:var(--h-vio); } .ring .dot.locked{ opacity:.5; border-color:var(--h-dim); }
+.ring .detail{ background:var(--h-slot); border:1px solid var(--h-dim); padding:5px 6px; display:flex; justify-content:space-between; gap:6px; align-items:center; margin-top:4px; }
+.ring .detail .s{ font-size:8.5px; color:var(--h-muted); }
+.hud .warn{ color:var(--h-bad); font-size:8.5px; margin-top:6px; }
+.note{ color:var(--muted); font-size:12.5px; }
+@media (prefers-reduced-motion: no-preference){ .hud .cd i{ transition:width .3s; } }
+</style>
+<div class="wrap">
+<section><h1>Teleport Bracelet Concepts</h1>
+<p class="lede">The bracelet is the item every player always has: it sits in a Curios slot, stays through death, and opens the player's teleport screen. Section 1 shows three looks for the item. Section 2 shows three layouts for the screen, drawn in the Holo HUD style, with the same content in each: homes (with locked ones), warps (with costs), players on the network (requests in and out), spawn, back, random, and the cooldown. Pick one of each, or mix.</p>
+<div class="card"><div class="ctl"><span class="key"><b>State:</b></span>
+<label><input type="checkbox" id="raid"> A totem is being stolen</label>
+<label><input type="checkbox" id="cool" checked> On cooldown</label>
+<label><input type="checkbox" id="req" checked> A request is waiting</label>
+<label><input type="checkbox" id="over" checked> More homes than slots</label></div></div></section>
+
+<section><h2>1. The item: three refinements of the Band</h2>
+<div class="icons" id="icons"></div>
+<p class="note">Drawn at 16 x 16, the item's real size. The tiny copy is how it shows in the band slot after the hotbar. Pick A1, A2 or A3; the texture is written by <code>tools/gen_band_assets.py</code>, so a change is one pixel map.</p></section>
+
+<section><h2>2. The screen</h2>
+<div class="grid3" id="screens"></div>
+<div class="card" style="margin-top:4px"><h3>What all three share</h3><ol>
+<li>Opened by right-clicking the bracelet, or a keybind (default B). The screen is the same whether or not the player carries a totem; the totem only raises the numbers.</li>
+<li>Every teleport from the screen goes through the same warm-up and cooldown as the commands. The screen closes when the warm-up starts and the countdown shows on the action bar.</li>
+<li>Locked homes stay listed, greyed, with "locked" and the slot count beside them. The slot count comes from config plus the totem's Extra Homes level.</li>
+<li>A destination on another server shows its server name in violet. Costs show in gold. Anything refused by the raid rule shows red with the reason.</li>
+<li>The incoming request panel appears only while one is open, with ACCEPT and DENY. Requests expire on their own.</li>
+<li>Admin tools stay on the admin panel (phase 5), not here.</li></ol></div></section>
+
+<section><h2>3. Decided (owner, 2026-10-15)</h2><div class="card"><ol>
+<li><b>Name:</b> Teleport Band (item id <code>bsp_teleport:teleport_band</code>).</li>
+<li><b>Icon:</b> the Band, refined. Pick A1, A2 or A3 above.</li>
+<li><b>Layout:</b> Tabs.</li>
+<li><b>How it opens:</b> a tenth hotbar slot drawn after the hotbar. Scroll past the last slot (or before the first) to select it, then right-click; or press "." (rebindable). No Curios slot.</li>
+<li><b>Visible on the wrist:</b> not in the first version.</li>
+<li><b>Set home from the screen:</b> yes; the footer shows homes used of slots and which Extra Homes level on the totem unlocks the next.</li>
+<li><b>Random teleport:</b> on this server by default; the MORE tab lists the other online servers to pick from.</li></ol></div></section>
+</div>
+<script>
+(function(){
+  var C={ _:null, t:'#19d3b0', T:'#0f8f78', L:'#78f0d7', g:'#ffd23a', G:'#b08a1c', W:'#ffffff', v:'#b58cff', V:'#6f4bc4', d:'#2a2f3a', w:'#e6eaf2', k:'#0c0e12', s:'#5a6472', c:'rgba(90,100,114,.5)' };
+  // 16x16 maps. '.' is empty. Three refinements of the Band (the owner's pick), each more detailed than the first sketch.
+  var ICONS=[
+   {name:'A1. Lit band', cap:'The band with a light rim on top, shade below, a gold gem with a white glint, two violet nodes at the sides and a faint centre seam. This is the texture the generator writes today.', map:[
+    '................','.......LL.......','.....LTggTL.....','....LT.gG.TL....','...LT..WW..TL...','...T.........T..','..vT.........Tv.','..VT....c....TV.','..VT....c....TV.','..vT.........Tv.','...T.........T..','...DT.......TD..','....DT.....TD...','.....DTTTTTD....','.......DD.......','................']},
+   {name:'A2. Circuit band', cap:'A thicker band with a lighter trace running inside it, four small light pips where the traces meet, and the gem set into a dark socket on top.', map:[
+    '................','......kkkk......','....kkTggTkk....','...kTLLgGLLTk...','..kTL..WW..LTk..','..kTL.......LTk.','.kTL.........LTk','.kTL....L....LTk','.kTL....L....LTk','.kTL.........LTk','..kTL.......LTk.','..kTL.......LTk.','...kTLL...LLTk..','....kkTTTTTkk...','......kkkk......','................']},
+   {name:'A3. Twin ring', cap:'An outer turquoise ring and a thin inner violet ring, the gem bridging both at the top; the violet ring stands for the other servers the band reaches.', map:[
+    '................','......LTTL......','....LT.gg.TL....','...T..gGGg..T...','..T..v.WW.v..T..','..T.v......v.T..','.T.v........v.T.','.T.v........v.T.','.T.v........v.T.','.T.v........v.T.','..T.v......v.T..','..T..v....v..T..','...T..vvvv..T...','....DT....TD....','......DTTD......','................']}
+  ];
+  function pix(map,cls){ var d=document.createElement('div'); d.className='px'+(cls?' '+cls:''); for(var y=0;y<16;y++){ for(var x=0;x<16;x++){ var i=document.createElement('i'); var ch=map[y][x]; if(ch!=='.'){ i.style.background=C[ch]; } d.appendChild(i);} } return d; }
+  var icons=document.getElementById('icons');
+  ICONS.forEach(function(ic){ var o=document.createElement('div'); o.className='opt card'; var row=document.createElement('div'); row.className='icon-row'; row.appendChild(pix(ic.map)); row.appendChild(pix(ic.map,'small')); o.innerHTML='<div class="name">'+ic.name+'</div>'; o.appendChild(row); var c=document.createElement('div'); c.className='cap'; c.textContent=ic.cap; o.appendChild(c); icons.appendChild(o); });
+
+  var S={ raid:false, cool:true, req:true, over:true };
+  var HOMES=[ {n:'base', s:'survival-1  overworld  120, 64, -340', base:true}, {n:'mine', s:'survival-1  nether  -12, 40, 88'}, {n:'farm', s:'creative  overworld  5, 70, 5', far:'creative'}, {n:'tower', s:'survival-1  overworld  900, 100, 900', extra:true} ];
+  var WARPS=[ {n:'hub', s:'hub', far:'hub'}, {n:'shop', s:'survival-1  overworld', cost:50}, {n:'arena', s:'survival-2', far:'survival-2', cost:0} ];
+  var PLAYERS=[ {n:'Alex', s:'survival-1'}, {n:'Sam', s:'hub', far:'hub'}, {n:'Kai', s:'survival-2', far:'survival-2'} ];
+  function esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function sub(h){ var t=esc(h.s); if(h.far){ t=t.replace(h.far,'<b>'+h.far+'</b>'); } if(h.cost){ t+='  <em>'+h.cost+' coins</em>'; } return t; }
+  function homeRow(h,i){ var locked=S.over&&h.extra; var blocked=S.raid&&h.base; var cls='row'+(locked?' locked':''); var act=locked?'<span class="b dim">locked</span>':blocked?'<span class="b bad">raid</span>':'<span class="b">go</span>'; return '<div class="'+cls+'"><div><div class="n">'+h.n+'</div><div class="s">'+sub(h)+(blocked?'  <span style="color:var(--h-bad)">within 150 of your totem</span>':'')+'</div></div><div class="acts">'+act+'<span class="b dim">del</span></div></div>'; }
+  function warpRow(w){ return '<div class="row"><div><div class="n">'+w.n+'</div><div class="s">'+sub(w)+'</div></div><div class="acts"><span class="b'+(w.cost?' gold':'')+'">go</span></div></div>'; }
+  function playerRow(p){ return '<div class="row"><div><div class="n">'+p.n+'</div><div class="s">'+sub(p)+'</div></div><div class="acts"><span class="b">tpa</span><span class="b dim">here</span></div></div>'; }
+  function reqPanel(){ return S.req?'<div class="req"><div><div class="n">Sam wants to come to you</div><div class="s">from hub, 48 s left</div></div><div class="acts"><span class="b ok">accept</span><span class="b bad">deny</span></div></div>':''; }
+  function foot(){ return '<div class="foot"><span>'+(S.cool?'cooldown 42 s':'ready')+'</span><div class="cd'+(S.cool?' hot':'')+'"><i style="width:'+(S.cool?'30%':'100%')+'"></i></div><span>slots '+(S.over?'4/3':'3/3')+'  swift II</span></div>'; }
+  function warn(){ return S.raid?'<div class="warn">Your totem is being stolen. Nothing lands within 150 blocks of it.</div>':''; }
+
+  function tabs(){ return '<div class="hud"><div class="ttl"><span>Shatter Band</span><div class="tabs"><span class="tab on">homes</span><span class="tab">warps</span><span class="tab">players</span><span class="tab">more</span></div></div><div class="help">Pick a place. Stand still while it counts down.</div>'+warn()+'<div class="list">'+HOMES.map(homeRow).join('')+'<div class="row"><div><div class="n">set home here</div><div class="s">survival-1  overworld  44, 71, -12</div></div><div class="acts"><span class="b gold">set</span></div></div></div>'+reqPanel()+foot()+'</div>'; }
+  function board(){ return '<div class="hud board"><div class="ttl"><span>Shatter Band</span><span class="help">survival-1</span></div>'+warn()+'<div class="cols"><div class="col"><h4>Homes</h4><div class="list">'+HOMES.map(homeRow).join('')+'</div></div><div class="col"><h4>Warps</h4><div class="list">'+WARPS.map(warpRow).join('')+'</div></div><div class="col"><h4>Players</h4><div class="list">'+PLAYERS.map(playerRow).join('')+'</div>'+reqPanel()+'</div></div><div class="bar"><span class="b gold">set home here</span><span class="b">spawn</span><span class="b">back</span><span class="b">random: survival-1</span><span class="b dim">ignore requests: off</span></div>'+foot()+'</div>'; }
+  function ring(){
+    var items=[ {n:'base',a:-90,on:true,locked:false,blocked:S.raid}, {n:'mine',a:-30}, {n:'farm',a:30,far:true}, {n:'tower',a:90,locked:S.over}, {n:'spawn',a:150}, {n:'back',a:210} ];
+    var dots=items.map(function(it){ var r=85, x=50+Math.cos(it.a*Math.PI/180)*r/2.6, y=50+Math.sin(it.a*Math.PI/180)*r/2.3; var cls='dot'+(it.on?' on':'')+(it.far?' far':'')+(it.locked?' locked':''); return '<span class="'+cls+'" style="left:'+x+'%;top:'+y+'%">'+it.n+(it.locked?' x':'')+'</span>'; }).join('');
+    var sel=S.raid?'<div class="detail"><div><div class="n" style="color:var(--h-bad)">base</div><div class="s">survival-1  overworld  120, 64, -340  within 150 of your totem</div></div><span class="b bad">raid</span></div>':'<div class="detail"><div><div class="n">base</div><div class="s">survival-1  overworld  120, 64, -340</div></div><div class="acts"><span class="b">go</span><span class="b dim">del</span></div></div>';
+    return '<div class="hud ring"><div class="ttl"><span>Shatter Band</span><div class="tabs"><span class="tab on">homes</span><span class="tab">warps</span><span class="tab">players</span></div></div><div class="help">Turn the ring with the mouse. The gold dot is you.</div><div class="stage"><div class="orbit"></div><div class="me"></div>'+dots+'</div>'+sel+reqPanel()+foot()+'</div>'; }
+
+  var OPTS=[ {name:'A. Tabs', cap:'One list at a time, like the totem screen. Fits the most homes and warps on a small window; a MORE tab holds spawn, back, random and the ignore switch.', draw:tabs},
+             {name:'B. Board', cap:'Everything on one wider panel: homes, warps and players side by side, actions along the bottom. Fewest clicks, needs the most space.', draw:board},
+             {name:'C. Ring', cap:'Destinations around a compass ring with you in the middle; one detail line for the selected place. The most bracelet-like, shows fewer at once.', draw:ring} ];
+  var screens=document.getElementById('screens');
+  function render(){ screens.innerHTML=''; OPTS.forEach(function(o){ var d=document.createElement('div'); d.className='opt'; d.innerHTML='<div class="name">'+o.name+'</div>'+o.draw()+'<div class="cap">'+o.cap+'</div>'; screens.appendChild(d); }); }
+  ['raid','cool','req','over'].forEach(function(id){ document.getElementById(id).addEventListener('change',function(e){ S[id]=e.target.checked; render(); }); });
+  render();
+})();
+</script>

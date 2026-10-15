@@ -10,7 +10,7 @@ BspTeleportApi api = BspTeleportApi.get();   // available from the mod construct
 
 ## Forced moves
 
-These skip warm-up, cooldown, cost and region checks. They are for rules that have already decided the player must move (Region Guard triggers, admin tools).
+These skip warm-up, cooldown, cost and region checks. They are for rules that have already decided the player must move (Region Guard triggers, admin tools). Every move first records where the player was, so `/back` brings them home afterwards: evacuate a server with `sendAllToServer` or a `teleport` loop, and once it is back up the players return themselves.
 
 | Call | What |
 |---|---|
@@ -19,12 +19,28 @@ These skip warm-up, cooldown, cost and region checks. They are for rules that ha
 | `sendToServer(player, server)` | proxy move only; the target server decides where they appear |
 | `sendAllToServer(server)` | every player on this server; usable from `ServerStoppingEvent` |
 
-`Destination.serialize()` / `Destination.parse(String)` give the wire form `server;world;x;y;z;message`.
+`Destination(server, world, x, y, z, yaw, pitch, message, protect)`; the six- and eight-argument constructors keep the player's facing and use the config's arrival protection (`protect` = -1); `withProtect(seconds)` asks for a set number of seconds (Region Guard trigger landings get 3). `serialize()` / `parse(String)` give the wire form `server;world;x;y;z;yaw;pitch;protect;message`.
 
 ## Cross-server landings
 
-A cross-server `teleport` announces the landing to the target server, then asks the proxy to move the player; the target server lands the player when they log in (or as soon as the announcement arrives, if the player got there first). The announcement travels through a shared message store. Today that store is Region Guard's (`RegionGuardApi.publish`, kind `bsp_teleport.landing`), so landings work only when Region Guard is on both servers with storage on; without it the player is still moved and appears wherever the target server puts them. BSP Teleport's own MySQL and Redis transport replaces this in phase 2 without changing the API.
+A cross-server `teleport` writes the landing to the shared database (`storage.mode = mysql`, table `<prefix>pending`), tells BSP-Core the player is transferring, dismounts them and asks the proxy to move them; the target server reads the row when the player logs in and lands them. Rows older than `network.landingSeconds` are ignored. Without the shared database, the landing is announced through Region Guard's message store instead (kind `bsp_teleport.landing`) when Region Guard is present; without either, the player is still moved and appears wherever the target server puts them.
+
+## Messaging
+
+| Call | What |
+|---|---|
+| `messagingAvailable()` | whether Redis is configured (`redis.enabled`, needs `storage.mode = mysql`) and started |
+| `publish(channel, payload)` | sends a line to every other server on the mod's Redis channel; false when messaging is off |
+| `subscribe(channel, handler)` | `handler.accept(sourceServer, payload)` on the server thread for each line published on that channel by another server; one handler per channel |
+
+The Redis channel is `bsp_teleport:<redis.cluster>:v<API_VERSION>`, so servers running different API versions never read each other's messages. BSP Teleport uses the same link for its own traffic: player lists, teleport requests and answers, home and warp cache invalidation, random-teleport requests.
+
+## Events (Forge bus, `com.mrgregles.bsp_teleport.api.event`)
+
+| Event | When | Cancel means |
+|---|---|---|
+| `TeleportStartEvent` | a player asked for a teleport (home, warp, spawn, back, random, request); fired after the cooldown and region checks, before the warm-up; `player()`, `destination()`, `kind()` | the teleport is refused; `setReason(text)` tells the player why. Forced API moves do not fire it. |
 
 ## Region Guard
 
-When Region Guard is loaded, BSP Teleport listens for `RegionTriggerEvent` with a cross-server destination, cancels it and performs the move; same-server triggers are left to Region Guard. Teleports and homes ask Region Guard's `teleport-out`, `teleport-in` and `set-home` flags.
+When Region Guard is loaded, BSP Teleport listens for `RegionTriggerEvent` with a cross-server destination, whatever its cause (ENTER, EXIT, TIMER, SHUTDOWN, EDGE), cancels it and performs the move to the exact x/z given, with 3 s of arrival protection; same-server triggers are left to Region Guard. Teleports and homes ask Region Guard's `teleport-out`, `teleport-in` and `set-home` flags, and `/rtp` samples inside Region Guard's world border (shrunk by 16 blocks). Both mods must call this server by the same name: `network.serverName` here, `storage.serverId` there; a warning is logged at start when they differ.
