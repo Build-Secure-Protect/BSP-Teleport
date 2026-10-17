@@ -35,7 +35,14 @@ public final class BandPackets {
     }
 
     public static void sendAdmin(ServerPlayer player, AdminData data) {
-        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Admin(data));
+        if (canReceive(player)) {
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Admin(data));
+        }
+    }
+
+    /** False while the player is leaving or not yet fully in: a play packet then would break the connection. */
+    private static boolean canReceive(ServerPlayer player) {
+        return player.connection != null && player.connection.isAcceptingMessages() && !player.hasDisconnected();
     }
 
     public static void sendAdminAction(AdminAction action, String arg) {
@@ -62,7 +69,9 @@ public final class BandPackets {
     }
 
     public static void sendData(ServerPlayer player, BandData data) {
-        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Data(data));
+        if (canReceive(player)) {
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Data(data));
+        }
     }
 
     public static void sendAction(BandAction action, String arg) {

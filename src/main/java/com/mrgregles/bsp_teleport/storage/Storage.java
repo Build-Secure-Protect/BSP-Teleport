@@ -52,6 +52,18 @@ public final class Storage {
         return status;
     }
 
+    /** The status line with the live warp count, for the panel and {@code /bsptp status}. */
+    public static String status(MinecraftServer server) {
+        return store == null ? status : status + ", " + TeleportData.get(server).warps().size() + " warps";
+    }
+
+    /** Every five minutes: re-read the warps, in case a change notice was missed while Redis was away. */
+    public static void onServerTick(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
+        if (event.phase == net.minecraftforge.event.TickEvent.Phase.END && store != null && event.getServer().getTickCount() % 6000 == 0) {
+            reloadWarps(event.getServer());
+        }
+    }
+
     // Lifecycle
 
     public static void onServerStarted(ServerStartedEvent event) {
@@ -79,8 +91,8 @@ public final class Storage {
             if (loaded.spawn() != null) {
                 data.setSpawn(loaded.spawn());
             }
-            status = "mysql: connected to " + s.describe() + ", " + loaded.warps().size() + " warps";
-            BSPTeleport.LOGGER.info("Storage ready: {}", status);
+            status = "mysql: connected to " + s.describe();
+            BSPTeleport.LOGGER.info("Storage ready: {}, {} warps", status, loaded.warps().size());
         }, e -> status = "mysql: FAILED, " + e.getMessage());
     }
 
@@ -199,24 +211,22 @@ public final class Storage {
 
     // Write-through
 
+    // The change notice goes out only once the row is written: a server that re-reads on the notice must see the new row.
+
     public static void homeSaved(UUID owner, Home home) {
-        submit(s -> s.saveHome(owner, home));
-        Messenger.homesChanged(owner);
+        submit(s -> s.saveHome(owner, home), () -> Messenger.homesChanged(owner));
     }
 
     public static void homeDeleted(UUID owner, String name) {
-        submit(s -> s.deleteHome(owner, name));
-        Messenger.homesChanged(owner);
+        submit(s -> s.deleteHome(owner, name), () -> Messenger.homesChanged(owner));
     }
 
     public static void warpSaved(Warp warp) {
-        submit(s -> s.saveWarp(warp));
-        Messenger.warpsChanged();
+        submit(s -> s.saveWarp(warp), Messenger::warpsChanged);
     }
 
     public static void warpDeleted(String name) {
-        submit(s -> s.deleteWarp(name));
-        Messenger.warpsChanged();
+        submit(s -> s.deleteWarp(name), Messenger::warpsChanged);
     }
 
     public static void wipeHomes() {
@@ -267,6 +277,11 @@ public final class Storage {
     }
 
     private static void submit(Work work) {
+        submit(work, null);
+    }
+
+    /** Runs a write on the worker; {@code afterWrite} runs on the server thread once it succeeded. */
+    private static void submit(Work work, @Nullable Runnable afterWrite) {
         MySqlStore s = store;
         ExecutorService w = worker;
         if (s == null || w == null) {
@@ -278,6 +293,10 @@ public final class Storage {
             } catch (Exception e) {
                 BSPTeleport.LOGGER.error("Storage write failed: {}", e.toString());
                 status = "mysql: last write failed, " + e.getMessage();
+                return;
+            }
+            if (afterWrite != null) {
+                onServer(afterWrite);
             }
         });
     }

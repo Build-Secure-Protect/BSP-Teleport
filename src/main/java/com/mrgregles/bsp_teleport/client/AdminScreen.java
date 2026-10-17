@@ -2,7 +2,7 @@ package com.mrgregles.bsp_teleport.client;
 
 import com.mrgregles.bsp_teleport.admin.AdminAction;
 import com.mrgregles.bsp_teleport.admin.AdminData;
-import com.mrgregles.bsp_teleport.network.BandPackets;
+import com.mrgregles.bsp_teleport.ClientConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -41,6 +41,8 @@ public class AdminScreen extends Screen {
     private boolean pickingTarget;
     private int scroll;
     private int left, top;
+    /** Everything is drawn this many times bigger than vanilla's GUI scale; mouse positions are divided by it. */
+    private float scale = 1f;
     private final List<Hit> hits = new ArrayList<>();
     @Nullable
     private Confirm confirm;
@@ -70,8 +72,9 @@ public class AdminScreen extends Screen {
 
     @Override
     protected void init() {
-        left = (width - W) / 2;
-        top = (height - H) / 2;
+        scale = ClientConfig.screenScale(width, height, W, H);
+        left = ((int) (width / scale) - W) / 2;
+        top = ((int) (height / scale) - H) / 2;
         nameBox = new EditBox(font, left + 10, top + H - 40, 90, 14, Component.literal("name"));
         nameBox.setMaxLength(16);
         nameBox.setHint(Component.translatable("screen.bsp_teleport.band.name_hint"));
@@ -93,7 +96,7 @@ public class AdminScreen extends Screen {
     }
 
     private void send(AdminAction action, String arg) {
-        BandPackets.sendAdminAction(action, arg);
+        ClientNet.sendAdmin(action, arg);
     }
 
     private void go(AdminAction action, String arg) {
@@ -111,6 +114,8 @@ public class AdminScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partial) {
         renderBackground(g);
+        g.pose().pushPose();
+        g.pose().scale(scale, scale, 1f);
         hits.clear();
         g.fill(left - 1, top - 1, left + W + 1, top + H + 1, VIO);
         g.fill(left, top, left + W, top + H, BG);
@@ -140,10 +145,11 @@ public class AdminScreen extends Screen {
             case WARPS -> drawWarps(g);
         }
         drawFooter(g);
-        super.render(g, mouseX, mouseY, partial);
+        super.render(g, (int) (mouseX / scale), (int) (mouseY / scale), partial);
         if (confirm != null) {
             drawConfirm(g);
         }
+        g.pose().popPose();
     }
 
     private void drawNetwork(GuiGraphics g) {
@@ -422,6 +428,8 @@ public class AdminScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
+        mx /= scale;
+        my /= scale;
         if (button == 0) {
             for (Hit hit : new ArrayList<>(hits)) {
                 if (hit.contains(mx, my)) {
@@ -434,6 +442,21 @@ public class AdminScreen extends Screen {
             }
         }
         return super.mouseClicked(mx, my, button);
+    }
+
+    @Override
+    public boolean mouseReleased(double mx, double my, int button) {
+        return super.mouseReleased(mx / scale, my / scale, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
+        return super.mouseDragged(mx / scale, my / scale, button, dx / scale, dy / scale);
+    }
+
+    @Override
+    public void mouseMoved(double mx, double my) {
+        super.mouseMoved(mx / scale, my / scale);
     }
 
     @Override

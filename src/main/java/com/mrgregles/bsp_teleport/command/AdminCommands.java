@@ -59,7 +59,7 @@ public final class AdminCommands {
     private static int status(CommandContext<CommandSourceStack> ctx) {
         CommandSourceStack src = ctx.getSource();
         src.sendSuccess(() -> Component.literal("This server: " + BspTeleportApi.get().serverName()), false);
-        src.sendSuccess(() -> Component.literal("Storage: " + Storage.status()), false);
+        src.sendSuccess(() -> Component.literal("Storage: " + Storage.status(src.getServer())), false);
         src.sendSuccess(() -> Component.literal("Messaging: " + Messenger.status()), false);
         return 1;
     }
