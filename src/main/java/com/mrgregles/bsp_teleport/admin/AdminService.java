@@ -202,7 +202,7 @@ public final class AdminService {
                 servers.add(new AdminData.ServerRow(e.getKey(), PlayerDirectory.isOnline(e.getKey()), false, e.getValue()));
             }
         }
-        return new AdminData(TeleportConfig.serverName(), !Permissions.isAdmin(player), Storage.status(), Messenger.status(), settings, warps, servers);
+        return new AdminData(TeleportConfig.serverName(), !Permissions.isAdmin(player), Storage.status(player.server), Messenger.status(), settings, warps, servers);
     }
 
     private static int parseInt(String s, int fallback) {

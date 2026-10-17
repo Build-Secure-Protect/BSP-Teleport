@@ -2,7 +2,7 @@ package com.mrgregles.bsp_teleport.client;
 
 import com.mrgregles.bsp_teleport.band.BandAction;
 import com.mrgregles.bsp_teleport.band.BandData;
-import com.mrgregles.bsp_teleport.network.BandPackets;
+import com.mrgregles.bsp_teleport.ClientConfig;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -37,6 +37,8 @@ public class BandScreen extends Screen {
     private Tab tab = Tab.HOMES;
     private int scroll;
     private int left, top;
+    /** Everything is drawn this many times bigger than vanilla's GUI scale; mouse positions are divided by it. */
+    private float scale = 1f;
     private final List<Hit> hits = new ArrayList<>();
     private EditBox nameBox;
 
@@ -51,8 +53,9 @@ public class BandScreen extends Screen {
 
     @Override
     protected void init() {
-        left = (width - W) / 2;
-        top = (height - H) / 2;
+        scale = ClientConfig.screenScale(width, height, W, H);
+        left = ((int) (width / scale) - W) / 2;
+        top = ((int) (height / scale) - H) / 2;
         nameBox = new EditBox(font, left + 10, top + H - FOOT_H - 20, 100, 14, Component.translatable("screen.bsp_teleport.band.name_hint"));
         nameBox.setMaxLength(16);
         nameBox.setHint(Component.translatable("screen.bsp_teleport.band.name_hint"));
@@ -67,7 +70,7 @@ public class BandScreen extends Screen {
     }
 
     private void send(BandAction action, String arg) {
-        BandPackets.sendAction(action, arg);
+        ClientNet.send(action, arg);
     }
 
     private void go(BandAction action, String arg) {
@@ -80,6 +83,8 @@ public class BandScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partial) {
         renderBackground(g);
+        g.pose().pushPose();
+        g.pose().scale(scale, scale, 1f);
         hits.clear();
         g.fill(left - 1, top - 1, left + W + 1, top + H + 1, TQ);
         g.fill(left, top, left + W, top + H, BG);
@@ -122,7 +127,8 @@ public class BandScreen extends Screen {
             }
         }
         drawFooter(g);
-        super.render(g, mouseX, mouseY, partial);
+        super.render(g, (int) (mouseX / scale), (int) (mouseY / scale), partial);
+        g.pose().popPose();
     }
 
     private void drawHomes(GuiGraphics g, int y, int bottom) {
@@ -315,6 +321,8 @@ public class BandScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
+        mx /= scale;
+        my /= scale;
         if (button == 0) {
             for (Hit hit : hits) {
                 if (hit.contains(mx, my)) {
@@ -324,6 +332,21 @@ public class BandScreen extends Screen {
             }
         }
         return super.mouseClicked(mx, my, button);
+    }
+
+    @Override
+    public boolean mouseReleased(double mx, double my, int button) {
+        return super.mouseReleased(mx / scale, my / scale, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
+        return super.mouseDragged(mx / scale, my / scale, button, dx / scale, dy / scale);
+    }
+
+    @Override
+    public void mouseMoved(double mx, double my) {
+        super.mouseMoved(mx / scale, my / scale);
     }
 
     @Override

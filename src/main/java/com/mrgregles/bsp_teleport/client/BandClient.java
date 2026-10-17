@@ -4,7 +4,6 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mrgregles.bsp_teleport.BSPTeleport;
 import com.mrgregles.bsp_teleport.band.BandAction;
 import com.mrgregles.bsp_teleport.band.BandData;
-import com.mrgregles.bsp_teleport.network.BandPackets;
 import com.mrgregles.bsp_teleport.registry.ModItems;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -70,7 +69,7 @@ public final class BandClient {
     }
 
     public static void open() {
-        BandPackets.sendAction(BandAction.OPEN, "");
+        ClientNet.send(BandAction.OPEN, "");
     }
 
     private static void onClientTick(TickEvent.ClientTickEvent event) {

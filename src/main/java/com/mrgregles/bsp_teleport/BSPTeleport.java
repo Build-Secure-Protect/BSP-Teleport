@@ -35,6 +35,7 @@ public class BSPTeleport {
 
     public BSPTeleport(FMLJavaModLoadingContext context) {
         context.registerConfig(ModConfig.Type.SERVER, TeleportConfig.SPEC);
+        context.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
         BspTeleportApiSetter.set(TeleportService.INSTANCE);
         ModItems.ITEMS.register(context.getModEventBus());
         ModItems.TABS.register(context.getModEventBus());
@@ -45,6 +46,7 @@ public class BSPTeleport {
         MinecraftForge.EVENT_BUS.addListener(Storage::onServerStopping);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, Storage::onPlayerLoggedIn);
         MinecraftForge.EVENT_BUS.addListener(Storage::onPlayerLoggedOut);
+        MinecraftForge.EVENT_BUS.addListener(Storage::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(Messenger::onServerStarted);
         MinecraftForge.EVENT_BUS.addListener(Messenger::onServerStopping);
         MinecraftForge.EVENT_BUS.addListener(Messenger::onPlayerLoggedIn);
