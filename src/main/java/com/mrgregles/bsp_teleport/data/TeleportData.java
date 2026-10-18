@@ -1,6 +1,8 @@
 package com.mrgregles.bsp_teleport.data;
 
 import com.mrgregles.bsp_teleport.BSPTeleport;
+import com.mrgregles.bsp_teleport.access.AccessGrant;
+import com.mrgregles.bsp_teleport.access.TokenAssignment;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -14,6 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -34,6 +37,10 @@ public class TeleportData extends SavedData {
     private final Map<String, Warp> warps = new LinkedHashMap<>();
     /** Portal rows (D62): every row in local mode, this server's own rows in network mode (the shared table holds the rest). */
     private final Map<String, PortalRow> portals = new LinkedHashMap<>();
+    /** Access (D87): every grant in local mode, this server's cache of its online players' grants in network mode. */
+    private final Map<UUID, List<AccessGrant>> accessGrants = new HashMap<>();
+    private final Map<Integer, TokenAssignment> accessTokens = new LinkedHashMap<>();
+    private final Set<String> restrictedServers = new LinkedHashSet<>();
     /** Where each player last logged out, for {@code /tpoffline}. */
     private final Map<UUID, Position> offline = new HashMap<>();
     /** Players who do not want teleport requests. */
@@ -250,6 +257,53 @@ public class TeleportData extends SavedData {
         return removed;
     }
 
+    // Access
+
+    public List<AccessGrant> accessOf(UUID player) {
+        List<AccessGrant> list = accessGrants.get(player);
+        return list == null ? List.of() : new ArrayList<>(list);
+    }
+
+    public Map<UUID, List<AccessGrant>> allAccess() {
+        return accessGrants;
+    }
+
+    public void replaceAccess(UUID player, List<AccessGrant> grants) {
+        if (grants.isEmpty()) {
+            accessGrants.remove(player);
+        } else {
+            accessGrants.put(player, new ArrayList<>(grants));
+        }
+        setDirty();
+    }
+
+    public Map<Integer, TokenAssignment> accessTokens() {
+        return accessTokens;
+    }
+
+    public void setToken(TokenAssignment token) {
+        accessTokens.put(token.token(), token);
+        setDirty();
+    }
+
+    public void deleteToken(int token) {
+        accessTokens.remove(token);
+        setDirty();
+    }
+
+    public Set<String> restrictedServers() {
+        return restrictedServers;
+    }
+
+    public void setRestricted(String server, boolean on) {
+        if (on) {
+            restrictedServers.add(server);
+        } else {
+            restrictedServers.remove(server);
+        }
+        setDirty();
+    }
+
     // Persistence
 
     @Override
@@ -270,6 +324,15 @@ public class TeleportData extends SavedData {
         ListTag portalList = new ListTag();
         portals.values().forEach(r -> portalList.add(r.save()));
         tag.put("Portals", portalList);
+        ListTag grantList = new ListTag();
+        accessGrants.values().forEach(list -> list.forEach(g -> grantList.add(g.save())));
+        tag.put("AccessGrants", grantList);
+        ListTag tokenList = new ListTag();
+        accessTokens.values().forEach(t -> tokenList.add(t.save()));
+        tag.put("AccessTokens", tokenList);
+        ListTag serverList = new ListTag();
+        restrictedServers.forEach(sv -> serverList.add(net.minecraft.nbt.StringTag.valueOf(sv)));
+        tag.put("RestrictedServers", serverList);
         if (spawn != null) {
             tag.put("Spawn", spawn.save());
         }
@@ -317,6 +380,24 @@ public class TeleportData extends SavedData {
         for (Tag t : tag.getList("Portals", Tag.TAG_COMPOUND)) {
             PortalRow row = PortalRow.load((CompoundTag) t);
             data.portals.put(row.id(), row);
+        }
+        for (Tag t : tag.getList("AccessGrants", Tag.TAG_COMPOUND)) {
+            try {
+                AccessGrant g = AccessGrant.load((CompoundTag) t);
+                data.accessGrants.computeIfAbsent(g.player(), k -> new ArrayList<>()).add(g);
+            } catch (IllegalArgumentException ignored) {
+                // an unknown kind or tier from a later version
+            }
+        }
+        for (Tag t : tag.getList("AccessTokens", Tag.TAG_COMPOUND)) {
+            try {
+                TokenAssignment a = TokenAssignment.load((CompoundTag) t);
+                data.accessTokens.put(a.token(), a);
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+        for (Tag t : tag.getList("RestrictedServers", Tag.TAG_STRING)) {
+            data.restrictedServers.add(t.getAsString());
         }
         if (tag.contains("Spawn")) {
             data.spawn = Position.load(tag.getCompound("Spawn"));

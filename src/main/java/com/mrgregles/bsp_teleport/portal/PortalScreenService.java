@@ -82,6 +82,11 @@ public final class PortalScreenService {
             case LOCK -> PortalActions.setLocked(player, core, Boolean.parseBoolean(a));
             case CLOSE_WHEN_DOWN -> PortalActions.setCloseWhenDown(player, core, Boolean.parseBoolean(a));
             case COOLDOWN -> PortalActions.setCooldown(player, core, parseInt(a));
+            case RULE_ADD -> {
+                String c = parts.length > 2 ? parts[2] : "", d = parts.length > 3 ? parts[3] : "";
+                PortalActions.addRule(player, core, com.mrgregles.bsp_teleport.access.AccessRule.of(a, b, parseInt(c), Boolean.parseBoolean(d)));
+            }
+            case RULE_DEL -> PortalActions.removeRule(player, core, parseInt(a));
         }
         open(player, core);
     }
@@ -116,7 +121,14 @@ public final class PortalScreenService {
                 d.kind().name(), d.target(), d.describe(), partner, core.arriveOnly(), core.colour().getSerializedName(), core.doorStyle().name(),
                 core.getBlockState().getValue(PortalCoreBlock.FACING).getName(), core.arrivalLine(), core.mode().name(), core.openWhenPowered(), core.powered(),
                 core.openAtMinute(), core.closeAtMinute(), core.gameOpenAt(), core.gameCloseAt(), PortalCoreBlockEntity.zone().getId(), core.isLocked(),
-                core.closeWhenDown(), core.cooldownSeconds(), core.doorWord(), core.lit(), warps, servers);
+                core.closeWhenDown(), core.cooldownSeconds(), core.doorWord(), core.lit(), warps, servers,
+                com.mrgregles.bsp_teleport.access.AccessRule.serializeList(core.rules()), tokenFor(player, core));
+    }
+
+    /** The token that sells access to this portal (D86, TOKEN rule), or 0. */
+    private static int tokenFor(ServerPlayer player, PortalCoreBlockEntity core) {
+        com.mrgregles.bsp_teleport.access.TokenAssignment t = com.mrgregles.bsp_teleport.access.AccessService.tokenFor(player.server, com.mrgregles.bsp_teleport.access.AccessGrant.Kind.PORTAL, core.name());
+        return t == null ? 0 : t.token();
     }
 
     private static int parseInt(String s) {

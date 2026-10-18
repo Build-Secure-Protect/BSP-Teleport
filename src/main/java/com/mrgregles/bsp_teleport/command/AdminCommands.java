@@ -35,6 +35,7 @@ public final class AdminCommands {
     }
 
     public static void onRegisterCommands(RegisterCommandsEvent event) {
+        event.getDispatcher().register(AccessCommands.mainServer());
         event.getDispatcher().register(Commands.literal("bsptp")
                 .requires(src -> src.getEntity() instanceof ServerPlayer p ? com.mrgregles.bsp_teleport.admin.AdminService.mayOpen(p) : src.hasPermission(2))
                 .then(Commands.literal("admin").executes(ctx -> {
@@ -48,6 +49,7 @@ public final class AdminCommands {
                 }))
                 .then(Commands.literal("status").executes(AdminCommands::status))
                 .then(PortalCommands.portal())
+                .then(AccessCommands.access())
                 .then(PortalCommands.portalWarp())
                 .then(Commands.literal("players").executes(AdminCommands::players))
                 .then(Commands.literal("send")

@@ -3,6 +3,8 @@ package com.mrgregles.bsp_teleport.storage;
 import com.mrgregles.bsp_teleport.api.Destination;
 import com.mrgregles.bsp_teleport.data.Home;
 import com.mrgregles.bsp_teleport.data.Position;
+import com.mrgregles.bsp_teleport.access.AccessGrant;
+import com.mrgregles.bsp_teleport.access.TokenAssignment;
 import com.mrgregles.bsp_teleport.data.PortalRow;
 import com.mrgregles.bsp_teleport.data.Warp;
 import com.mrgregles.bsp_teleport.portal.PortalDestination;
@@ -16,6 +18,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -108,13 +112,19 @@ final class MySqlStore implements AutoCloseable {
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("homes") + " (owner CHAR(36) NOT NULL, name VARCHAR(16) NOT NULL, position VARCHAR(255) NOT NULL, "
                     + "created_ms BIGINT NOT NULL, description VARCHAR(255) NOT NULL DEFAULT '', public BOOLEAN NOT NULL DEFAULT FALSE, icon VARCHAR(96) NOT NULL DEFAULT '', PRIMARY KEY (owner, name), INDEX (public))");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("warps") + " (name VARCHAR(16) NOT NULL PRIMARY KEY, position VARCHAR(255) NOT NULL, "
-                    + "cost INT NOT NULL DEFAULT 0, restricted BOOLEAN NOT NULL DEFAULT FALSE, icon VARCHAR(96) NOT NULL DEFAULT '', portal BOOLEAN NOT NULL DEFAULT FALSE)");
+                    + "cost INT NOT NULL DEFAULT 0, restricted BOOLEAN NOT NULL DEFAULT FALSE, icon VARCHAR(96) NOT NULL DEFAULT '', portal BOOLEAN NOT NULL DEFAULT FALSE, rules VARCHAR(1024) NOT NULL DEFAULT '')");
             addColumn(st, "warps", "portal", "BOOLEAN NOT NULL DEFAULT FALSE");
+            addColumn(st, "warps", "rules", "VARCHAR(1024) NOT NULL DEFAULT ''");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("portals") + " (id VARCHAR(190) NOT NULL PRIMARY KEY, server VARCHAR(64) NOT NULL, world VARCHAR(128) NOT NULL, "
                     + "x INT NOT NULL, y INT NOT NULL, z INT NOT NULL, name VARCHAR(32) NOT NULL DEFAULT '', destination VARCHAR(512) NOT NULL DEFAULT '', "
                     + "arrive_only BOOLEAN NOT NULL DEFAULT FALSE, exit_to VARCHAR(512) NOT NULL DEFAULT '', frame_ok BOOLEAN NOT NULL DEFAULT FALSE, "
                     + "colour VARCHAR(16) NOT NULL DEFAULT '', status VARCHAR(24) NOT NULL DEFAULT '', doors VARCHAR(16) NOT NULL DEFAULT '', created_ms BIGINT NOT NULL DEFAULT 0, INDEX (server))");
             addColumn(st, "portals", "doors", "VARCHAR(16) NOT NULL DEFAULT ''");
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("access_grants") + " (uuid CHAR(36) NOT NULL, kind VARCHAR(16) NOT NULL, target VARCHAR(128) NOT NULL, "
+                    + "tier VARCHAR(8) NOT NULL, expires_ms BIGINT NOT NULL DEFAULT 0, granted_ms BIGINT NOT NULL DEFAULT 0, PRIMARY KEY (uuid, kind, target), INDEX (kind, target, tier))");
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("access_tokens") + " (token INT NOT NULL PRIMARY KEY, kind VARCHAR(16) NOT NULL, target VARCHAR(128) NOT NULL, "
+                    + "rent_hours INT NOT NULL DEFAULT 168, hint VARCHAR(255) NOT NULL DEFAULT '')");
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("access_servers") + " (server VARCHAR(64) NOT NULL PRIMARY KEY)");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("spawns") + " (server VARCHAR(64) NOT NULL PRIMARY KEY, position VARCHAR(255) NOT NULL)");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("pending") + " (uuid CHAR(36) NOT NULL PRIMARY KEY, destination VARCHAR(512) NOT NULL, created_ms BIGINT NOT NULL)");
         }
@@ -283,23 +293,24 @@ final class MySqlStore implements AutoCloseable {
 
     List<Warp> loadWarps() throws SQLException {
         List<Warp> warps = new ArrayList<>();
-        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT name, position, cost, restricted, icon, portal FROM " + t("warps") + " ORDER BY name")) {
+        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT name, position, cost, restricted, icon, portal, rules FROM " + t("warps") + " ORDER BY name")) {
             while (rs.next()) {
-                warps.add(new Warp(rs.getString(1), Position.parse(rs.getString(2)), rs.getInt(3), rs.getBoolean(4), rs.getString(5), rs.getBoolean(6)));
+                warps.add(new Warp(rs.getString(1), Position.parse(rs.getString(2)), rs.getInt(3), rs.getBoolean(4), rs.getString(5), rs.getBoolean(6), rs.getString(7)));
             }
         }
         return warps;
     }
 
     void saveWarp(Warp warp) throws SQLException {
-        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("warps") + " (name, position, cost, restricted, icon, portal) VALUES (?, ?, ?, ?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE position = VALUES(position), cost = VALUES(cost), restricted = VALUES(restricted), icon = VALUES(icon), portal = VALUES(portal)")) {
+        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("warps") + " (name, position, cost, restricted, icon, portal, rules) VALUES (?, ?, ?, ?, ?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE position = VALUES(position), cost = VALUES(cost), restricted = VALUES(restricted), icon = VALUES(icon), portal = VALUES(portal), rules = VALUES(rules)")) {
             ps.setString(1, warp.name());
             ps.setString(2, warp.position().serialize());
             ps.setInt(3, warp.cost());
             ps.setBoolean(4, warp.restricted());
             ps.setString(5, warp.icon());
             ps.setBoolean(6, warp.portal());
+            ps.setString(7, warp.rules());
             ps.executeUpdate();
         }
     }
@@ -338,6 +349,111 @@ final class MySqlStore implements AutoCloseable {
             ps.setString(13, row.status());
             ps.setString(14, row.doors());
             ps.setLong(15, row.createdMs());
+            ps.executeUpdate();
+        }
+    }
+
+    // Access (D87)
+
+    List<AccessGrant> loadAccess(UUID uuid) throws SQLException {
+        List<AccessGrant> out = new ArrayList<>();
+        try (PreparedStatement ps = conn().prepareStatement("SELECT kind, target, tier, expires_ms, granted_ms FROM " + t("access_grants") + " WHERE uuid = ?")) {
+            ps.setString(1, uuid.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    try {
+                        out.add(new AccessGrant(uuid, AccessGrant.Kind.valueOf(rs.getString(1)), rs.getString(2), AccessGrant.Tier.valueOf(rs.getString(3)), rs.getLong(4), rs.getLong(5)));
+                    } catch (IllegalArgumentException ignored) {
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    void saveAccess(AccessGrant g) throws SQLException {
+        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("access_grants") + " (uuid, kind, target, tier, expires_ms, granted_ms) VALUES (?, ?, ?, ?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE tier = VALUES(tier), expires_ms = VALUES(expires_ms), granted_ms = VALUES(granted_ms)")) {
+            ps.setString(1, g.player().toString());
+            ps.setString(2, g.kind().name());
+            ps.setString(3, g.target());
+            ps.setString(4, g.tier().name());
+            ps.setLong(5, g.expiresMs());
+            ps.setLong(6, g.grantedMs());
+            ps.executeUpdate();
+        }
+    }
+
+    void deleteAccess(UUID uuid, AccessGrant.Kind kind, String target) throws SQLException {
+        try (PreparedStatement ps = conn().prepareStatement("DELETE FROM " + t("access_grants") + " WHERE uuid = ? AND kind = ? AND target = ?")) {
+            ps.setString(1, uuid.toString());
+            ps.setString(2, kind.name());
+            ps.setString(3, target);
+            ps.executeUpdate();
+        }
+    }
+
+    /** Per server: how many players call it home, hold full access, or rent it (live rents only). */
+    Map<String, int[]> loadAccessCounts(long now) throws SQLException {
+        Map<String, int[]> out = new HashMap<>();
+        try (PreparedStatement ps = conn().prepareStatement("SELECT target, tier, COUNT(*) FROM " + t("access_grants") + " WHERE kind = 'SERVER' AND (tier <> 'RENT' OR expires_ms > ?) GROUP BY target, tier")) {
+            ps.setLong(1, now);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int[] c = out.computeIfAbsent(rs.getString(1), k -> new int[3]);
+                    String tier = rs.getString(2);
+                    c["MAIN".equals(tier) ? 0 : "FULL".equals(tier) ? 1 : 2] = rs.getInt(3);
+                }
+            }
+        }
+        return out;
+    }
+
+    List<TokenAssignment> loadTokens() throws SQLException {
+        List<TokenAssignment> out = new ArrayList<>();
+        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT token, kind, target, rent_hours, hint FROM " + t("access_tokens") + " ORDER BY token")) {
+            while (rs.next()) {
+                try {
+                    out.add(new TokenAssignment(rs.getInt(1), AccessGrant.Kind.valueOf(rs.getString(2)), rs.getString(3), rs.getInt(4), rs.getString(5)));
+                } catch (IllegalArgumentException ignored) {
+                }
+            }
+        }
+        return out;
+    }
+
+    void saveToken(TokenAssignment a) throws SQLException {
+        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("access_tokens") + " (token, kind, target, rent_hours, hint) VALUES (?, ?, ?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE kind = VALUES(kind), target = VALUES(target), rent_hours = VALUES(rent_hours), hint = VALUES(hint)")) {
+            ps.setInt(1, a.token());
+            ps.setString(2, a.kind().name());
+            ps.setString(3, a.target());
+            ps.setInt(4, a.rentHours());
+            ps.setString(5, a.hint());
+            ps.executeUpdate();
+        }
+    }
+
+    void deleteToken(int token) throws SQLException {
+        try (PreparedStatement ps = conn().prepareStatement("DELETE FROM " + t("access_tokens") + " WHERE token = ?")) {
+            ps.setInt(1, token);
+            ps.executeUpdate();
+        }
+    }
+
+    List<String> loadRestrictedServers() throws SQLException {
+        List<String> out = new ArrayList<>();
+        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT server FROM " + t("access_servers") + " ORDER BY server")) {
+            while (rs.next()) {
+                out.add(rs.getString(1));
+            }
+        }
+        return out;
+    }
+
+    void setRestricted(String server, boolean on) throws SQLException {
+        try (PreparedStatement ps = conn().prepareStatement(on ? "INSERT IGNORE INTO " + t("access_servers") + " (server) VALUES (?)" : "DELETE FROM " + t("access_servers") + " WHERE server = ?")) {
+            ps.setString(1, server);
             ps.executeUpdate();
         }
     }

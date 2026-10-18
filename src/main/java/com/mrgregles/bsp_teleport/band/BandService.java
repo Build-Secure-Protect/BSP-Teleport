@@ -58,6 +58,7 @@ public final class BandService {
             case SPAWN -> TeleportActions.spawn(player);
             case BACK -> TeleportActions.back(player);
             case RTP -> TeleportActions.rtp(player, arg.isEmpty() ? null : arg);
+            case ACCESS_CHOOSE -> com.mrgregles.bsp_teleport.access.AccessService.showChoose(player);
             case TOGGLE_IGNORE -> {
                 TeleportRequests.toggleIgnore(player);
                 open(player);
@@ -113,7 +114,8 @@ public final class BandService {
                 (int) Teleports.cooldownLeft(player), raidDistance, raid, data.isIgnoring(player.getUUID()),
                 TeleportActions.spawnPosition(player) != null, Teleports.back(player) != null,
                 TeleportConfig.getOr(TeleportConfig.SKIP_COOLDOWN_COINS, 0), BspCore.coins(player),
-                homes, warps, players, rtpServers, request, com.mrgregles.bsp_teleport.admin.AdminService.mayOpen(player));
+                homes, warps, players, rtpServers, request, com.mrgregles.bsp_teleport.admin.AdminService.mayOpen(player),
+                com.mrgregles.bsp_teleport.access.AccessService.enabled(), com.mrgregles.bsp_teleport.access.AccessService.bandEntries(player));
     }
 
     private static boolean nearRaid(ServerPlayer player, Position p, int distance) {

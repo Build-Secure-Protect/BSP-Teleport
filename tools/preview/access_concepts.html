@@ -1,0 +1,181 @@
+<title>Access Concepts</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: dark board like the portal concept page. Five sections of three options: the token items, the HUD row above
+   the hotbar, the two popups, the Access Board, and the admin screen that puts a token next to a server. */
+:root{ --bg:#0f1115; --panel:#171a21; --line:#2a2f3a; --fg:#e8eaf0; --muted:#9aa3b5; --tq:#19d3b0; --on:#0b0d11; --air:#1c2230;
+  --h-bg:#10151c; --h-fg:#e6eaf2; --h-muted:#9aa3b5; --h-slot:#0c0e12; --h-dim:#2a2f3a; --h-tq:#19d3b0; --h-vio:#b58cff; --h-gold:#ffd23a; --h-bad:#ff6b5c; --h-ok:#8fe04a;
+  --display:"Silkscreen","Courier New",monospace; --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme:dark; }
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){ --bg:#f3f1ea; --panel:#fff; --line:#d9d4c7; --fg:#1a1b20; --muted:#5f6472; --tq:#0c8f78; --on:#fff; --air:#cfd3dc; color-scheme:light; } }
+:root[data-theme="light"]{ --bg:#f3f1ea; --panel:#fff; --line:#d9d4c7; --fg:#1a1b20; --muted:#5f6472; --tq:#0c8f78; --on:#fff; --air:#cfd3dc; color-scheme:light; }
+body{ background:var(--bg); color:var(--fg); font-family:var(--body); margin:0; font-size:14px; line-height:1.5; }
+.wrap{ max-width:1100px; margin:0 auto; padding-block:28px 56px; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); display:flex; flex-direction:column; gap:30px; }
+h1{ font-family:var(--display); font-size:clamp(20px,3vw,28px); margin:0 0 6px; color:var(--tq); text-wrap:balance; }
+h2{ font-family:var(--display); font-size:15px; margin:0 0 10px; letter-spacing:.04em; text-transform:uppercase; }
+h3{ font-size:14px; margin:0 0 4px; }
+p{ margin:0; max-width:70ch; } .lede{ color:var(--muted); }
+code{ font-size:12.5px; }
+.card{ background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:14px 16px; }
+.card ol, .card ul{ margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px; }
+.ctl{ display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; } .key{ color:var(--muted); font-size:12.5px; }
+.ctl label{ display:inline-flex; gap:6px; align-items:center; font-size:13px; }
+.ctl select{ font:inherit; font-size:12.5px; background:var(--panel); color:var(--fg); border:1px solid var(--line); border-radius:4px; padding:2px 6px; }
+.grid{ display:grid; grid-template-columns:1fr; gap:22px; }
+.opt{ display:flex; flex-direction:column; gap:10px; min-width:0; }
+.opt .cap{ color:var(--muted); font-size:12.5px; max-width:80ch; }
+.opt .name{ font-family:var(--display); font-size:13px; color:var(--tq); }
+.swatches{ display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+.sw{ display:flex; flex-direction:column; align-items:center; gap:4px; font-size:11px; color:var(--muted); }
+.sw .px{ width:48px; height:48px; background-size:100% 100%; image-rendering:pixelated; }
+.tip{ background:#100010; border:1px solid #2a0a5a; color:#e6eaf2; font-family:var(--display); font-size:10px; padding:5px 7px; line-height:1.35; max-width:260px; }
+.tip .t{ color:#fff; } .tip .v{ color:var(--h-vio); } .tip .m{ color:var(--h-muted); } .tip .g{ color:var(--h-gold); }
+/* hotbar scene */
+.scene{ position:relative; background:linear-gradient(#2a3f55,#5b7a4a 70%,#3d5a33); border:1px solid var(--line); height:150px; width:100%; max-width:560px; box-sizing:border-box; overflow:hidden; font-family:var(--display); }
+.hotbar{ position:absolute; left:50%; bottom:8px; transform:translateX(-50%); display:flex; gap:0; }
+.hotbar .s{ width:22px; height:22px; background:#1c1c1c; border:1px solid #6a6a6a; box-sizing:border-box; }
+.hotbar .s.sel{ border:2px solid #fff; } .hotbar .s.band{ margin-left:6px; border-color:var(--h-tq); background:#0c1a18; }
+.hud{ position:absolute; display:flex; gap:6px; }
+.hud .e{ display:flex; flex-direction:column; align-items:center; gap:1px; font-size:7px; color:#fff; text-shadow:1px 1px #000; }
+.hud .e .i{ width:18px; height:18px; background-size:100% 100%; image-rendering:pixelated; box-sizing:border-box; border:1px solid transparent; }
+.hud .e.main .i{ border-color:var(--h-gold); } .hud .e.full .i{ border-color:var(--h-tq); } .hud .e.rent .i{ border-color:var(--h-vio); }
+.hud .e .c{ color:#d9c9ff; } .hud .e .n{ color:#e6eaf2; }
+.hud.strip{ background:rgba(0,0,0,.45); padding:2px 6px; border-radius:2px; align-items:center; }
+.hud.strip .e{ flex-direction:row; gap:4px; } .hud.strip .e .i{ width:12px; height:12px; }
+.hud.col{ flex-direction:column; gap:3px; align-items:flex-end; } .hud.col .e{ flex-direction:row-reverse; gap:4px; }
+.recall{ position:absolute; left:calc(50% - 150px); bottom:34px; width:54px; height:26px; background:rgba(0,0,0,.5); border:1px solid #666; font-size:7px; color:#aaa; padding:2px; box-sizing:border-box; }
+/* hud screens */
+.hs{ background:var(--h-bg); color:var(--h-fg); border:2px solid var(--h-tq); font-family:var(--display); font-size:11px; line-height:1.25; width:100%; max-width:420px; box-sizing:border-box; padding:10px 10px 12px; position:relative; }
+.hs.vio{ border-color:var(--h-vio); max-width:700px; min-height:300px; padding-bottom:28px; }
+.hs .ttl{ text-transform:uppercase; letter-spacing:.06em; font-size:12px; font-weight:700; display:flex; justify-content:space-between; gap:8px; align-items:center; color:var(--h-tq); flex-wrap:wrap; }
+.hs.vio .ttl{ color:var(--h-vio); } .hs.gold{ border-color:var(--h-gold); } .hs.gold .ttl{ color:var(--h-gold); }
+.hs .help{ font-size:8.5px; color:var(--h-muted); margin-top:2px; }
+.hs .tabs{ display:flex; gap:4px; flex-wrap:wrap; }
+.hs .tab{ background:var(--h-slot); border:1px solid var(--h-dim); padding:2px 8px; font-size:9px; text-transform:uppercase; color:var(--h-muted); }
+.hs .tab.on{ border-color:var(--h-vio); color:var(--h-vio); }
+.hs .list{ display:flex; flex-direction:column; gap:4px; margin-top:8px; }
+.hs .row{ display:grid; grid-template-columns:1fr auto; gap:6px; align-items:center; background:var(--h-slot); border:1px solid var(--h-dim); padding:4px 6px; min-width:0; }
+.hs .row .n{ font-weight:700; } .hs .row .s{ font-size:8.5px; color:var(--h-muted); } .hs .row .s b{ color:var(--h-vio); font-weight:400; } .hs .row .s em{ color:var(--h-gold); font-style:normal; } .hs .row .s u{ color:var(--h-ok); text-decoration:none; }
+.hs .row.sel{ border-color:var(--h-tq); }
+.hs .acts{ display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end; }
+.hs .b{ background:var(--h-slot); border:1px solid var(--h-tq); color:var(--h-tq); padding:2px 6px; font-size:9px; text-transform:uppercase; }
+.hs .b.dim{ border-color:var(--h-dim); color:var(--h-muted); } .hs .b.bad{ border-color:var(--h-bad); color:var(--h-bad); } .hs .b.gold{ border-color:var(--h-gold); color:var(--h-gold); } .hs .b.vio{ border-color:var(--h-vio); color:var(--h-vio); } .hs .b.ok{ border-color:var(--h-ok); color:var(--h-ok); }
+.hs .foot{ position:absolute; left:10px; right:10px; bottom:8px; display:flex; justify-content:space-between; gap:8px; font-size:8.5px; color:var(--h-muted); flex-wrap:wrap; }
+.hs .item{ display:flex; gap:8px; align-items:center; background:var(--h-slot); border:1px solid var(--h-dim); padding:5px 6px; }
+.hs .item .i{ width:24px; height:24px; background-size:100% 100%; image-rendering:pixelated; flex:none; }
+.hs .item .t{ font-size:9px; } .hs .item .t b{ color:#fff; font-weight:400; display:block; } .hs .item .t span{ color:var(--h-muted); font-size:8.5px; }
+.hs .big{ font-size:14px; color:var(--h-gold); }
+.hs .slot{ width:22px; height:22px; background:var(--h-bg); border:1px dashed var(--h-dim); display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; }
+.hs .slot .i{ width:16px; height:16px; background-size:100% 100%; image-rendering:pixelated; }
+.hs .slot.on{ border-style:solid; border-color:var(--h-tq); }
+.hs .tgrid{ display:grid; grid-template-columns:repeat(10,22px); gap:3px; margin-top:6px; }
+.hs .two{ display:grid; grid-template-columns:1fr 1fr; gap:8px; } @media (max-width:560px){ .hs .two{ grid-template-columns:1fr; } }
+.hs h4{ margin:8px 0 4px; font-size:9px; text-transform:uppercase; color:var(--h-muted); letter-spacing:.06em; }
+/* board */
+.board{ background:#07090d; border:3px solid #3b434c; color:#e6eaf2; font-family:var(--display); width:100%; max-width:420px; box-sizing:border-box; padding:10px 12px; aspect-ratio:2/1; display:flex; flex-direction:column; gap:6px; }
+.board .bt{ font-size:13px; color:var(--h-tq); letter-spacing:.08em; text-transform:uppercase; text-align:center; border-bottom:1px solid #3b434c; padding-bottom:4px; }
+.board .r{ display:grid; grid-template-columns:20px 1fr auto; gap:8px; align-items:center; font-size:10px; }
+.board .r .i{ width:16px; height:16px; background-size:100% 100%; image-rendering:pixelated; }
+.board .bar{ height:8px; background:#1c2230; position:relative; } .board .bar i{ position:absolute; left:0; top:0; bottom:0; }
+.board .num{ color:var(--h-gold); font-size:12px; min-width:28px; text-align:right; }
+.board .sub{ font-size:7.5px; color:var(--h-muted); }
+.board .tiles{ display:grid; grid-template-columns:1fr 1fr; gap:6px; flex:1; }
+.board .tile{ border:1px solid #3b434c; padding:6px; display:flex; flex-direction:column; align-items:center; gap:2px; }
+.board .tile .big{ font-size:22px; color:var(--h-gold); line-height:1; } .board .tile .i{ width:20px; height:20px; background-size:100% 100%; image-rendering:pixelated; }
+.board .cols{ display:flex; gap:10px; align-items:flex-end; flex:1; padding:4px 10px 0; }
+.board .col{ flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; font-size:8px; }
+.board .col .st{ width:100%; } .board .col .i{ width:16px; height:16px; background-size:100% 100%; image-rendering:pixelated; }
+</style>
+<div class="wrap">
+<section><h1>Access Concepts</h1>
+<p class="lede">The access system for BSP-Teleport (D67 to D88): players pick one main server for free, rent or buy the others with Access Token items sold in BSP-Core's shops, see what they hold above the hotbar, get a popup when a door is shut to them, and read a board at spawn that says how many players call each server home. Five visual pieces, three options each. The controls set the example player.</p>
+<div class="card"><div class="ctl"><span class="key"><b>Player:</b></span>
+<label><input type="checkbox" id="hasMain" checked> main server chosen (BSP-Forest)</label>
+<label><input type="checkbox" id="hasFull" checked> full access to BSP-Wilds</label>
+<label><input type="checkbox" id="hasRent" checked> rented BSP-Caves</label>
+<label>Rent left <select id="left"><option value="6d 5h">6d 5h</option><option value="23h 59m">23h 59m</option><option value="9m">9m</option></select></label></div></div></section>
+
+<section><h2>1. The token items</h2>
+<p class="lede" style="margin-bottom:10px">Twenty registered items, Access Token I to XX, one colour each. A token is a server's symbol: it is sold in the shop as a rent stack or a full stack (the tier is in the stack), it shows above the hotbar, and it marks portals that lead to that server. Four of the twenty colours shown, plus the tooltips of a rent stack, a full stack and an unassigned token.</p>
+<div class="grid" id="tokens"></div></section>
+
+<section><h2>2. Above the hotbar</h2>
+<p class="lede" style="margin-bottom:10px">What a player holds: gold frame for the main server, turquoise for full access, violet for rented with its countdown. Drawn right of the hotbar's centre, since BSP-Core's Recall card uses the left. The small turquoise slot after the hotbar is the Teleport Band.</p>
+<div class="grid" id="huds"></div></section>
+
+<section><h2>3. The two popups</h2>
+<p class="lede" style="margin-bottom:10px">Left: "Access needed", shown when a teleport, portal or warp is refused or the player is bounced on login: the server, the token stacks that grant it, the admin's shop hint, Close. Right: "Choose your main server", shown on the first attempt to enter a restricted server without one: the servers with how many players call them home, Choose, then a confirmation.</p>
+<div class="grid" id="popups"></div></section>
+
+<section><h2>4. The Access Board</h2>
+<p class="lede" style="margin-bottom:10px">An admin-only block whose panels join into one screen, like BSP-Core's Score Screen. It lists each restricted server with how many players call it home, and the full and rented counts, refreshed every minute from the shared table. The same rows go to BSP-Core's rotating Score Screens once R8 exists.</p>
+<div class="grid" id="boards"></div></section>
+
+<section><h2>5. Assigning tokens (admin)</h2>
+<p class="lede" style="margin-bottom:10px">Where an admin puts a token next to the server, region, portal or warp it is for, and takes a rent or full stack to put in a shop. Drawn as a TOKENS tab on the admin panel.</p>
+<div class="grid" id="admins"></div></section>
+
+<section><h2>Picks to make</h2><div class="card"><ol>
+<li><b>Token look:</b> A Keycard, B Medallion or C Sigil. Default: A.</li>
+<li><b>HUD:</b> A Row, B Strip or C Column. Default: A.</li>
+<li><b>Popups:</b> A Card, B Sheet or C Banner. Default: A.</li>
+<li><b>Board:</b> A Bars, B Tiles or C Columns. Default: A.</li>
+<li><b>Assigning:</b> A Slots, B Pick-then-place or C Table. Default: A.</li></ol></div></section>
+</div>
+<script>
+(function(){
+  var COLOURS=[['red','#b02e26'],['orange','#f9801d'],['amber','#ff9f1c'],['gold','#ffd23a'],['yellow','#fed83d'],['lime','#80c71f'],['green','#5e7c16'],['mint','#8fe0a4'],['turquoise','#19d3b0'],['cyan','#169c9c'],['ice','#bfefff'],['light blue','#3ab3da'],['blue','#3c44aa'],['violet','#b58cff'],['purple','#8932b8'],['magenta','#c74ebd'],['pink','#f38baa'],['rose','#ff6b8a'],['brown','#835432'],['gray','#9d9d97']];
+  var ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX'];
+  var S={ hasMain:true, hasFull:true, hasRent:true, left:'6d 5h' };
+  /* 16x16 maps: '.' clear, 'P' the colour, 'D' darker colour, 'L' lighter, 'K' dark line, 'W' white, 'G' gold chip */
+  var KEYCARD=['................','................','..KKKKKKKKKKKK..','.KPPPPPPPPPPPPK.','.KPPPPPPPPPPPPK.','.KPWWWWWWWWPPPK.','.KPPPPPPPPPPPPK.','.KPGGPPPPPPPPPK.','.KPGGPPPDDDDPPK.','.KPPPPPPPPPPPPK.','.KPPPPPPPPPPPPK.','.KDDDDDDDDDDDDK.','..KKKKKKKKKKKK..','................','................','................'];
+  var MEDAL=['.....KKKKKK.....','...KKLLLLLLKK...','..KLLPPPPPPLLK..','.KLPPPPPPPPPPLK.','.KLPPPWWPPPPPLK.','KLPPPWWWWPPPPPLK','KLPPPWWWWPPPPPLK','KLPPPPWWPPPPPPLK','KLPPPPPPPPPPPPLK','KDPPPPPPPPPPPPDK','.KDPPPPPPPPPPDK.','.KDDPPPPPPPPDDK.','..KDDDPPPPDDDK..','...KKDDDDDDKK...','.....KKKKKK.....','................'];
+  var SIGIL=['.......KK.......','......KPPK......','.....KPLLPK.....','....KPLPPLPK....','...KPLPWWPLPK...','..KPLPPWWPPLPK..','.KPLPPPWWPPPLPK.','KPPPPPPPPPPPPPPK','KDPPPPPPPPPPPPDK','.KDPPPPPPPPPPDK.','..KDPPPGGPPPDK..','...KDPPGGPPDK...','....KDPPPPDK....','.....KDDDDK.....','......KKKK......','................'];
+  function shade(hex,f){ var n=parseInt(hex.slice(1),16); var r=(n>>16)&255,g=(n>>8)&255,b=n&255; r=Math.round(Math.min(255,r*f)); g=Math.round(Math.min(255,g*f)); b=Math.round(Math.min(255,b*f)); return '#'+((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1); }
+  function svg(rows,colour){ var pal={P:colour,D:shade(colour,.6),L:shade(colour,1.35),K:'#1d2127',W:'#ffffff',G:'#ffd23a'}; var s='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">'; for(var y=0;y<16;y++){ for(var x=0;x<16;x++){ var ch=rows[y][x]; if(ch==='.') continue; s+='<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="'+pal[ch]+'"/>'; } } return "url('data:image/svg+xml,"+encodeURIComponent(s+'</svg>')+"')"; }
+  var LOOKS=[ {name:'A. Keycard', cap:'A card with a white stripe, a gold chip and a dark band: the shop card look. Reads as a pass at small size and stacks neatly in a row.', map:KEYCARD},
+              {name:'B. Medallion', cap:'A round coin with a bright rim and a highlight: close to the Shatter Coins, so it looks like money in the shop and on the HUD.', map:MEDAL},
+              {name:'C. Sigil', cap:'A hexagonal badge with a diamond and a gold mark: the most distinct from the pack\'s other items, the least like a thing you buy.', map:SIGIL} ];
+  var SERVERS=[ {n:'BSP-Forest', t:6, home:12, full:4, rent:7}, {n:'BSP-Wilds', t:8, home:9, full:6, rent:11}, {n:'BSP-Caves', t:13, home:7, full:2, rent:5}, {n:'BSP-Isles', t:16, home:4, full:1, rent:3} ];
+  var look=0;
+  function icon(t, map){ return svg(map||LOOKS[look].map, COLOURS[t][1]); }
+  function tooltip(kind,t){ var name='Access Token '+ROMAN[t]; var srv=SERVERS.filter(function(s){return s.t===t;})[0]; if(kind==='none') return '<div class="tip"><span class="t">'+name+'</span><br><span class="m">Not assigned</span></div>'; return '<div class="tip"><span class="t">'+name+'</span><br><span class="v">'+srv.n+'</span><br>'+(kind==='rent'?'<span class="g">Rented access, 48 hours</span>':'<span class="g">Full access</span>')+'<br><span class="m">Right-click to use</span></div>'; }
+  function tokenCard(l, idx){ var sw=[6,8,13,16].map(function(t){ return '<div class="sw"><div class="px" style="background-image:'+svg(l.map,COLOURS[t][1])+'"></div>'+ROMAN[t]+' '+COLOURS[t][0]+'</div>'; }).join(''); return '<div class="swatches">'+sw+tooltip('rent',8)+tooltip('full',8)+tooltip('none',2)+'</div>'; }
+
+  function entries(){ var e=[]; if(S.hasMain) e.push({cls:'main',t:6,n:'Forest',c:''}); if(S.hasFull) e.push({cls:'full',t:8,n:'Wilds',c:''}); if(S.hasRent) e.push({cls:'rent',t:13,n:'Caves',c:S.left}); return e; }
+  function hotbar(){ var s=''; for(var i=0;i<9;i++) s+='<div class="s'+(i===0?' sel':'')+'"></div>'; return '<div class="hotbar">'+s+'<div class="s band"></div></div><div class="recall">RECALL<br>142 m</div>'; }
+  function hudRow(){ var e=entries().map(function(x){ return '<div class="e '+x.cls+'"><div class="i" style="background-image:'+icon(x.t)+'"></div><div class="n">'+x.n+'</div>'+(x.c?'<div class="c">'+x.c+'</div>':'')+'</div>'; }).join(''); return '<div class="scene">'+hotbar()+'<div class="hud" style="left:calc(50% + 20px);bottom:36px">'+e+'</div></div>'; }
+  function hudStrip(){ var e=entries().map(function(x){ return '<div class="e '+x.cls+'"><div class="i" style="background-image:'+icon(x.t)+'"></div><span class="n">'+x.n+'</span>'+(x.c?'<span class="c">'+x.c+'</span>':'')+'</div>'; }).join(''); return '<div class="scene">'+hotbar()+'<div class="hud strip" style="left:calc(50% + 10px);bottom:36px">'+e+'</div></div>'; }
+  function hudCol(){ var e=entries().map(function(x){ return '<div class="e '+x.cls+'"><div class="i" style="background-image:'+icon(x.t)+'"></div><span class="n">'+x.n+(x.c?' <span class="c">'+x.c+'</span>':'')+'</span></div>'; }).join(''); return '<div class="scene">'+hotbar()+'<div class="hud col" style="right:8px;bottom:40px">'+e+'</div></div>'; }
+  var HUDS=[ {name:'A. Row', cap:'Icons in a row with the server name under each and the countdown under the rented one. Closest to the brief; takes the most width when a player holds many.', draw:hudRow},
+             {name:'B. Strip', cap:'A thin dark strip with small icons and the text inline. Compact, always readable over bright ground, less of a trophy shelf.', draw:hudStrip},
+             {name:'C. Column', cap:'A column at the right edge of the screen, text to the left of each icon. Never crowds the hotbar or the Recall card; farther from the eye.', draw:hudCol} ];
+
+  function denied(style){ var items='<div class="item"><div class="i" style="background-image:'+icon(8)+'"></div><div class="t"><b>Access Token IX</b><span>BSP-Wilds, rented 48 hours</span><span>Sold at the Spawn Market</span></div></div><div class="item"><div class="i" style="background-image:'+icon(8)+'"></div><div class="t"><b>Access Token IX</b><span>BSP-Wilds, full access</span><span>Sold at the Spawn Market</span></div></div>'; var head='<div class="ttl"><span>Access needed</span></div><div class="help">BSP-Wilds needs access you do not have. Buy a token and right-click it.</div>'; if(style==='banner') return '<div class="hs" style="max-width:700px"><div class="ttl"><span>Access needed: BSP-Wilds</span><span class="acts"><span class="b dim">close</span></span></div><div class="help">Buy one of these and right-click it. Sold at the Spawn Market.</div><div class="two" style="margin-top:6px">'+items+'</div></div>'; return '<div class="hs'+(style==='sheet'?' vio':'')+'">'+head+'<div class="list">'+items+'</div><div class="list"><div class="row"><div><div class="n">Where to buy</div><div class="s">Spawn Market, next to the bank</div></div><div class="acts"><span class="b dim">close</span></div></div></div></div>'; }
+  function choose(style){ var rows=SERVERS.map(function(s,i){ return '<div class="row"><div><div class="n"><span class="hud" style="position:static;display:inline-block;vertical-align:middle"><span class="e"><span class="i" style="width:12px;height:12px;background-image:'+icon(s.t)+'"></span></span></span> '+s.n+'</div><div class="s"><em>'+s.home+' players call this home</em>  '+s.full+' full, '+s.rent+' renting</div></div><div class="acts"><span class="b gold">choose</span></div></div>'; }).join(''); var confirm='<div class="list"><div class="row" style="border-color:var(--h-gold)"><div><div class="n">Choose BSP-Forest as your main server?</div><div class="s">This cannot be changed. You will always have access there.</div></div><div class="acts"><span class="b ok">yes</span><span class="b dim">no</span></div></div></div>'; if(style==='banner') return '<div class="hs gold" style="max-width:700px"><div class="ttl"><span>Choose your main server</span><span class="help">one choice, free, for ever</span></div><div class="list">'+rows+'</div>'+confirm+'</div>'; return '<div class="hs'+(style==='sheet'?' vio':' gold')+'"><div class="ttl"><span>Choose your main server</span></div><div class="help">You have not chosen one yet. Your base goes there and you always have access.</div><div class="list">'+rows+'</div>'+confirm+'</div>'; }
+  var POPUPS=[ {name:'A. Card', cap:'Two small centred cards in the band\'s turquoise and gold, the token stacks as item rows. Quick to read, closes with Escape or the key.', draw:function(){ return '<div class="two" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+denied('card')+choose('card')+'</div>'; }},
+               {name:'B. Sheet', cap:'Taller violet sheets with more room: the hint line and the counts get their own rows. Same content, more air.', draw:function(){ return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+denied('sheet')+choose('sheet')+'</div>'; }},
+               {name:'C. Banner', cap:'Wide banners across the top of the screen, the tokens side by side. Least in the way of the world behind; the choose list gets long with many servers.', draw:function(){ return denied('banner')+'<div style="height:10px"></div>'+choose('banner'); }} ];
+
+  function boardBars(){ var max=Math.max.apply(null,SERVERS.map(function(s){return s.home;})); return '<div class="board"><div class="bt">Home servers</div>'+SERVERS.map(function(s){ return '<div class="r"><div class="i" style="background-image:'+icon(s.t)+'"></div><div><div>'+s.n+'</div><div class="bar"><i style="width:'+(s.home/max*100)+'%;background:'+COLOURS[s.t][1]+'"></i></div><div class="sub">'+s.full+' full, '+s.rent+' renting</div></div><div class="num">'+s.home+'</div></div>'; }).join('')+'</div>'; }
+  function boardTiles(){ return '<div class="board"><div class="bt">Home servers</div><div class="tiles">'+SERVERS.map(function(s){ return '<div class="tile"><div class="i" style="background-image:'+icon(s.t)+'"></div><div class="big">'+s.home+'</div><div style="font-size:9px">'+s.n+'</div><div class="sub">'+s.full+' full, '+s.rent+' renting</div></div>'; }).join('')+'</div></div>'; }
+  function boardCols(){ var max=Math.max.apply(null,SERVERS.map(function(s){return s.home;})); return '<div class="board"><div class="bt">Home servers</div><div class="cols">'+SERVERS.map(function(s){ return '<div class="col"><div class="num" style="min-width:0">'+s.home+'</div><div class="st" style="height:'+(s.home/max*60)+'px;background:'+COLOURS[s.t][1]+'"></div><div class="i" style="background-image:'+icon(s.t)+'"></div><div>'+s.n.replace('BSP-','')+'</div></div>'; }).join('')+'</div></div>'; }
+  var BOARDS=[ {name:'A. Bars', cap:'One row per server: token, name, a bar for home players and the full and rented counts in small text. Reads top to bottom like the Score Screen list.', draw:boardBars},
+               {name:'B. Tiles', cap:'A tile per server with the home count large. Best for a board a new player glances at from across spawn; the full and rented numbers are small.', draw:boardTiles},
+               {name:'C. Columns', cap:'A column chart, the token under each column. The most visual; names are shortened and the full and rented counts drop off.', draw:boardCols} ];
+
+  function panelHead(help){ return '<div class="ttl"><span>Teleport Admin</span><div class="tabs"><span class="tab">network</span><span class="tab">settings</span><span class="tab">warps</span><span class="tab">portals</span><span class="tab on">tokens</span></div></div><div class="help">'+help+'</div>'; }
+  function stackBtns(){ return '<span class="b gold">rent stack</span><span class="b gold">full stack</span>'; }
+  function adminSlots(){ var rows=[{n:'BSP-Forest',k:'server',t:6},{n:'BSP-Wilds',k:'server',t:8},{n:'BSP-Caves',k:'server',t:13},{n:'arena (region, BSP-SafeRoom)',k:'region',t:null},{n:'Market Gate (portal)',k:'portal',t:2}].map(function(r){ return '<div class="row"><div style="display:flex;gap:8px;align-items:center"><span class="slot'+(r.t!==null?' on':'')+'">'+(r.t!==null?'<span class="i" style="background-image:'+icon(r.t)+'"></span>':'')+'</span><div><div class="n">'+r.n+'</div><div class="s">'+(r.t!==null?'Access Token '+ROMAN[r.t]+', rent 168 h':'<b>click the slot, then a token</b>')+'</div></div></div><div class="acts">'+(r.t!==null?stackBtns()+'<span class="b dim">hours</span><span class="b bad">clear</span>':'')+'</div></div>'; }).join(''); var grid=''; for(var i=0;i<20;i++){ var used=[6,8,13,2].indexOf(i)>=0; grid+='<span class="slot'+(used?' on':'')+'" title="'+ROMAN[i]+'"><span class="i" style="background-image:'+icon(i)+(used?'':';opacity:.5')+'"></span></span>'; } return '<div class="hs vio">'+panelHead('Each restricted server, region, portal and warp has a token slot. Click the slot, then a token below. Rent stack and Full stack give you the item to put in a shop.')+'<div class="list">'+rows+'</div><h4>Tokens (dim = free)</h4><div class="tgrid">'+grid+'</div><div class="foot"><span>BSP-Spawn</span><span>5 assigned, 15 free</span></div></div>'; }
+  function adminPick(){ var grid=''; for(var i=0;i<20;i++){ var used=[6,8,13].indexOf(i)>=0; grid+='<span class="slot'+(i===13?' on':'')+'"><span class="i" style="background-image:'+icon(i)+(used&&i!==13?';opacity:.5':'')+'"></span></span>'; } var targets=[{n:'BSP-Forest',t:6},{n:'BSP-Wilds',t:8},{n:'BSP-Caves',t:13},{n:'BSP-Isles',t:null},{n:'arena (region)',t:null},{n:'Market Gate (portal)',t:null}].map(function(r){ return '<div class="row'+(r.t===13?' sel':'')+'"><div><div class="n">'+r.n+'</div><div class="s">'+(r.t!==null?'Token '+ROMAN[r.t]:'<b>place here</b>')+'</div></div><div class="acts">'+(r.t!==null?'<span class="slot on"><span class="i" style="background-image:'+icon(r.t)+'"></span></span>':'<span class="slot"></span>')+'</div></div>'; }).join(''); return '<div class="hs vio">'+panelHead('Pick a token on the left (XIV is picked), then click the server, region, portal or warp to put it there. The right pane shows the picked token\'s stacks.')+'<div class="two"><div><h4>Tokens</h4><div class="tgrid" style="grid-template-columns:repeat(5,22px)">'+grid+'</div><h4>Token XIV</h4><div class="list" style="margin-top:0"><div class="row"><div><div class="n">BSP-Caves</div><div class="s">rent 168 h</div></div><div class="acts">'+stackBtns()+'</div></div></div></div><div><h4>Targets</h4><div class="list" style="margin-top:0">'+targets+'</div></div></div><div class="foot"><span>BSP-Spawn</span><span>3 assigned, 17 free</span></div></div>'; }
+  function adminTable(){ var rows=[{n:'BSP-Forest',k:'server',t:'VII',h:168},{n:'BSP-Wilds',k:'server',t:'IX',h:168},{n:'BSP-Caves',k:'server',t:'XIV',h:72},{n:'BSP-Isles',k:'server',t:'-',h:168},{n:'arena',k:'region',t:'-',h:24}].map(function(r){ return '<div class="row"><div><div class="n">'+r.n+'  <span style="color:var(--h-muted);font-weight:400">'+r.k+'</span></div><div class="s">token <b>'+r.t+'</b>  rent <em>'+r.h+' h</em></div></div><div class="acts"><span class="b dim">&lt;</span><span class="b vio">'+r.t+'</span><span class="b dim">&gt;</span><span class="b dim">-</span><span class="b dim">+</span>'+(r.t!=='-'?stackBtns():'')+'</div></div>'; }).join(''); return '<div class="hs vio">'+panelHead('A table: step the token with the arrows, step the rent hours with - and +, take the stacks. No pictures, the least clicking.')+'<div class="list">'+rows+'</div><div class="list"><div class="row"><div><div class="n">add target</div><div class="s">a region id, a portal or a warp name</div></div><div class="acts"><span class="b gold">add</span></div></div></div><div class="foot"><span>BSP-Spawn</span><span>3 assigned, 17 free</span></div></div>'; }
+  var ADMINS=[ {name:'A. Slots', cap:'Every target has a token slot; click the slot, then a token from the grid of twenty below (dim ones are free). The clearest picture of what is assigned where.', draw:adminSlots},
+               {name:'B. Pick then place', cap:'Pick a token on the left, click the target on the right. The picked token\'s own row shows its rent length and gives its stacks. Good when one token must move between targets.', draw:adminPick},
+               {name:'C. Table', cap:'Rows with arrows to step the token and the rent hours. Fastest for an admin who knows the numbers; no icons until the stacks are taken.', draw:adminTable} ];
+
+  function renderInto(id, opts, draw){ var el=document.getElementById(id); el.innerHTML=''; opts.forEach(function(o,i){ var d=document.createElement('div'); d.className='opt'; d.innerHTML='<div class="name">'+o.name+'</div>'+(draw?draw(o,i):o.draw())+'<div class="cap">'+o.cap+'</div>'; el.appendChild(d); }); }
+  function render(){ renderInto('tokens',LOOKS,tokenCard); renderInto('huds',HUDS); renderInto('popups',POPUPS); renderInto('boards',BOARDS); renderInto('admins',ADMINS); }
+  ['hasMain','hasFull','hasRent'].forEach(function(id){ document.getElementById(id).addEventListener('change',function(e){ S[id]=e.target.checked; render(); }); });
+  document.getElementById('left').addEventListener('change',function(e){ S.left=e.target.value; render(); });
+  render();
+})();
+</script>

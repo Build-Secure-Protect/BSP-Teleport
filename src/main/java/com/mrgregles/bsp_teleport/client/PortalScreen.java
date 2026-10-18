@@ -39,6 +39,9 @@ public class PortalScreen extends Screen {
     private String pick = "";
     /** The mode whose form is open, or empty for the current one. */
     private String modePick = "";
+    /** ACCESS tab (D86): the kind of the rule being added, and the item rule's used-up switch. */
+    private String ruleKind = "RANK";
+    private boolean ruleConsume;
     private int scroll;
     private int left, top;
     private float scale = 1f;
@@ -418,14 +421,76 @@ public class PortalScreen extends Screen {
 
     private void drawAccess(GuiGraphics g) {
         int y = top + 46;
-        small(g, Component.translatable("screen.bsp_teleport.portal.access_help").getString(), left + 12, y, MUTED);
-        y += 12;
-        for (String k : new String[]{"rank", "item", "node", "coins", "bought", "region"}) {
-            row(g, y, 14, DIM);
-            small(g, Component.translatable("screen.bsp_teleport.portal.access." + k).getString(), left + 14, y + 4, DIM);
-            button(g, left + W - 14, y + 1, Component.translatable("screen.bsp_teleport.portal.later").getString(), DIM, DIM, null);
-            y += 16;
+        small(g, Component.translatable("screen.bsp_teleport.portal.rules_help").getString(), left + 12, y, MUTED);
+        y += 10;
+        List<com.mrgregles.bsp_teleport.access.AccessRule> rules = com.mrgregles.bsp_teleport.access.AccessRule.parseList(data.rules());
+        if (rules.isEmpty()) {
+            small(g, Component.translatable("screen.bsp_teleport.portal.rules_none").getString(), left + 12, y + 2, DIM);
+            y += 14;
         }
+        for (int i = 0; i < rules.size(); i++) {
+            com.mrgregles.bsp_teleport.access.AccessRule r = rules.get(i);
+            row(g, y, 12, DIM);
+            small(g, r.describe(), left + 14, y + 3, TEXT);
+            if (!ro()) {
+                int index = i;
+                button(g, left + W - 14, y, Component.translatable("screen.bsp_teleport.admin.del").getString(), BAD, BAD, () -> send(PortalScreenAction.RULE_DEL, String.valueOf(index)));
+            }
+            y += 14;
+        }
+        if (ro()) {
+            return;
+        }
+        y += 4;
+        int px = left + 10;
+        for (String kind : new String[]{"RANK", "ITEM", "NODE", "COINS", "TOKEN"}) {
+            boolean on = kind.equals(ruleKind);
+            px = pill(g, px, y, Component.translatable("screen.bsp_teleport.portal.rule." + kind.toLowerCase()).getString(), on, () -> {
+                ruleKind = kind;
+                boxesFilled = false;
+            }) + 3;
+        }
+        y += 16;
+        if (!boxesFilled) {
+            box1.setValue("");
+            box2.setValue("");
+            boxesFilled = true;
+        }
+        switch (ruleKind) {
+            case "RANK", "NODE" -> {
+                box1.setX(left + 12);
+                box1.setY(y);
+                box1.setWidth(150);
+                box1.visible = true;
+                box1.setHint(Component.translatable("screen.bsp_teleport.portal.rule_value"));
+            }
+            case "ITEM" -> {
+                box1.setX(left + 12);
+                box1.setY(y);
+                box1.setWidth(120);
+                box1.visible = true;
+                box1.setHint(Component.translatable("screen.bsp_teleport.portal.rule_value"));
+                box2.setX(left + 136);
+                box2.setY(y);
+                box2.setWidth(36);
+                box2.visible = true;
+                box2.setHint(Component.translatable("screen.bsp_teleport.portal.rule_count"));
+                button(g, left + 230, y + 1, Component.translatable("screen.bsp_teleport.portal.rule_consume").getString(), ruleConsume ? OK : DIM, ruleConsume ? OK : MUTED, () -> ruleConsume = !ruleConsume);
+            }
+            case "COINS" -> {
+                box2.setX(left + 12);
+                box2.setY(y);
+                box2.setWidth(60);
+                box2.visible = true;
+                box2.setHint(Component.translatable("screen.bsp_teleport.portal.rule_count"));
+            }
+            default -> small(g, data.accessToken() > 0 ? Component.translatable("screen.bsp_teleport.portal.rule_token_hint", "Access Token " + com.mrgregles.bsp_teleport.access.TokenAssignment.roman(data.accessToken())).getString()
+                    : Component.translatable("screen.bsp_teleport.portal.rule_token_none").getString(), left + 12, y + 3, data.accessToken() > 0 ? VIO : GOLD);
+        }
+        button(g, left + W - 14, y + 1, Component.translatable("screen.bsp_teleport.portal.rule_add").getString(), TQ, TQ, () -> {
+            send(PortalScreenAction.RULE_ADD, ruleKind + ";" + box1.getValue().trim() + ";" + box2.getValue().trim() + ";" + ruleConsume);
+            boxesFilled = false;
+        });
     }
 
     private void drawFooter(GuiGraphics g) {

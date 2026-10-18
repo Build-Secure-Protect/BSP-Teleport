@@ -6,6 +6,9 @@ import com.mrgregles.bsp_teleport.api.Destination;
 import com.mrgregles.bsp_teleport.data.Home;
 import com.mrgregles.bsp_teleport.data.Position;
 import com.mrgregles.bsp_teleport.data.TeleportData;
+import com.mrgregles.bsp_teleport.access.AccessGrant;
+import com.mrgregles.bsp_teleport.access.AccessService;
+import com.mrgregles.bsp_teleport.access.TokenAssignment;
 import com.mrgregles.bsp_teleport.data.PortalRow;
 import com.mrgregles.bsp_teleport.data.Warp;
 import com.mrgregles.bsp_teleport.portal.Portals;
@@ -96,6 +99,8 @@ public final class Storage {
             }
             Portals.replaceRows(loaded.portals());
             status = "mysql: connected to " + s.describe();
+            reloadAccessSettings();
+            reloadAccessCounts();
             BSPTeleport.LOGGER.info("Storage ready: {}, {} warps", status, loaded.warps().size());
         }, e -> status = "mysql: FAILED, " + e.getMessage());
     }
@@ -231,6 +236,66 @@ public final class Storage {
             return;
         }
         run(s::loadPortals, Portals::replaceRows, null);
+    }
+
+    // Access (D87): grants per player on login and on notice; tokens and restricted servers for everyone.
+
+    public static void loadAccess(UUID uuid, Consumer<List<AccessGrant>> then) {
+        MySqlStore s = store;
+        if (s == null) {
+            return;
+        }
+        run(() -> s.loadAccess(uuid), then, null);
+    }
+
+    public static void accessSaved(AccessGrant grant) {
+        submit(s -> s.saveAccess(grant), () -> Messenger.accessChanged(grant.player().toString()));
+    }
+
+    public static void accessDeleted(UUID uuid, AccessGrant.Kind kind, String target) {
+        submit(s -> s.deleteAccess(uuid, kind, target), () -> Messenger.accessChanged(uuid.toString()));
+    }
+
+    public static void tokenSaved(TokenAssignment token) {
+        submit(s -> s.saveToken(token), () -> Messenger.accessChanged(""));
+    }
+
+    public static void tokenDeleted(int token) {
+        submit(s -> s.deleteToken(token), () -> Messenger.accessChanged(""));
+    }
+
+    public static void restrictedSet(String server, boolean on) {
+        submit(s -> s.setRestricted(server, on), () -> Messenger.accessChanged(""));
+    }
+
+    /** Re-reads the token assignments and the restricted servers into the service. */
+    public static void reloadAccessSettings() {
+        MySqlStore s = store;
+        if (s == null) {
+            return;
+        }
+        run(() -> new AccessSettings(s.loadTokens(), s.loadRestrictedServers()), loaded -> AccessService.replaceSettings(loaded.tokens(), loaded.servers()), null);
+    }
+
+    public static void reloadAccessCounts() {
+        MySqlStore s = store;
+        if (s == null) {
+            return;
+        }
+        run(() -> s.loadAccessCounts(System.currentTimeMillis()), AccessService::replaceCounts, null);
+    }
+
+    /** Another server's spawn, for a bounce to the lobby (D69); null when it has none. */
+    public static void spawnOf(String server, Consumer<Position> then) {
+        MySqlStore s = store;
+        if (s == null) {
+            then.accept(null);
+            return;
+        }
+        run(() -> s.loadSpawn(server), then, e -> then.accept(null));
+    }
+
+    private record AccessSettings(List<TokenAssignment> tokens, List<String> servers) {
     }
 
     public static void portalSaved(PortalRow row) {

@@ -25,12 +25,15 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void onSetup(FMLClientSetupEvent event) {
         BandClient.onClientSetup(event);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(AccessHud::onOverlay);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut e) -> ClientAccess.clear());
     }
 
     /** The Rendered door style (D60) is drawn by a block entity renderer on the core. */
     @SubscribeEvent
     public static void onRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(ModBlocks.PORTAL_CORE_ENTITY.get(), PortalCoreRenderer::new);
+        event.registerBlockEntityRenderer(ModBlocks.ACCESS_BOARD_ENTITY.get(), AccessBoardRenderer::new);
     }
 
     /** The portal field's grey texture takes its colour from the block state (D58). */

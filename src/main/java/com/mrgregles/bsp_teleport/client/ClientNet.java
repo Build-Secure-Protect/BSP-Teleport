@@ -4,6 +4,7 @@ import com.mrgregles.bsp_teleport.BSPTeleport;
 import com.mrgregles.bsp_teleport.admin.AdminAction;
 import com.mrgregles.bsp_teleport.band.BandAction;
 import com.mrgregles.bsp_teleport.network.BandPackets;
+import com.mrgregles.bsp_teleport.access.AccessAction;
 import com.mrgregles.bsp_teleport.portal.PortalScreenAction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.client.Minecraft;
@@ -36,6 +37,20 @@ public final class ClientNet {
             BandPackets.sendAction(action, arg);
         } else {
             BSPTeleport.LOGGER.debug("Dropped band action {} while the connection was changing", action);
+        }
+    }
+
+    public static void sendBoard(BlockPos pos, int style, int size, String title) {
+        if (ready()) {
+            BandPackets.sendBoardConfig(pos, style, size, title);
+        }
+    }
+
+    public static void sendAccess(AccessAction action, String arg) {
+        if (ready()) {
+            BandPackets.sendAccessAction(action, arg);
+        } else {
+            BSPTeleport.LOGGER.debug("Dropped access action {} while the connection was changing", action);
         }
     }
 

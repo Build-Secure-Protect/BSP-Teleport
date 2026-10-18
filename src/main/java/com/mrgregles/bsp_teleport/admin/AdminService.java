@@ -4,6 +4,9 @@ import com.mrgregles.bsp_teleport.BSPTeleport;
 import com.mrgregles.bsp_teleport.TeleportConfig;
 import com.mrgregles.bsp_teleport.api.BspTeleportApi;
 import com.mrgregles.bsp_teleport.compat.BspCore;
+import com.mrgregles.bsp_teleport.access.AccessGrant;
+import com.mrgregles.bsp_teleport.access.AccessService;
+import com.mrgregles.bsp_teleport.access.TokenAssignment;
 import com.mrgregles.bsp_teleport.data.PortalRow;
 import com.mrgregles.bsp_teleport.data.Position;
 import com.mrgregles.bsp_teleport.portal.PortalActions;
@@ -128,6 +131,88 @@ public final class AdminService {
                 }
                 open(player);
             }
+            case ACCESS_SERVER -> {
+                AccessService.setRestricted(player.server, a, Boolean.parseBoolean(b));
+                tell(player, Boolean.parseBoolean(b) ? "access.server_on" : "access.server_off", a);
+                open(player);
+            }
+            case TOKEN_ASSIGN -> {
+                int n = parseInt(a, 0);
+                AccessGrant.Kind kind = kindOf(b);
+                if (n >= 1 && n <= TokenAssignment.COUNT && kind != null && !c.isEmpty()) {
+                    String target = kind == AccessGrant.Kind.SERVER ? AccessService.properName(player.server, c) : kind == AccessGrant.Kind.REGION && !c.contains(":") ? TeleportConfig.serverName() + ":" + c : c;
+                    TokenAssignment existing = AccessService.tokens(player.server).get(n);
+                    TokenAssignment token = new TokenAssignment(n, kind, target, existing == null ? TeleportConfig.getOr(TeleportConfig.ACCESS_RENT_HOURS, 168) : existing.rentHours(), existing == null ? "" : existing.hint());
+                    AccessService.setToken(player.server, token);
+                    tell(player, "access.token_set", TokenAssignment.roman(n), token.describe(), token.rentHours());
+                }
+                open(player);
+            }
+            case TOKEN_CLEAR -> {
+                int n = parseInt(a, 0);
+                if (n >= 1 && n <= TokenAssignment.COUNT) {
+                    AccessService.clearToken(player.server, n);
+                    tell(player, "access.token_cleared", TokenAssignment.roman(n));
+                }
+                open(player);
+            }
+            case TOKEN_HOURS, TOKEN_HINT -> {
+                int n = parseInt(a, 0);
+                TokenAssignment existing = AccessService.tokens(player.server).get(n);
+                if (existing != null) {
+                    TokenAssignment edited = action == AdminAction.TOKEN_HOURS ? existing.withHours(Math.max(1, Math.min(8760, parseInt(b, existing.rentHours())))) : existing.withHint(b.trim());
+                    AccessService.setToken(player.server, edited);
+                    tell(player, action == AdminAction.TOKEN_HOURS ? "access.token_hours" : "access.token_hint", TokenAssignment.roman(n), edited.rentHours());
+                }
+                open(player);
+            }
+            case WARP_RULE_ADD -> {
+                String d = parts.length > 3 ? parts[3] : "", e = parts.length > 4 ? parts[4] : "";
+                com.mrgregles.bsp_teleport.access.AccessRule rule = com.mrgregles.bsp_teleport.access.AccessRule.of(b, c, parseInt(d, 0), Boolean.parseBoolean(e));
+                if (rule == null) {
+                    tell(player, "access.rule_bad");
+                } else {
+                    editWarp(player, a, w -> {
+                        List<com.mrgregles.bsp_teleport.access.AccessRule> rules = com.mrgregles.bsp_teleport.access.AccessRule.parseList(w.rules());
+                        if (rules.size() < com.mrgregles.bsp_teleport.access.AccessRule.MAX) {
+                            rules.add(rule);
+                        }
+                        return w.withRules(com.mrgregles.bsp_teleport.access.AccessRule.serializeList(rules));
+                    });
+                }
+                open(player);
+            }
+            case WARP_RULE_DEL -> {
+                int index = parseInt(b, -1);
+                editWarp(player, a, w -> {
+                    List<com.mrgregles.bsp_teleport.access.AccessRule> rules = com.mrgregles.bsp_teleport.access.AccessRule.parseList(w.rules());
+                    if (index >= 0 && index < rules.size()) {
+                        rules.remove(index);
+                    }
+                    return w.withRules(com.mrgregles.bsp_teleport.access.AccessRule.serializeList(rules));
+                });
+                open(player);
+            }
+            case TOKEN_STACK -> {
+                int n = parseInt(a, 0);
+                if (n >= 1 && n <= TokenAssignment.COUNT) {
+                    var item = (com.mrgregles.bsp_teleport.item.AccessTokenItem) com.mrgregles.bsp_teleport.registry.ModItems.ACCESS_TOKENS[n - 1].get();
+                    var stack = item.stack("full".equalsIgnoreCase(b) ? AccessGrant.Tier.FULL : AccessGrant.Tier.RENT, parseInt(c, 0));
+                    if (!player.getInventory().add(stack)) {
+                        player.drop(stack, false);
+                    }
+                    tell(player, "access.stack_given", TokenAssignment.roman(n), "full".equalsIgnoreCase(b) ? "full" : "rent");
+                }
+            }
+        }
+    }
+
+    @javax.annotation.Nullable
+    private static AccessGrant.Kind kindOf(String word) {
+        try {
+            return AccessGrant.Kind.valueOf(word.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 
@@ -210,7 +295,7 @@ public final class AdminService {
         }
         List<AdminData.WarpRow> warps = new ArrayList<>();
         for (Warp w : TeleportData.get(player.server).warps()) {
-            warps.add(new AdminData.WarpRow(w.name(), w.position().server(), w.cost(), w.restricted(), w.icon(), w.portal()));
+            warps.add(new AdminData.WarpRow(w.name(), w.position().server(), w.cost(), w.restricted(), w.icon(), w.portal(), w.rules()));
         }
         List<AdminData.ServerRow> servers = new ArrayList<>();
         List<String> here = new ArrayList<>();
@@ -229,7 +314,14 @@ public final class AdminService {
                     r.linkId(), r.status(), r.doors()));
         }
         portals.sort((x, y) -> x.server().equals(y.server()) ? x.name().compareToIgnoreCase(y.name()) : x.server().equals(TeleportConfig.serverName()) ? -1 : y.server().equals(TeleportConfig.serverName()) ? 1 : x.server().compareTo(y.server()));
-        return new AdminData(TeleportConfig.serverName(), !Permissions.isAdmin(player), Storage.status(player.server), Messenger.status(), settings, warps, servers, portals);
+        List<AdminData.TokenRow> tokens = new ArrayList<>();
+        Map<Integer, TokenAssignment> assigned = AccessService.tokens(player.server);
+        for (int n = 1; n <= TokenAssignment.COUNT; n++) {
+            TokenAssignment t = assigned.get(n);
+            tokens.add(t == null ? new AdminData.TokenRow(n, "", "", 0, "") : new AdminData.TokenRow(n, t.kind().name().toLowerCase(java.util.Locale.ROOT), t.target(), t.rentHours(), t.hint()));
+        }
+        return new AdminData(TeleportConfig.serverName(), !Permissions.isAdmin(player), Storage.status(player.server), Messenger.status(), settings, warps, servers, portals,
+                tokens, new ArrayList<>(AccessService.restricted(player.server)), AccessService.enabled());
     }
 
     private static int parseInt(String s, int fallback) {

@@ -7,6 +7,10 @@ import com.mrgregles.bsp_teleport.admin.AdminService;
 import com.mrgregles.bsp_teleport.band.BandAction;
 import com.mrgregles.bsp_teleport.band.BandData;
 import com.mrgregles.bsp_teleport.band.BandService;
+import com.mrgregles.bsp_teleport.access.AccessAction;
+import com.mrgregles.bsp_teleport.access.AccessPopup;
+import com.mrgregles.bsp_teleport.access.AccessService;
+import com.mrgregles.bsp_teleport.access.AccessSync;
 import com.mrgregles.bsp_teleport.portal.PortalScreenAction;
 import com.mrgregles.bsp_teleport.portal.PortalScreenData;
 import com.mrgregles.bsp_teleport.portal.PortalScreenService;
@@ -40,6 +44,16 @@ public final class BandPackets {
             buf.writeBlockPos(m.pos());
             buf.writeEnum(m.action()).writeUtf(m.arg());
         }, buf -> new PortalDo(buf.readBlockPos(), buf.readEnum(PortalScreenAction.class), buf.readUtf()), PortalDo::handle);
+        CHANNEL.registerMessage(6, Access.class, (m, buf) -> m.data().encode(buf), buf -> new Access(AccessSync.decode(buf)), Access::handle);
+        CHANNEL.registerMessage(7, Popup.class, (m, buf) -> m.data().encode(buf), buf -> new Popup(AccessPopup.decode(buf)), Popup::handle);
+        CHANNEL.registerMessage(8, AccessDo.class, (m, buf) -> buf.writeEnum(m.action()).writeUtf(m.arg()), buf -> new AccessDo(buf.readEnum(AccessAction.class), buf.readUtf()), AccessDo::handle);
+        CHANNEL.registerMessage(9, BoardOpen.class, (m, buf) -> buf.writeBlockPos(m.pos()), buf -> new BoardOpen(buf.readBlockPos()), BoardOpen::handle);
+        CHANNEL.registerMessage(10, BoardConfig.class, (m, buf) -> {
+            buf.writeBlockPos(m.pos());
+            buf.writeVarInt(m.style());
+            buf.writeVarInt(m.size());
+            buf.writeUtf(m.title());
+        }, buf -> new BoardConfig(buf.readBlockPos(), buf.readVarInt(), buf.readVarInt(), buf.readUtf()), BoardConfig::handle);
         CHANNEL.registerMessage(3, AdminDo.class, (m, buf) -> buf.writeEnum(m.action()).writeUtf(m.arg()), buf -> new AdminDo(buf.readEnum(AdminAction.class), buf.readUtf()), AdminDo::handle);
     }
 
@@ -73,6 +87,78 @@ public final class BandPackets {
                     AdminService.handle(player, action, arg);
                 }
             });
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    public static void sendBoardOpen(ServerPlayer player, BlockPos origin) {
+        if (canReceive(player)) {
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new BoardOpen(origin));
+        }
+    }
+
+    public static void sendBoardConfig(BlockPos pos, int style, int size, String title) {
+        CHANNEL.sendToServer(new BoardConfig(pos, style, size, title));
+    }
+
+    public record BoardOpen(BlockPos pos) {
+        void handle(Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> com.mrgregles.bsp_teleport.client.AccessBoardScreen.open(pos)));
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    public record BoardConfig(BlockPos pos, int style, int size, String title) {
+        void handle(Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> {
+                ServerPlayer player = ctx.get().getSender();
+                if (player != null && com.mrgregles.bsp_teleport.perm.Permissions.isAdmin(player) && player.serverLevel().isLoaded(pos)
+                        && player.serverLevel().getBlockEntity(pos) instanceof com.mrgregles.bsp_teleport.block.AccessBoardBlockEntity board) {
+                    board.configure(style, size, title);
+                }
+            });
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    public static void sendPopup(ServerPlayer player, AccessPopup data) {
+        if (canReceive(player)) {
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Popup(data));
+        }
+    }
+
+    public static void sendAccessAction(AccessAction action, String arg) {
+        CHANNEL.sendToServer(new AccessDo(action, arg));
+    }
+
+    public record Popup(AccessPopup data) {
+        void handle(Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> com.mrgregles.bsp_teleport.client.AccessScreen.show(data)));
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    public record AccessDo(AccessAction action, String arg) {
+        void handle(Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> {
+                ServerPlayer player = ctx.get().getSender();
+                if (player != null) {
+                    AccessService.handle(player, action, arg);
+                }
+            });
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    public static void sendAccess(ServerPlayer player, AccessSync data) {
+        if (canReceive(player)) {
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Access(data));
+        }
+    }
+
+    public record Access(AccessSync data) {
+        void handle(Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> com.mrgregles.bsp_teleport.client.ClientAccess.accept(data)));
             ctx.get().setPacketHandled(true);
         }
     }

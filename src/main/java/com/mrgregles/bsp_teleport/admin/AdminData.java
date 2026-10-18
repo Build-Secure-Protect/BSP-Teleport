@@ -7,13 +7,18 @@ import java.util.List;
 
 /** Everything the admin panel shows, built on the server and sent whole. */
 public record AdminData(String server, boolean readOnly, String storage, String messaging,
-                        List<Setting> settings, List<WarpRow> warps, List<ServerRow> servers, List<PortalEntry> portals) {
+                        List<Setting> settings, List<WarpRow> warps, List<ServerRow> servers, List<PortalEntry> portals,
+                        List<TokenRow> tokens, List<String> restricted, boolean accessOn) {
 
     /** One config value. {@code kind} is INT, BOOL or TEXT; INT values carry min, max and step. */
     public record Setting(String id, String value, String kind, int min, int max, int step) {
     }
 
-    public record WarpRow(String name, String server, int cost, boolean restricted, String icon, boolean portal) {
+    public record WarpRow(String name, String server, int cost, boolean restricted, String icon, boolean portal, String rules) {
+    }
+
+    /** One Access Token's assignment (D74); kind and target empty when free. */
+    public record TokenRow(int token, String kind, String target, int hours, String hint) {
     }
 
     /** One portal on the network, from its shared row. */
@@ -41,6 +46,7 @@ public record AdminData(String server, boolean readOnly, String storage, String 
             buf.writeVarInt(w.cost());
             buf.writeBoolean(w.restricted());
             buf.writeBoolean(w.portal());
+            buf.writeUtf(w.rules());
         }
         buf.writeVarInt(servers.size());
         for (ServerRow s : servers) {
@@ -58,6 +64,16 @@ public record AdminData(String server, boolean readOnly, String storage, String 
             buf.writeInt(p.z());
             buf.writeUtf(p.destination()).writeUtf(p.linkId()).writeUtf(p.status()).writeUtf(p.doors());
         }
+        buf.writeVarInt(tokens.size());
+        for (TokenRow t : tokens) {
+            buf.writeVarInt(t.token());
+            buf.writeUtf(t.kind()).writeUtf(t.target());
+            buf.writeVarInt(t.hours());
+            buf.writeUtf(t.hint());
+        }
+        buf.writeVarInt(restricted.size());
+        restricted.forEach(buf::writeUtf);
+        buf.writeBoolean(accessOn);
     }
 
     public static AdminData decode(FriendlyByteBuf buf) {
@@ -75,7 +91,7 @@ public record AdminData(String server, boolean readOnly, String storage, String 
             String wn = buf.readUtf(), ws = buf.readUtf(), wi = buf.readUtf();
             int cost = buf.readVarInt();
             boolean restricted = buf.readBoolean(), portal = buf.readBoolean();
-            warps.add(new WarpRow(wn, ws, cost, restricted, wi, portal));
+            warps.add(new WarpRow(wn, ws, cost, restricted, wi, portal, buf.readUtf()));
         }
         n = buf.readVarInt();
         List<ServerRow> servers = new ArrayList<>(n);
@@ -96,6 +112,19 @@ public record AdminData(String server, boolean readOnly, String storage, String 
             int x = buf.readInt(), y = buf.readInt(), z = buf.readInt();
             portals.add(new PortalEntry(id, pn, ps, pw, x, y, z, buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readUtf()));
         }
-        return new AdminData(server, readOnly, storage, messaging, settings, warps, servers, portals);
+        n = buf.readVarInt();
+        List<TokenRow> tokens = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            int token = buf.readVarInt();
+            String kind = buf.readUtf(), target = buf.readUtf();
+            tokens.add(new TokenRow(token, kind, target, buf.readVarInt(), buf.readUtf()));
+        }
+        n = buf.readVarInt();
+        List<String> restricted = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            restricted.add(buf.readUtf());
+        }
+        boolean accessOn = buf.readBoolean();
+        return new AdminData(server, readOnly, storage, messaging, settings, warps, servers, portals, tokens, restricted, accessOn);
     }
 }

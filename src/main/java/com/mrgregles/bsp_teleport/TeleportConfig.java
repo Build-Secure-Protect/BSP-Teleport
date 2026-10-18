@@ -39,6 +39,10 @@ public final class TeleportConfig {
     public static final ForgeConfigSpec.IntValue PORTAL_MAX_SIZE, PORTAL_MAX_OPENING;
     public static final ForgeConfigSpec.ConfigValue<String> PORTAL_TIME_ZONE;
 
+    public static final ForgeConfigSpec.BooleanValue ACCESS_ENABLED;
+    public static final ForgeConfigSpec.ConfigValue<String> ACCESS_LOBBY;
+    public static final ForgeConfigSpec.IntValue ACCESS_RENT_HOURS;
+
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
 
@@ -137,6 +141,12 @@ public final class TeleportConfig {
         PORTAL_MAX_SIZE = b.comment("Most blocks a portal frame may be across or tall.").defineInRange("maxSize", 24, 3, 64);
         PORTAL_MAX_OPENING = b.comment("Most cells a portal's opening may have.").defineInRange("maxOpening", 300, 1, 4096);
         PORTAL_TIME_ZONE = b.comment("Time zone for portals on a real-time clock, for example Europe/London. Empty means this machine's zone.").define("timeZone", "");
+        b.pop();
+
+        b.push("access");
+        ACCESS_ENABLED = b.comment("The server access system (main server, rented and full access through Access Tokens). Off: no checks, no HUD, no board.").define("enabled", false);
+        ACCESS_LOBBY = b.comment("The network's main spawn server, where a player without access is sent. Empty: the server of the global spawn warp, else the server they came from.").define("lobbyServer", "");
+        ACCESS_RENT_HOURS = b.comment("Rent length in hours a token grants when its assignment gives none.").defineInRange("rentHours", 168, 1, 8760);
         b.pop();
 
         SPEC = b.build();

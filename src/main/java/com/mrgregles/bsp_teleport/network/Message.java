@@ -32,6 +32,8 @@ public final class Message {
         PORTALS_CHANGED,
         /** Open, close, lock or unlock a portal on the target server: "id", "command". */
         PORTAL_DO,
+        /** A grant ("uuid" set) or the token and server settings ("uuid" empty) changed: re-read them. */
+        ACCESS_CHANGED,
         RTP_REQUEST, RTP_RESULT,
         TELL,
         CUSTOM

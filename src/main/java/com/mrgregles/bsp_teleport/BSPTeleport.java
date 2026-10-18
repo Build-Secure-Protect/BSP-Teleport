@@ -1,6 +1,7 @@
 package com.mrgregles.bsp_teleport;
 
 import com.mojang.logging.LogUtils;
+import com.mrgregles.bsp_teleport.access.AccessService;
 import com.mrgregles.bsp_teleport.api.BspTeleportApiSetter;
 import com.mrgregles.bsp_teleport.command.AdminCommands;
 import com.mrgregles.bsp_teleport.command.TeleportCommands;
@@ -68,6 +69,12 @@ public class BSPTeleport {
         MinecraftForge.EVENT_BUS.addListener(TeleportRequests::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(Portals::onServerStopping);
         MinecraftForge.EVENT_BUS.addListener(Portals::onServerTick);
+        // Access runs after storage (HIGH) and the landing (normal) have had their say on login.
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOW, AccessService::onPlayerLoggedIn);
+        MinecraftForge.EVENT_BUS.addListener(AccessService::onPlayerLoggedOut);
+        MinecraftForge.EVENT_BUS.addListener(AccessService::onServerTick);
+        MinecraftForge.EVENT_BUS.addListener(AccessService::onServerStarted);
+        MinecraftForge.EVENT_BUS.addListener(AccessService::onServerStopping);
         MinecraftForge.EVENT_BUS.addListener(TeleportCommands::onRegisterCommands);
         MinecraftForge.EVENT_BUS.addListener(AdminCommands::onRegisterCommands);
         MinecraftForge.EVENT_BUS.addListener(AdminCommands::onPermissionNodes);

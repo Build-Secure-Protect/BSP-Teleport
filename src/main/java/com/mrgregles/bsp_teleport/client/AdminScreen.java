@@ -23,7 +23,7 @@ public class AdminScreen extends Screen {
     private static final int TQ = BandClient.TQ, BG = BandClient.BG, SLOT = BandClient.SLOT, DIM = BandClient.DIM, MUTED = BandClient.MUTED,
             TEXT = BandClient.TEXT, VIO = BandClient.VIO, GOLD = BandClient.GOLD, BAD = BandClient.BAD, OK = BandClient.OK;
 
-    private enum Tab { NETWORK, SETTINGS, WARPS, PORTALS }
+    private enum Tab { NETWORK, SETTINGS, WARPS, PORTALS, TOKENS }
 
     private record Hit(int x, int y, int w, int h, Runnable action) {
         boolean contains(double mx, double my) {
@@ -42,6 +42,13 @@ public class AdminScreen extends Screen {
     /** PORTALS tab: the node map instead of the grouped list (D66), and the selected portal on it. */
     private boolean portalMap;
     private String selectedPortal = "";
+    /** TOKENS tab (D89, pick then place): the token picked on the left, 0 for none. */
+    private int pickedToken;
+    /** WARPS tab: the warp whose rules are being edited (D86), or null for the list. */
+    @Nullable
+    private String accessWarp;
+    private String warpRuleKind = "RANK";
+    private boolean warpRuleConsume;
     private int scroll;
     private int left, top;
     /** Everything is drawn this many times bigger than vanilla's GUI scale; mouse positions are divided by it. */
@@ -89,8 +96,11 @@ public class AdminScreen extends Screen {
     }
 
     private void refreshBoxes() {
-        nameBox.visible = tab == Tab.WARPS && !data.readOnly();
-        textBox.visible = tab == Tab.SETTINGS && !data.readOnly();
+        nameBox.visible = (tab == Tab.WARPS || tab == Tab.TOKENS) && !data.readOnly();
+        textBox.visible = (tab == Tab.SETTINGS || tab == Tab.TOKENS || (tab == Tab.WARPS && accessWarp != null)) && !data.readOnly();
+        nameBox.setHint(Component.translatable(tab == Tab.TOKENS ? "screen.bsp_teleport.admin.region_id" : "screen.bsp_teleport.band.name_hint"));
+        nameBox.setMaxLength(tab == Tab.TOKENS ? 64 : 16);
+        textBox.setMaxLength(tab == Tab.TOKENS ? 64 : 16);
     }
 
     @Override
@@ -147,6 +157,7 @@ public class AdminScreen extends Screen {
             case SETTINGS -> drawSettings(g);
             case WARPS -> drawWarps(g);
             case PORTALS -> drawPortals(g);
+            case TOKENS -> drawTokens(g);
         }
         drawFooter(g);
         super.render(g, (int) (mouseX / scale), (int) (mouseY / scale), partial);
@@ -205,9 +216,16 @@ public class AdminScreen extends Screen {
             return;
         }
         int y = sy + sh + 6;
-        g.fill(sx, y, sx + sw, y + 22, DIM);
-        g.fill(sx + 1, y + 1, sx + sw - 1, y + 21, SLOT);
+        g.fill(sx, y, sx + sw, y + 34, DIM);
+        g.fill(sx + 1, y + 1, sx + sw - 1, y + 33, SLOT);
         g.drawString(font, sel.name(), sx + 4, y + 3, sel.here() ? GOLD : TEXT, false);
+        // D70: whether this server needs access, written to the shared list.
+        boolean needs = data.restricted().stream().anyMatch(r -> r.equalsIgnoreCase(sel.name()));
+        String needsLabel = Component.translatable("screen.bsp_teleport.admin.needs_access").getString() + ": " + Component.translatable(needs ? "screen.bsp_teleport.admin.on" : "screen.bsp_teleport.admin.off").getString();
+        button(g, sx + sw - 4, y + 20, needsLabel, needs ? GOLD : DIM, needs ? GOLD : MUTED, data.readOnly() ? null : () -> send(AdminAction.ACCESS_SERVER, sel.name() + ";" + !needs));
+        if (!data.accessOn()) {
+            small(g, Component.translatable("screen.bsp_teleport.admin.access_off").getString(), sx + 4, y + 24, MUTED);
+        }
         String who = sel.players().isEmpty() ? Component.translatable("screen.bsp_teleport.admin.nobody").getString() : String.join(", ", sel.players());
         small(g, clip(who, 150), sx + 4, y + 13, MUTED);
         if (!data.readOnly()) {
@@ -234,7 +252,7 @@ public class AdminScreen extends Screen {
             }
         }
         // The selected server's players, scrollable.
-        y += 26;
+        y += 38;
         int bottom = top + H - 24;
         int i = 0;
         for (String name : sel.players()) {
@@ -307,6 +325,16 @@ public class AdminScreen extends Screen {
     }
 
     private void drawWarps(GuiGraphics g) {
+        if (accessWarp != null) {
+            AdminData.WarpRow editing = data.warps().stream().filter(w -> w.name().equals(accessWarp)).findFirst().orElse(null);
+            if (editing == null) {
+                accessWarp = null;
+                refreshBoxes();
+            } else {
+                drawWarpRules(g, editing);
+                return;
+            }
+        }
         int y = top + 28;
         int bottom = top + H - 44;
         int i = 0;
@@ -332,6 +360,11 @@ public class AdminScreen extends Screen {
             if (!data.readOnly()) {
                 bx = button(g, bx, y + 2, Component.translatable("screen.bsp_teleport.admin.del").getString(), BAD, BAD, () -> ask(
                         Component.translatable("screen.bsp_teleport.admin.confirm_del", w.name()).getString(), () -> send(AdminAction.DEL_WARP, w.name()))) - 2;
+                bx = button(g, bx, y + 2, Component.translatable("screen.bsp_teleport.admin.access_btn").getString(), w.rules().isEmpty() ? DIM : VIO, w.rules().isEmpty() ? MUTED : VIO, () -> {
+                    accessWarp = w.name();
+                    scroll = 0;
+                    refreshBoxes();
+                }) - 2;
                 bx = button(g, bx, y + 2, "P", w.portal() ? VIO : DIM, w.portal() ? VIO : MUTED, () -> send(AdminAction.WARP_PORTAL, w.name() + ";" + !w.portal())) - 2;
                 bx = button(g, bx, y + 2, w.restricted() ? "R" : "O", w.restricted() ? VIO : DIM, w.restricted() ? VIO : MUTED, () -> send(AdminAction.WARP_RESTRICT, w.name() + ";" + !w.restricted())) - 2;
                 bx = button(g, bx, y + 2, "+", DIM, GOLD, () -> send(AdminAction.WARP_COST, w.name() + ";" + (w.cost() + 10))) - 2;
@@ -348,6 +381,70 @@ public class AdminScreen extends Screen {
                 nameBox.setValue("");
             });
         }
+    }
+
+    /** The rules of one warp (D86): the list with Del, then a row to add one. */
+    private void drawWarpRules(GuiGraphics g, AdminData.WarpRow w) {
+        int y = top + 28;
+        small(g, Component.translatable("screen.bsp_teleport.admin.rules_of", w.name()).getString().toUpperCase(), left + 10, y, VIO);
+        button(g, left + W - 10, y - 2, Component.translatable("screen.bsp_teleport.admin.back").getString(), DIM, MUTED, () -> {
+            accessWarp = null;
+            refreshBoxes();
+        });
+        y += 12;
+        small(g, Component.translatable("screen.bsp_teleport.portal.rules_help").getString(), left + 10, y, MUTED);
+        y += 10;
+        List<com.mrgregles.bsp_teleport.access.AccessRule> rules = com.mrgregles.bsp_teleport.access.AccessRule.parseList(w.rules());
+        if (rules.isEmpty()) {
+            small(g, Component.translatable("screen.bsp_teleport.portal.rules_none").getString(), left + 12, y + 2, DIM);
+            y += 14;
+        }
+        for (int i = 0; i < rules.size(); i++) {
+            g.fill(left + 10, y, left + W - 10, y + 12, DIM);
+            g.fill(left + 11, y + 1, left + W - 11, y + 11, SLOT);
+            small(g, rules.get(i).describe(), left + 14, y + 3, TEXT);
+            if (!data.readOnly()) {
+                int index = i;
+                button(g, left + W - 14, y, Component.translatable("screen.bsp_teleport.admin.del").getString(), BAD, BAD, () -> send(AdminAction.WARP_RULE_DEL, w.name() + ";" + index));
+            }
+            y += 14;
+        }
+        if (data.readOnly()) {
+            return;
+        }
+        y += 4;
+        int px = left + 10;
+        for (String kind : new String[]{"RANK", "ITEM", "NODE", "COINS", "TOKEN"}) {
+            boolean on = kind.equals(warpRuleKind);
+            String label = Component.translatable("screen.bsp_teleport.portal.rule." + kind.toLowerCase()).getString();
+            int pw = (int) (font.width(label) * 0.75f) + 8;
+            g.fill(px, y, px + pw, y + 12, on ? VIO : DIM);
+            g.fill(px + 1, y + 1, px + pw - 1, y + 11, SLOT);
+            small(g, label.toUpperCase(), px + 4, y + 3, on ? VIO : MUTED);
+            hits.add(new Hit(px, y, pw, 12, () -> warpRuleKind = kind));
+            px += pw + 3;
+        }
+        y += 16;
+        nameBox.setX(left + 12);
+        nameBox.setY(y);
+        nameBox.setWidth(120);
+        nameBox.setHint(Component.translatable("screen.bsp_teleport.portal.rule_value"));
+        textBox.setX(left + 136);
+        textBox.setY(y);
+        textBox.setWidth(36);
+        textBox.setHint(Component.translatable("screen.bsp_teleport.portal.rule_count"));
+        nameBox.visible = warpRuleKind.equals("RANK") || warpRuleKind.equals("NODE") || warpRuleKind.equals("ITEM");
+        textBox.visible = warpRuleKind.equals("ITEM") || warpRuleKind.equals("COINS");
+        if (warpRuleKind.equals("ITEM")) {
+            button(g, left + 230, y + 1, Component.translatable("screen.bsp_teleport.portal.rule_consume").getString(), warpRuleConsume ? OK : DIM, warpRuleConsume ? OK : MUTED, () -> warpRuleConsume = !warpRuleConsume);
+        } else if (warpRuleKind.equals("TOKEN")) {
+            small(g, Component.translatable("screen.bsp_teleport.admin.kind.warp").getString() + " " + w.name() + ": " + Component.translatable("screen.bsp_teleport.admin.tokens_list").getString().toLowerCase(), left + 12, y + 3, MUTED);
+        }
+        button(g, left + W - 14, y + 1, Component.translatable("screen.bsp_teleport.portal.rule_add").getString(), TQ, TQ, () -> {
+            send(AdminAction.WARP_RULE_ADD, w.name() + ";" + warpRuleKind + ";" + nameBox.getValue().trim() + ";" + textBox.getValue().trim() + ";" + warpRuleConsume);
+            nameBox.setValue("");
+            textBox.setValue("");
+        });
     }
 
     private void drawPortals(GuiGraphics g) {
@@ -453,6 +550,141 @@ public class AdminScreen extends Screen {
             bx = button(g, bx, y + 3, Component.translatable("screen.bsp_teleport.admin.open_now").getString(), DIM, OK, () -> send(AdminAction.PORTAL_COMMAND, p.id() + ";open")) - 2;
         }
         button(g, bx, y + 3, Component.translatable("screen.bsp_teleport.admin.go").getString(), TQ, TQ, () -> go(AdminAction.GO_PORTAL, p.id()));
+    }
+
+    private record Target(String kind, String name) {
+    }
+
+    private List<Target> targets() {
+        List<Target> out = new ArrayList<>();
+        for (String s : data.restricted()) {
+            out.add(new Target("server", s));
+        }
+        List<String> seen = new ArrayList<>();
+        for (AdminData.PortalEntry p : data.portals()) {
+            if (!seen.contains(p.name().toLowerCase())) {
+                seen.add(p.name().toLowerCase());
+                out.add(new Target("portal", p.name()));
+            }
+        }
+        for (AdminData.WarpRow w : data.warps()) {
+            out.add(new Target("warp", w.name()));
+        }
+        for (AdminData.TokenRow t : data.tokens()) {
+            if ("region".equals(t.kind()) && out.stream().noneMatch(x -> x.kind().equals("region") && x.name().equalsIgnoreCase(t.target()))) {
+                out.add(new Target("region", t.target()));
+            }
+        }
+        return out;
+    }
+
+    @Nullable
+    private AdminData.TokenRow tokenOf(String kind, String target) {
+        for (AdminData.TokenRow t : data.tokens()) {
+            if (t.kind().equals(kind) && t.target().equalsIgnoreCase(target)) {
+                return t;
+            }
+        }
+        return null;
+    }
+
+    private void drawTokens(GuiGraphics g) {
+        int y = top + 28;
+        small(g, Component.translatable("screen.bsp_teleport.admin.tokens_help").getString(), left + 10, y, MUTED);
+        y += 12;
+        // Left: the twenty tokens, five across; dim means free, violet assigned, turquoise picked.
+        int lx = left + 10;
+        small(g, Component.translatable("screen.bsp_teleport.admin.tokens_list").getString().toUpperCase(), lx, y, MUTED);
+        int gy = y + 10;
+        for (AdminData.TokenRow t : data.tokens()) {
+            int i = t.token() - 1;
+            int cx = lx + (i % 5) * 19, cy = gy + (i / 5) * 19;
+            boolean picked = t.token() == pickedToken, assigned = !t.kind().isEmpty();
+            g.fill(cx, cy, cx + 18, cy + 18, picked ? TQ : assigned ? VIO : DIM);
+            g.fill(cx + 1, cy + 1, cx + 17, cy + 17, picked ? 0xFF0F2A28 : SLOT);
+            g.renderItem(new net.minecraft.world.item.ItemStack(com.mrgregles.bsp_teleport.registry.ModItems.ACCESS_TOKENS[i].get()), cx + 1, cy + 1);
+            if (!assigned && !picked) {
+                g.fill(cx + 1, cy + 1, cx + 17, cy + 17, 0x90000000);
+            }
+            int n = t.token();
+            hits.add(new Hit(cx, cy, 18, 18, () -> pickedToken = pickedToken == n ? 0 : n));
+        }
+        int infoY = gy + 4 * 19 + 2;
+        AdminData.TokenRow picked = pickedToken > 0 ? data.tokens().get(pickedToken - 1) : null;
+        int lw = 118;
+        g.fill(lx, infoY, lx + lw, infoY + 46, DIM);
+        g.fill(lx + 1, infoY + 1, lx + lw - 1, infoY + 45, SLOT);
+        if (picked == null) {
+            small(g, Component.translatable("screen.bsp_teleport.admin.token_free").getString(), lx + 4, infoY + 4, MUTED);
+        } else {
+            small(g, Component.translatable("screen.bsp_teleport.admin.token_picked", com.mrgregles.bsp_teleport.access.TokenAssignment.roman(picked.token())).getString().toUpperCase(), lx + 4, infoY + 4, TQ);
+            boolean assigned = !picked.kind().isEmpty();
+            small(g, assigned ? clip(Component.translatable("screen.bsp_teleport.admin.kind." + picked.kind()).getString() + " " + picked.target(), lw - 8)
+                    : Component.translatable("screen.bsp_teleport.admin.token_free").getString(), lx + 4, infoY + 13, assigned ? VIO : MUTED);
+            if (assigned && !data.readOnly()) {
+                int n = picked.token();
+                int bx = lx + lw - 4;
+                bx = button(g, bx, infoY + 22, "+", DIM, GOLD, () -> send(AdminAction.TOKEN_HOURS, n + ";" + (picked.hours() + 24))) - 2;
+                String hrs = Component.translatable("screen.bsp_teleport.admin.hours", picked.hours()).getString();
+                int tw = (int) (font.width(hrs) * 0.75f) + 6;
+                small(g, hrs, bx - tw + 3, infoY + 25, GOLD);
+                bx -= tw + 2;
+                button(g, bx, infoY + 22, "-", DIM, GOLD, () -> send(AdminAction.TOKEN_HOURS, n + ";" + Math.max(1, picked.hours() - 24)));
+                bx = lx + lw - 4;
+                bx = button(g, bx, infoY + 34, Component.translatable("screen.bsp_teleport.admin.clear").getString(), BAD, BAD, () -> send(AdminAction.TOKEN_CLEAR, String.valueOf(n))) - 2;
+                bx = button(g, bx, infoY + 34, Component.translatable("screen.bsp_teleport.admin.full_stack").getString(), GOLD, GOLD, () -> send(AdminAction.TOKEN_STACK, n + ";full;0")) - 2;
+                button(g, bx, infoY + 34, Component.translatable("screen.bsp_teleport.admin.rent_stack").getString(), GOLD, GOLD, () -> send(AdminAction.TOKEN_STACK, n + ";rent;0"));
+            }
+        }
+        // The hint box under the info (left) and the region box at the foot of the targets (right): both act on the picked token.
+        int rx = left + 10 + lw + 8, rw = W - 20 - lw - 8;
+        textBox.setX(lx);
+        textBox.setY(infoY + 48);
+        textBox.setWidth(lw - 30);
+        textBox.setHint(Component.translatable("screen.bsp_teleport.admin.hint"));
+        nameBox.setX(rx);
+        nameBox.setY(top + H - 40);
+        nameBox.setWidth(rw - 44);
+        if (!data.readOnly() && picked != null) {
+            int n = picked.token();
+            button(g, lx + lw, infoY + 49, Component.translatable("screen.bsp_teleport.admin.set").getString(), TQ, TQ, () -> {
+                send(AdminAction.TOKEN_HINT, n + ";" + textBox.getValue().trim());
+                textBox.setValue("");
+            });
+            button(g, rx + rw, top + H - 39, Component.translatable("screen.bsp_teleport.admin.assign_region").getString(), VIO, VIO, () -> {
+                if (!nameBox.getValue().trim().isEmpty()) {
+                    send(AdminAction.TOKEN_ASSIGN, n + ";region;" + nameBox.getValue().trim());
+                    nameBox.setValue("");
+                }
+            });
+        }
+        // Right: the targets; click one to place the picked token there.
+        small(g, Component.translatable("screen.bsp_teleport.admin.targets").getString().toUpperCase(), rx, y, MUTED);
+        int ry = y + 10;
+        int bottom = top + H - 44;
+        int i = 0;
+        for (Target t : targets()) {
+            if (i++ < scroll) {
+                continue;
+            }
+            if (ry + 20 > bottom) {
+                break;
+            }
+            AdminData.TokenRow has = tokenOf(t.kind(), t.name());
+            g.fill(rx, ry, rx + rw, ry + 18, has != null ? VIO : DIM);
+            g.fill(rx + 1, ry + 1, rx + rw - 1, ry + 17, SLOT);
+            if (has != null) {
+                g.renderItem(new net.minecraft.world.item.ItemStack(com.mrgregles.bsp_teleport.registry.ModItems.ACCESS_TOKENS[has.token() - 1].get()), rx + 2, ry + 1);
+            }
+            g.drawString(font, clip(t.name(), rw - 50), rx + 22, ry + 2, TEXT, false);
+            small(g, Component.translatable("screen.bsp_teleport.admin.kind." + t.kind()).getString() + (has != null ? "  " + com.mrgregles.bsp_teleport.access.TokenAssignment.roman(has.token()) : pickedToken > 0 ? "  " + Component.translatable("screen.bsp_teleport.admin.place").getString() : ""),
+                    rx + 22, ry + 11, has != null ? VIO : pickedToken > 0 ? TQ : MUTED);
+            if (!data.readOnly() && pickedToken > 0) {
+                int n = pickedToken;
+                hits.add(new Hit(rx, ry, rw, 18, () -> send(AdminAction.TOKEN_ASSIGN, n + ";" + t.kind() + ";" + t.name())));
+            }
+            ry += 20;
+        }
     }
 
     private void drawFooter(GuiGraphics g) {
@@ -578,6 +810,7 @@ public class AdminScreen extends Screen {
             case SETTINGS -> data.settings().size();
             case WARPS -> data.warps().size();
             case PORTALS -> portalMap ? 0 : data.portals().size() + (int) data.portals().stream().map(AdminData.PortalEntry::server).distinct().count();
+            case TOKENS -> targets().size();
         };
         scroll = Math.max(0, Math.min(Math.max(0, count - 1), scroll - (int) Math.signum(delta)));
         return true;

@@ -38,5 +38,21 @@ public enum AdminAction {
     /** row id: go to the portal (its exit, else the core) */
     GO_PORTAL,
     /** row id;open|close|lock|unlock */
-    PORTAL_COMMAND
+    PORTAL_COMMAND,
+    /** server;true|false: the server needs access (D70) */
+    ACCESS_SERVER,
+    /** token;kind;target: the token stands for that (D74) */
+    TOKEN_ASSIGN,
+    /** token */
+    TOKEN_CLEAR,
+    /** token;hours */
+    TOKEN_HOURS,
+    /** token;text */
+    TOKEN_HINT,
+    /** token;full|rent;hours: a stack for a shop lands in the admin's inventory */
+    TOKEN_STACK,
+    /** name;kind;value;count;consume: a rule on a warp (D86) */
+    WARP_RULE_ADD,
+    /** name;index */
+    WARP_RULE_DEL
 }

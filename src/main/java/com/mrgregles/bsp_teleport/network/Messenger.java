@@ -144,6 +144,10 @@ public final class Messenger {
         return send(new Message(Message.Type.PORTAL_DO, Message.To.SERVER, server).put("id", rowId).put("command", command));
     }
 
+    public static void accessChanged(String uuid) {
+        send(new Message(Message.Type.ACCESS_CHANGED, Message.To.ALL, Message.ALL).put("uuid", uuid));
+    }
+
     public static void portalsChanged() {
         send(new Message(Message.Type.PORTALS_CHANGED, Message.To.ALL, Message.ALL));
     }
@@ -210,6 +214,7 @@ public final class Messenger {
             case WARPS_CHANGED -> Storage.reloadWarps(server);
             case PORTALS_CHANGED -> Storage.reloadPortals(server);
             case PORTAL_DO -> Portals.applyCommand(server, m.get("id"), m.get("command"));
+            case ACCESS_CHANGED -> com.mrgregles.bsp_teleport.access.AccessService.onNotice(server, m.get("uuid"));
             case TP_REQUEST -> {
                 if (m.to == Message.To.ALL) {
                     for (ServerPlayer p : new ArrayList<>(server.getPlayerList().getPlayers())) {

@@ -37,5 +37,9 @@ public enum PortalScreenAction {
     /** true|false */
     CLOSE_WHEN_DOWN,
     /** seconds */
-    COOLDOWN
+    COOLDOWN,
+    /** kind;value;count;consume (D86) */
+    RULE_ADD,
+    /** index */
+    RULE_DEL
 }

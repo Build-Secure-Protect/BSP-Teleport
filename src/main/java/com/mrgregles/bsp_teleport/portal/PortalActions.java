@@ -203,6 +203,31 @@ public final class PortalActions {
         }
     }
 
+    // Access rules (D86)
+
+    public static boolean addRule(ServerPlayer player, PortalCoreBlockEntity core, com.mrgregles.bsp_teleport.access.AccessRule rule) {
+        List<com.mrgregles.bsp_teleport.access.AccessRule> rules = core.rules();
+        if (rule == null) {
+            return fail(player, "access.rule_bad");
+        }
+        if (rules.size() >= com.mrgregles.bsp_teleport.access.AccessRule.MAX) {
+            return fail(player, "access.rule_full", com.mrgregles.bsp_teleport.access.AccessRule.MAX);
+        }
+        rules.add(rule);
+        core.setRules(rules);
+        return done(player, core, "rule " + rule.describe());
+    }
+
+    public static boolean removeRule(ServerPlayer player, PortalCoreBlockEntity core, int index) {
+        List<com.mrgregles.bsp_teleport.access.AccessRule> rules = core.rules();
+        if (index < 0 || index >= rules.size()) {
+            return false;
+        }
+        com.mrgregles.bsp_teleport.access.AccessRule removed = rules.remove(index);
+        core.setRules(rules);
+        return done(player, core, "rule removed: " + removed.describe());
+    }
+
     /** Turns the core round: players then arrive on the other side (D56). */
     public static boolean flipFacing(ServerPlayer player, PortalCoreBlockEntity core) {
         ServerLevel level = (ServerLevel) core.getLevel();

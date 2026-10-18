@@ -1,6 +1,7 @@
 package com.mrgregles.bsp_teleport.registry;
 
 import com.mrgregles.bsp_teleport.BSPTeleport;
+import com.mrgregles.bsp_teleport.item.AccessTokenItem;
 import com.mrgregles.bsp_teleport.item.BandItem;
 import com.mrgregles.bsp_teleport.item.PortalBlockItem;
 import net.minecraft.core.registries.Registries;
@@ -21,6 +22,18 @@ public final class ModItems {
     /** The portal blocks (D53): admin-only to place. */
     public static final RegistryObject<Item> PORTAL_CORE = ITEMS.register("portal_core", () -> new PortalBlockItem(ModBlocks.PORTAL_CORE.get()));
     public static final RegistryObject<Item> PORTAL_FRAME = ITEMS.register("portal_frame", () -> new PortalBlockItem(ModBlocks.PORTAL_FRAME.get()));
+    public static final RegistryObject<Item> ACCESS_BOARD = ITEMS.register("access_board", () -> new PortalBlockItem(ModBlocks.ACCESS_BOARD.get()));
+
+    /** Access Token I to XX (D73): index 0 is token 1. */
+    @SuppressWarnings("unchecked")
+    public static final RegistryObject<Item>[] ACCESS_TOKENS = new RegistryObject[com.mrgregles.bsp_teleport.access.TokenAssignment.COUNT];
+
+    static {
+        for (int i = 0; i < ACCESS_TOKENS.length; i++) {
+            int index = i + 1;
+            ACCESS_TOKENS[i] = ITEMS.register("access_token_" + index, () -> new AccessTokenItem(index));
+        }
+    }
 
     public static final RegistryObject<CreativeModeTab> TAB = TABS.register("main", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.bsp_teleport"))
@@ -29,6 +42,10 @@ public final class ModItems {
                 out.accept(TELEPORT_BAND.get());
                 out.accept(PORTAL_CORE.get());
                 out.accept(PORTAL_FRAME.get());
+                out.accept(ACCESS_BOARD.get());
+                for (RegistryObject<Item> token : ACCESS_TOKENS) {
+                    out.accept(token.get());
+                }
             })
             .build());
 

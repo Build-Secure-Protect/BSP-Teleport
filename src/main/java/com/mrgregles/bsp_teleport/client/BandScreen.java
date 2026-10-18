@@ -241,7 +241,50 @@ public class BandScreen extends Screen {
         y = wide(g, x, y, Component.translatable(data.ignoring() ? "screen.bsp_teleport.band.ignore_on" : "screen.bsp_teleport.band.ignore_off").getString(),
                 data.ignoring() ? GOLD : DIM, () -> send(BandAction.TOGGLE_IGNORE, ""));
         if (data.skipCoins() > 0 && data.cooldownLeft() > 0) {
-            wide(g, x, y, Component.translatable("screen.bsp_teleport.band.tpnow", data.skipCoins()).getString(), GOLD, () -> go(BandAction.TPNOW, ""));
+            y = wide(g, x, y, Component.translatable("screen.bsp_teleport.band.tpnow", data.skipCoins()).getString(), GOLD, () -> go(BandAction.TPNOW, ""));
+        }
+        if (!data.accessOn()) {
+            return;
+        }
+        // The ACCESS list (D80): one line per restricted server, and the HUD layout the player draws it with.
+        y += 2;
+        small(g, Component.translatable("screen.bsp_teleport.band.access").getString().toUpperCase(), x, y, MUTED);
+        y += 9;
+        for (BandData.AccessEntry a : data.access()) {
+            if (y + 14 > bottom) {
+                break;
+            }
+            String state = switch (a.state()) {
+                case "main" -> Component.translatable("screen.bsp_teleport.band.access_main").getString();
+                case "full" -> Component.translatable("screen.bsp_teleport.band.access_full").getString();
+                case "rent" -> Component.translatable("screen.bsp_teleport.band.access_rent", a.left()).getString();
+                default -> Component.translatable("screen.bsp_teleport.band.access_none", a.token() > 0 ? "Access Token " + com.mrgregles.bsp_teleport.access.TokenAssignment.roman(a.token()) : "-").getString();
+            };
+            int colour = switch (a.state()) {
+                case "main" -> GOLD;
+                case "full" -> TQ;
+                case "rent" -> VIO;
+                default -> DIM;
+            };
+            g.fill(x, y, x + W - 20, y + 12, colour == DIM ? DIM : colour);
+            g.fill(x + 1, y + 1, x + W - 21, y + 11, SLOT);
+            if (a.token() > 0) {
+                g.pose().pushPose();
+                g.pose().translate(x + 2, y + 1, 0);
+                g.pose().scale(0.6f, 0.6f, 1f);
+                g.renderItem(new net.minecraft.world.item.ItemStack(com.mrgregles.bsp_teleport.registry.ModItems.ACCESS_TOKENS[a.token() - 1].get()), 0, 0);
+                g.pose().popPose();
+            }
+            small(g, a.server() + "  " + state, x + 16, y + 3, colour == DIM ? MUTED : colour);
+            y += 14;
+        }
+        boolean noMain = data.access().stream().noneMatch(a -> "main".equals(a.state()));
+        if (noMain && !data.access().isEmpty() && y + 16 <= bottom) {
+            y = wide(g, x, y, Component.translatable("screen.bsp_teleport.band.choose_main").getString(), GOLD, () -> go(BandAction.ACCESS_CHOOSE, ""));
+        }
+        if (y + 14 <= bottom) {
+            String layout = Component.translatable("screen.bsp_teleport.band.hud_" + com.mrgregles.bsp_teleport.ClientConfig.accessHud()).getString();
+            wide(g, x, y, Component.translatable("screen.bsp_teleport.band.hud", layout).getString(), VIO, com.mrgregles.bsp_teleport.ClientConfig::cycleAccessHud);
         }
     }
 

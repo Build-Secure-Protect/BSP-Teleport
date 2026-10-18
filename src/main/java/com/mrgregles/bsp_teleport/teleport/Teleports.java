@@ -79,6 +79,9 @@ public final class Teleports {
             tell(player, "blocked_thief", thief);
             return false;
         }
+        if (!com.mrgregles.bsp_teleport.access.AccessService.checkServer(player, destination.server())) {
+            return false;
+        }
         // D39: during a raid every teleport still works, except one that would land near the totem being stolen,
         // on this server or on another (R6).
         if (kind != TeleportKind.RANDOM && BspCore.beingRaided(player)) {

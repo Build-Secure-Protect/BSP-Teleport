@@ -85,6 +85,8 @@ public class PortalCoreBlockEntity extends BlockEntity {
     private String arrivalLine = "";
     /** When this core was first published; the two oldest cores own a link id (D55). 0 until then. */
     private long createdMs;
+    /** The access rules (D86), all of which must pass. */
+    private List<com.mrgregles.bsp_teleport.access.AccessRule> rules = new ArrayList<>();
 
     @Nullable
     private PortalRow lastRow;
@@ -141,6 +143,7 @@ public class PortalCoreBlockEntity extends BlockEntity {
         tag.putBoolean("ArriveOnly", arriveOnly);
         tag.putString("ArrivalLine", arrivalLine);
         tag.putLong("Created", createdMs);
+        tag.putString("Rules", com.mrgregles.bsp_teleport.access.AccessRule.serializeList(rules));
         tag.putString("Mode", mode.name());
         tag.putBoolean("OpenWhenPowered", openWhenPowered);
         tag.putInt("OpenAt", openAtMinute);
@@ -169,6 +172,7 @@ public class PortalCoreBlockEntity extends BlockEntity {
         arriveOnly = tag.getBoolean("ArriveOnly");
         arrivalLine = tag.getString("ArrivalLine");
         createdMs = tag.getLong("Created");
+        rules = com.mrgregles.bsp_teleport.access.AccessRule.parseList(tag.getString("Rules"));
         try {
             mode = Mode.valueOf(tag.getString("Mode"));
         } catch (IllegalArgumentException e) {
@@ -391,6 +395,15 @@ public class PortalCoreBlockEntity extends BlockEntity {
     /** The status of the destination alone, asked only when the frame is fine. */
     public PortalStatus destinationStatus() {
         return Portals.destinationStatus(this);
+    }
+
+    public List<com.mrgregles.bsp_teleport.access.AccessRule> rules() {
+        return new ArrayList<>(rules);
+    }
+
+    public void setRules(List<com.mrgregles.bsp_teleport.access.AccessRule> rules) {
+        this.rules = new ArrayList<>(rules);
+        setChanged();
     }
 
     public Mode mode() {

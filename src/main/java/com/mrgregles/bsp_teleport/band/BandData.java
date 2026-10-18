@@ -10,7 +10,7 @@ import java.util.List;
 public record BandData(String server, int slots, int used, int extraHomesLevel, int swiftLevel, int cooldownLeft, int raidDistance,
                        boolean raid, boolean ignoring, boolean hasSpawn, boolean hasBack, int skipCoins, int coins,
                        List<HomeEntry> homes, List<WarpEntry> warps, List<PlayerEntry> players, List<String> rtpServers,
-                       @Nullable RequestEntry request, boolean admin) {
+                       @Nullable RequestEntry request, boolean admin, boolean accessOn, List<AccessEntry> access) {
 
     public record HomeEntry(String name, String server, String world, int x, int y, int z, boolean locked, boolean nearRaid, String icon) {
     }
@@ -22,6 +22,10 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
     }
 
     public record RequestEntry(String from, String server, boolean here, int secondsLeft) {
+    }
+
+    /** One restricted server on the MORE tab (D80): state is main, full, rent or none; token is the server's symbol (0 for none). */
+    public record AccessEntry(String server, String state, String left, int token) {
     }
 
     public void encode(FriendlyByteBuf buf) {
@@ -69,6 +73,12 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
             buf.writeVarInt(request.secondsLeft());
         }
         buf.writeBoolean(admin);
+        buf.writeBoolean(accessOn);
+        buf.writeVarInt(access.size());
+        for (AccessEntry a : access) {
+            buf.writeUtf(a.server()).writeUtf(a.state()).writeUtf(a.left());
+            buf.writeVarInt(a.token());
+        }
     }
 
     public static BandData decode(FriendlyByteBuf buf) {
@@ -100,6 +110,13 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
         }
         RequestEntry request = buf.readBoolean() ? new RequestEntry(buf.readUtf(), buf.readUtf(), buf.readBoolean(), buf.readVarInt()) : null;
         boolean admin = buf.readBoolean();
-        return new BandData(server, slots, used, extra, swift, cooldown, raidDistance, raid, ignoring, hasSpawn, hasBack, skipCoins, coins, homes, warps, players, rtp, request, admin);
+        boolean accessOn = buf.readBoolean();
+        n = buf.readVarInt();
+        List<AccessEntry> access = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            String as = buf.readUtf(), st = buf.readUtf(), lf = buf.readUtf();
+            access.add(new AccessEntry(as, st, lf, buf.readVarInt()));
+        }
+        return new BandData(server, slots, used, extra, swift, cooldown, raidDistance, raid, ignoring, hasSpawn, hasBack, skipCoins, coins, homes, warps, players, rtp, request, admin, accessOn, access);
     }
 }

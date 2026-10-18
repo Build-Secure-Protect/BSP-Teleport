@@ -141,6 +141,15 @@ public final class TeleportActions {
         if (warp.cost() > 0 && BspCore.coins(player) < warp.cost()) {
             return fail(player, "warp.cannot_afford", warp.cost());
         }
+        // D86: the warp's own rules, all of which must pass; charges happen with the move.
+        com.mrgregles.bsp_teleport.access.AccessChecks.Result rules = com.mrgregles.bsp_teleport.access.AccessChecks.evaluate(player,
+                com.mrgregles.bsp_teleport.access.AccessRule.parseList(warp.rules()), com.mrgregles.bsp_teleport.access.AccessGrant.Kind.WARP, warp.name());
+        if (!rules.ok()) {
+            if (!rules.refusal().getString().isEmpty()) {
+                player.displayClientMessage(rules.refusal(), false);
+            }
+            return false;
+        }
         return Teleports.start(player, warp.position().toDestination(""), Component.literal(warp.name()), TeleportKind.WARP, () -> {
             if (!BspCore.pay(player, warp.cost())) {
                 tell(player, "warp.cannot_afford", warp.cost());
@@ -149,7 +158,7 @@ public final class TeleportActions {
             if (warp.cost() > 0) {
                 tell(player, "warp.paid", warp.cost());
             }
-            return true;
+            return com.mrgregles.bsp_teleport.access.AccessChecks.charge(player, rules);
         });
     }
 
@@ -189,6 +198,9 @@ public final class TeleportActions {
     /** {@code /rtp [server]}: here, or asked of another server over Redis. */
     public static boolean rtp(ServerPlayer player, @Nullable String server) {
         if (server != null && !server.isEmpty() && !server.equals(TeleportConfig.serverName())) {
+            if (!com.mrgregles.bsp_teleport.access.AccessService.checkServer(player, server)) {
+                return false;
+            }
             if (Teleports.isWaiting(player) || Teleports.cooldownLeft(player) > 0) {
                 return Teleports.start(player, Position.of(player).toDestination(""), Component.empty(), TeleportKind.RANDOM, null);
             }

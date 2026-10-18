@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "bsp_teleport:block/access_board"
+    },
+    "facing=east": {
+      "model": "bsp_teleport:block/access_board",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "bsp_teleport:block/access_board",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bsp_teleport:block/access_board",
+      "y": 270
+    }
+  }
+}

@@ -647,6 +647,11 @@ public final class Portals {
 
     /** The last checks of D61 (raid distance, the start event), then the forced move. */
     private static void go(PortalCoreBlockEntity core, ServerPlayer player, Destination destination) {
+        if (!com.mrgregles.bsp_teleport.access.AccessService.mayEnter(player, destination.server())) {
+            com.mrgregles.bsp_teleport.access.AccessService.deny(player, com.mrgregles.bsp_teleport.access.AccessGrant.Kind.SERVER, destination.server());
+            hold(player, core, 3);
+            return;
+        }
         if (BspCore.beingRaided(player)) {
             int distance = TeleportConfig.getOr(TeleportConfig.RAID_HOME_DISTANCE, 150);
             if (BspCore.nearRaid(player.server, player.getUUID(), destination.server(), destination.world(), destination.x(), destination.z(), distance)) {
@@ -660,6 +665,19 @@ public final class Portals {
             if (!event.reason().isEmpty()) {
                 player.displayClientMessage(Component.literal(event.reason()), true);
             }
+            hold(player, core, 3);
+            return;
+        }
+        com.mrgregles.bsp_teleport.access.AccessChecks.Result rules = com.mrgregles.bsp_teleport.access.AccessChecks.evaluate(player, core.rules(),
+                com.mrgregles.bsp_teleport.access.AccessGrant.Kind.PORTAL, core.name());
+        if (!rules.ok()) {
+            if (!rules.refusal().getString().isEmpty()) {
+                player.displayClientMessage(rules.refusal(), true);
+            }
+            hold(player, core, 3);
+            return;
+        }
+        if (!com.mrgregles.bsp_teleport.access.AccessChecks.charge(player, rules)) {
             hold(player, core, 3);
             return;
         }

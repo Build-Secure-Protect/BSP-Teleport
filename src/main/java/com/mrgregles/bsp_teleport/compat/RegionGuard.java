@@ -84,11 +84,28 @@ public final class RegionGuard {
         return PRESENT && Impl.publish(KIND_LANDING, player + Destination.SEPARATOR + destination.serialize());
     }
 
+    /** Lets players with bought region access through a region whose entry is denied (D83). Call once the server is up. */
+    public static void registerAccessExemption() {
+        if (PRESENT) {
+            Impl.registerAccessExemption();
+        }
+    }
+
     /** Only this class names Region Guard's types, so the outer class loads without the mod. */
     private static final class Impl {
         static void register() {
             MinecraftForge.EVENT_BUS.addListener(Impl::onTrigger);
             MinecraftForge.EVENT_BUS.addListener(Impl::onRemoteMessage);
+        }
+
+        static void registerAccessExemption() {
+            try {
+                com.mrgregles.bsp_region_guard.api.RegionGuardApi.get().regions().addExemption((level, pos, flag, player) ->
+                        flag == com.mrgregles.bsp_region_guard.flag.Flags.ENTRY && player instanceof ServerPlayer sp
+                                && com.mrgregles.bsp_teleport.access.AccessService.hasRegionAccess(sp, com.mrgregles.bsp_region_guard.api.RegionGuardApi.get().regions().regionIdsAt(level, pos)));
+            } catch (LinkageError | RuntimeException e) {
+                BSPTeleport.LOGGER.warn("Could not register the access exemption with Region Guard: {}", e.toString());
+            }
         }
 
         static boolean allowsTeleportOut(ServerLevel level, BlockPos pos, @Nullable ServerPlayer player) {
