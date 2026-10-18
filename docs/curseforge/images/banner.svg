@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+<rect width="1200" height="1200" fill="#0B0F14"/>
+<g transform="translate(0, 400)">
+<rect width="1200" height="400" fill="#0B0F14"/>
+<line x1="0" y1="0" x2="0" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="40" y1="0" x2="40" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="80" y1="0" x2="80" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="120" y1="0" x2="120" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="160" y1="0" x2="160" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="200" y1="0" x2="200" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="240" y1="0" x2="240" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="280" y1="0" x2="280" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="320" y1="0" x2="320" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="360" y1="0" x2="360" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="400" y1="0" x2="400" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="440" y1="0" x2="440" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="480" y1="0" x2="480" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="520" y1="0" x2="520" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="560" y1="0" x2="560" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="600" y1="0" x2="600" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="640" y1="0" x2="640" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="680" y1="0" x2="680" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="720" y1="0" x2="720" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="760" y1="0" x2="760" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="800" y1="0" x2="800" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="840" y1="0" x2="840" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="880" y1="0" x2="880" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="920" y1="0" x2="920" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="960" y1="0" x2="960" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="1000" y1="0" x2="1000" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="1040" y1="0" x2="1040" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="1080" y1="0" x2="1080" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="1120" y1="0" x2="1120" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="1160" y1="0" x2="1160" y2="400" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="0" y1="0" x2="1200" y2="0" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="0" y1="40" x2="1200" y2="40" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="0" y1="80" x2="1200" y2="80" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="0" y1="120" x2="1200" y2="120" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="0" y1="160" x2="1200" y2="160" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="0" y1="200" x2="1200" y2="200" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="0" y1="240" x2="1200" y2="240" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="0" y1="280" x2="1200" y2="280" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="0" y1="320" x2="1200" y2="320" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<line x1="0" y1="360" x2="1200" y2="360" stroke="#111821" stroke-width="1" stroke-linecap="round"/>
+<rect x="60" y="60" width="1080" height="280" rx="12" fill="#10151C" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="100" y="150" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="58" font-weight="bold" fill="#E6EAF2" text-anchor="start">BSP-Teleport</text>
+<text x="100" y="196" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="24" font-weight="normal" fill="#9AA3B5" text-anchor="start">Homes, warps, portals and server access across the Build Secure Protect network.</text>
+<rect x="100" y="232" width="148.9" height="34" rx="17" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="174.45" y="255" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#19D3B0" text-anchor="middle">Teleport Band</text>
+<rect x="262.9" y="232" width="139.60000000000002" height="34" rx="17" fill="#0C0E12" stroke="#B58CFF" stroke-width="1.5" opacity="1"/>
+<text x="332.7" y="255" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#B58CFF" text-anchor="middle">Cross-server</text>
+<rect x="416.5" y="232" width="195.4" height="34" rx="17" fill="#0C0E12" stroke="#FFD23A" stroke-width="1.5" opacity="1"/>
+<text x="514.2" y="255" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#FFD23A" text-anchor="middle">Portals with doors</text>
+<rect x="625.9" y="232" width="148.9" height="34" rx="17" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="700.35" y="255" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#19D3B0" text-anchor="middle">Access Tokens</text>
+<text x="100" y="312" font-family="Menlo, Monaco, monospace" font-size="16" font-weight="normal" fill="#9AA3B5" text-anchor="start">Minecraft 1.20.1  ·  Forge 47.4  ·  requires BSP-Core  ·  Region Guard and RankUp optional  ·  MIT</text>
+<g shape-rendering="crispEdges">
+<rect x="1056" y="108" width="8" height="8" fill="#78f0d7"/>
+<rect x="1064" y="108" width="8" height="8" fill="#78f0d7"/>
+<rect x="1040" y="116" width="8" height="8" fill="#78f0d7"/>
+<rect x="1048" y="116" width="8" height="8" fill="#19d3b0"/>
+<rect x="1056" y="116" width="8" height="8" fill="#ffd23a"/>
+<rect x="1064" y="116" width="8" height="8" fill="#ffd23a"/>
+<rect x="1072" y="116" width="8" height="8" fill="#19d3b0"/>
+<rect x="1080" y="116" width="8" height="8" fill="#78f0d7"/>
+<rect x="1032" y="124" width="8" height="8" fill="#78f0d7"/>
+<rect x="1040" y="124" width="8" height="8" fill="#19d3b0"/>
+<rect x="1056" y="124" width="8" height="8" fill="#ffd23a"/>
+<rect x="1064" y="124" width="8" height="8" fill="#b08a1c"/>
+<rect x="1080" y="124" width="8" height="8" fill="#19d3b0"/>
+<rect x="1088" y="124" width="8" height="8" fill="#78f0d7"/>
+<rect x="1024" y="132" width="8" height="8" fill="#78f0d7"/>
+<rect x="1032" y="132" width="8" height="8" fill="#19d3b0"/>
+<rect x="1056" y="132" width="8" height="8" fill="#ffffff"/>
+<rect x="1064" y="132" width="8" height="8" fill="#ffffff"/>
+<rect x="1088" y="132" width="8" height="8" fill="#19d3b0"/>
+<rect x="1096" y="132" width="8" height="8" fill="#78f0d7"/>
+<rect x="1024" y="140" width="8" height="8" fill="#19d3b0"/>
+<rect x="1104" y="140" width="8" height="8" fill="#19d3b0"/>
+<rect x="1016" y="148" width="8" height="8" fill="#b58cff"/>
+<rect x="1024" y="148" width="8" height="8" fill="#19d3b0"/>
+<rect x="1104" y="148" width="8" height="8" fill="#19d3b0"/>
+<rect x="1112" y="148" width="8" height="8" fill="#b58cff"/>
+<rect x="1016" y="156" width="8" height="8" fill="#6f4bc4"/>
+<rect x="1024" y="156" width="8" height="8" fill="#19d3b0"/>
+<rect x="1064" y="156" width="8" height="8" fill="#5a6472"/>
+<rect x="1104" y="156" width="8" height="8" fill="#19d3b0"/>
+<rect x="1112" y="156" width="8" height="8" fill="#6f4bc4"/>
+<rect x="1016" y="164" width="8" height="8" fill="#6f4bc4"/>
+<rect x="1024" y="164" width="8" height="8" fill="#19d3b0"/>
+<rect x="1064" y="164" width="8" height="8" fill="#5a6472"/>
+<rect x="1104" y="164" width="8" height="8" fill="#19d3b0"/>
+<rect x="1112" y="164" width="8" height="8" fill="#6f4bc4"/>
+<rect x="1016" y="172" width="8" height="8" fill="#b58cff"/>
+<rect x="1024" y="172" width="8" height="8" fill="#19d3b0"/>
+<rect x="1104" y="172" width="8" height="8" fill="#19d3b0"/>
+<rect x="1112" y="172" width="8" height="8" fill="#b58cff"/>
+<rect x="1024" y="180" width="8" height="8" fill="#19d3b0"/>
+<rect x="1104" y="180" width="8" height="8" fill="#19d3b0"/>
+<rect x="1024" y="188" width="8" height="8" fill="#0c7864"/>
+<rect x="1032" y="188" width="8" height="8" fill="#19d3b0"/>
+<rect x="1096" y="188" width="8" height="8" fill="#19d3b0"/>
+<rect x="1104" y="188" width="8" height="8" fill="#0c7864"/>
+<rect x="1032" y="196" width="8" height="8" fill="#0c7864"/>
+<rect x="1040" y="196" width="8" height="8" fill="#19d3b0"/>
+<rect x="1088" y="196" width="8" height="8" fill="#19d3b0"/>
+<rect x="1096" y="196" width="8" height="8" fill="#0c7864"/>
+<rect x="1040" y="204" width="8" height="8" fill="#0c7864"/>
+<rect x="1048" y="204" width="8" height="8" fill="#19d3b0"/>
+<rect x="1056" y="204" width="8" height="8" fill="#19d3b0"/>
+<rect x="1064" y="204" width="8" height="8" fill="#19d3b0"/>
+<rect x="1072" y="204" width="8" height="8" fill="#19d3b0"/>
+<rect x="1080" y="204" width="8" height="8" fill="#19d3b0"/>
+<rect x="1088" y="204" width="8" height="8" fill="#0c7864"/>
+<rect x="1056" y="212" width="8" height="8" fill="#0c7864"/>
+<rect x="1064" y="212" width="8" height="8" fill="#0c7864"/>
+</g>
+</g>
+</svg>

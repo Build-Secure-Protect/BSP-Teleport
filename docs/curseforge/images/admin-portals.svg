@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+<rect width="1200" height="1200" fill="#0B0F14"/>
+<g transform="translate(0, 280)">
+<rect width="1200" height="640" fill="#0B0F14"/>
+<rect x="38" y="38" width="1124" height="564" rx="0" fill="#B58CFF" opacity="1"/>
+<rect x="40" y="40" width="1120" height="560" rx="0" fill="#10151C" opacity="1"/>
+<text x="56" y="70" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#B58CFF" text-anchor="start" letter-spacing="2">ADMIN</text>
+<text x="56" y="90" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Open and Close act now and switch the portal to manual. Click a node on the map to select it.</text>
+<rect x="1074.8" y="52" width="69.19999999999999" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="1109.3999999999999" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">TOKENS</text>
+<rect x="991.4" y="52" width="77.39999999999999" height="24" rx="0" fill="#0C0E12" stroke="#B58CFF" stroke-width="1.5" opacity="1"/>
+<text x="1030.1" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#B58CFF" text-anchor="middle" letter-spacing="1">PORTALS</text>
+<rect x="924.4" y="52" width="61.0" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="954.9" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">WARPS</text>
+<rect x="832.8" y="52" width="85.6" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="875.5999999999999" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">SETTINGS</text>
+<rect x="749.4" y="52" width="77.39999999999999" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="788.1" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">NETWORK</text>
+<rect x="1103.2" y="98" width="40.8" height="22" rx="0" fill="#0C0E12" stroke="#B58CFF" stroke-width="1.5" opacity="1"/>
+<text x="1123.6000000000001" y="113" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#B58CFF" text-anchor="middle" letter-spacing="1">MAP</text>
+<text x="64" y="146" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#FFD23A" text-anchor="start" letter-spacing="1.5">BSP-SPAWN  (this server)</text>
+<rect x="56" y="156" width="1088" height="44" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="66" y="175" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Hub East</text>
+<text x="66" y="192" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#8FE04A" text-anchor="start">120,64,-40   link hub-east: Market Gate (BSP-SafeRoom)   open</text>
+<rect x="1085.6" y="167" width="48.4" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="1109.8" y="182" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">LOCK</text>
+<rect x="1023.5999999999999" y="167" width="56.0" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="1051.6" y="182" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">CLOSE</text>
+<rect x="969.1999999999999" y="167" width="48.4" height="22" rx="0" fill="#0C0E12" stroke="#8FE04A" stroke-width="1.5" opacity="1"/>
+<text x="993.4" y="182" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#8FE04A" text-anchor="middle" letter-spacing="1">OPEN</text>
+<rect x="929.9999999999999" y="167" width="33.2" height="22" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="946.5999999999999" y="182" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">GO</text>
+<rect x="56" y="206" width="1088" height="44" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="66" y="225" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Wilds Drop</text>
+<text x="66" y="242" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#8FE04A" text-anchor="start">88,70,12   random on BSP-Wilds   open</text>
+<rect x="1085.6" y="217" width="48.4" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="1109.8" y="232" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">LOCK</text>
+<rect x="1023.5999999999999" y="217" width="56.0" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="1051.6" y="232" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">CLOSE</text>
+<rect x="969.1999999999999" y="217" width="48.4" height="22" rx="0" fill="#0C0E12" stroke="#8FE04A" stroke-width="1.5" opacity="1"/>
+<text x="993.4" y="232" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#8FE04A" text-anchor="middle" letter-spacing="1">OPEN</text>
+<rect x="929.9999999999999" y="217" width="33.2" height="22" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="946.5999999999999" y="232" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">GO</text>
+<rect x="56" y="256" width="1088" height="44" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="66" y="275" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Old Gate</text>
+<text x="66" y="292" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#FFD23A" text-anchor="start">-10,64,200   -   no destination</text>
+<rect x="1085.6" y="267" width="48.4" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="1109.8" y="282" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">LOCK</text>
+<rect x="1023.5999999999999" y="267" width="56.0" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="1051.6" y="282" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">CLOSE</text>
+<rect x="969.1999999999999" y="267" width="48.4" height="22" rx="0" fill="#0C0E12" stroke="#8FE04A" stroke-width="1.5" opacity="1"/>
+<text x="993.4" y="282" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#8FE04A" text-anchor="middle" letter-spacing="1">OPEN</text>
+<rect x="929.9999999999999" y="267" width="33.2" height="22" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="946.5999999999999" y="282" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">GO</text>
+<text x="64" y="322" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#FFD23A" text-anchor="start" letter-spacing="1.5">BSP-SAFEROOM</text>
+<rect x="56" y="332" width="1088" height="44" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="66" y="351" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Market Gate</text>
+<text x="66" y="368" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#FFD23A" text-anchor="start">4,65,-90   link hub-east: Hub East (BSP-Spawn)   real clock, opens 18:00   closed</text>
+<rect x="1085.6" y="343" width="48.4" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="1109.8" y="358" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">LOCK</text>
+<rect x="1023.5999999999999" y="343" width="56.0" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="1051.6" y="358" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">CLOSE</text>
+<rect x="969.1999999999999" y="343" width="48.4" height="22" rx="0" fill="#0C0E12" stroke="#8FE04A" stroke-width="1.5" opacity="1"/>
+<text x="993.4" y="358" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#8FE04A" text-anchor="middle" letter-spacing="1">OPEN</text>
+<rect x="929.9999999999999" y="343" width="33.2" height="22" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="946.5999999999999" y="358" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">GO</text>
+<rect x="56" y="382" width="1088" height="44" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="66" y="401" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Arena Door</text>
+<text x="66" y="418" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#FF6B5C" text-anchor="start">300,64,300   portal warp arena   locked</text>
+<rect x="1070.4" y="393" width="63.599999999999994" height="22" rx="0" fill="#0C0E12" stroke="#FF6B5C" stroke-width="1.5" opacity="1"/>
+<text x="1102.2" y="408" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#FF6B5C" text-anchor="middle" letter-spacing="1">UNLOCK</text>
+<rect x="1008.4000000000001" y="393" width="56.0" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="1036.4" y="408" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">CLOSE</text>
+<rect x="954.0000000000001" y="393" width="48.4" height="22" rx="0" fill="#0C0E12" stroke="#8FE04A" stroke-width="1.5" opacity="1"/>
+<text x="978.2000000000002" y="408" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#8FE04A" text-anchor="middle" letter-spacing="1">OPEN</text>
+<rect x="914.8000000000001" y="393" width="33.2" height="22" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="931.4000000000001" y="408" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">GO</text>
+<line x1="56" y1="540" x2="1144" y2="540" stroke="#2A2F3A" stroke-width="1" stroke-linecap="round"/>
+<text x="56" y="560" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="start">this server: BSP-Spawn      storage: mysql ok</text>
+<text x="1144" y="560" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#8FE04A" text-anchor="end">all servers up</text>
+</g>
+</svg>

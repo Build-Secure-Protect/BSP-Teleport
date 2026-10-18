@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+<rect width="1200" height="1200" fill="#0B0F14"/>
+<g transform="translate(0, 280)">
+<rect width="1200" height="640" fill="#0B0F14"/>
+<rect x="38" y="38" width="704" height="564" rx="0" fill="#B58CFF" opacity="1"/>
+<rect x="40" y="40" width="700" height="560" rx="0" fill="#10151C" opacity="1"/>
+<text x="56" y="70" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#B58CFF" text-anchor="start" letter-spacing="2">PORTAL</text>
+<text x="56" y="90" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Hub East.  Doors follow the mode; Lock forces them closed in any mode.</text>
+<rect x="654.8" y="52" width="69.19999999999999" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="689.4" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">ACCESS</text>
+<rect x="546.8" y="52" width="102.0" height="24" rx="0" fill="#0C0E12" stroke="#B58CFF" stroke-width="1.5" opacity="1"/>
+<text x="597.8" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#B58CFF" text-anchor="middle" letter-spacing="1">OPEN/CLOSE</text>
+<rect x="487.99999999999994" y="52" width="52.8" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="514.4" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">LOOK</text>
+<rect x="371.79999999999995" y="52" width="110.19999999999999" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="426.9" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">DESTINATION</text>
+<rect x="56" y="102" width="668" height="26" rx="0" fill="#0C0E12" stroke="#8FE04A" stroke-width="1.5" opacity="1"/>
+<text x="66" y="120" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#8FE04A" text-anchor="start" letter-spacing="1">READY  DOORS: CLOSED</text>
+<rect x="56" y="140" width="68" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="90.0" y="155" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">MANUAL</text>
+<rect x="130" y="140" width="84" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="172.0" y="155" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">REDSTONE</text>
+<rect x="220" y="140" width="100" height="22" rx="0" fill="#0C0E12" stroke="#B58CFF" stroke-width="1.5" opacity="1"/>
+<text x="270.0" y="155" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#B58CFF" text-anchor="middle" letter-spacing="1">REAL CLOCK</text>
+<rect x="326" y="140" width="100" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="376.0" y="155" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">GAME CLOCK</text>
+<rect x="56" y="174" width="668" height="50" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="66" y="195" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Real clock</text>
+<text x="66" y="215" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="start">opens and closes at these times (Europe/London)</text>
+<rect x="66" y="190" width="70" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="74" y="207" font-family="Menlo, Monaco, monospace" font-size="13" font-weight="normal" fill="#E6EAF2" text-anchor="start">18:00</text>
+<text x="146" y="207" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">to</text>
+<rect x="170" y="190" width="70" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="178" y="207" font-family="Menlo, Monaco, monospace" font-size="13" font-weight="normal" fill="#E6EAF2" text-anchor="start">23:00</text>
+<rect x="673.2" y="190" width="40.8" height="22" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="693.6" y="205" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">SET</text>
+<rect x="56" y="236" width="668" height="40" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="66" y="257" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Lock</text>
+<text x="66" y="267" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="start">forces the portal closed in any mode</text>
+<rect x="673.2" y="245" width="40.8" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="693.6" y="260" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">OFF</text>
+<rect x="56" y="282" width="668" height="40" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="66" y="303" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Cooldown per player</text>
+<text x="66" y="313" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="start">seconds before the same player may use it again</text>
+<rect x="688.4" y="291" width="25.6" height="22" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="701.1999999999999" y="306" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">+</text>
+<text x="680.4" y="307" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#FFD23A" text-anchor="end">5 s</text>
+<rect x="618.8" y="291" width="25.6" height="22" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="631.5999999999999" y="306" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">-</text>
+<text x="66" y="350" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="start">Doors: closed, mode real clock 18:00 to 23:00, doors rendered, close when down</text>
+<line x1="56" y1="550" x2="724" y2="550" stroke="#2A2F3A" stroke-width="1" stroke-linecap="round"/>
+<text x="56" y="570" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="start">BSP-Spawn  minecraft:overworld  120, 64, -40      frame 9x6, opening 28 cells</text>
+<text x="724" y="570" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="end">DARK</text>
+<text x="780" y="70" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" fill="#E6EAF2" text-anchor="start">Four ways to open and close</text>
+<text x="780" y="100" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#B58CFF" text-anchor="start" letter-spacing="1.5">Manual</text>
+<text x="780" y="120" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">an Open and a Close button; the panel and</text>
+<text x="780" y="138" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">/bsptp portal &lt;name&gt; open|close do the same</text>
+<text x="780" y="156" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">from anywhere</text>
+<text x="780" y="192" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#B58CFF" text-anchor="start" letter-spacing="1.5">Redstone</text>
+<text x="780" y="212" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">the core reads power on any side: open while</text>
+<text x="780" y="230" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">powered, or closed while powered</text>
+<text x="780" y="266" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#B58CFF" text-anchor="start" letter-spacing="1.5">Real clock</text>
+<text x="780" y="286" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">open from one time of day to another on the</text>
+<text x="780" y="304" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">server's clock, wrapping past midnight</text>
+<text x="780" y="340" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#B58CFF" text-anchor="start" letter-spacing="1.5">Game clock</text>
+<text x="780" y="360" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">the same in world time, 0 to 24000</text>
+<text x="780" y="396" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#B58CFF" text-anchor="start" letter-spacing="1.5">Close when down</text>
+<text x="780" y="416" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">the doors shut by themselves while the</text>
+<text x="780" y="434" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">destination's server is away and reopen when</text>
+<text x="780" y="452" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">it is back</text>
+</g>
+</svg>
