@@ -24,6 +24,10 @@ import net.minecraftforge.server.ServerLifecycleHooks;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
@@ -45,6 +49,49 @@ public final class TeleportService implements BspTeleportApi {
         return TeleportConfig.serverName();
     }
 
+    /** When each online player logged in here, for the switch gap (B5). */
+    private static final Map<UUID, Long> LOGIN_AT = new HashMap<>();
+    /** Players whose departure is already waiting for the gap to pass. */
+    private static final Set<UUID> WAITING = new HashSet<>();
+
+    public static void onPlayerLoggedIn(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
+        LOGIN_AT.put(event.getEntity().getUUID(), System.currentTimeMillis());
+    }
+
+    public static void onPlayerLoggedOut(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
+        LOGIN_AT.remove(event.getEntity().getUUID());
+        WAITING.remove(event.getEntity().getUUID());
+    }
+
+    /**
+     * B5: a backend switch that starts within {@code network.switchGapSeconds} of the player's login is held until the
+     * gap has passed, because the client is still settling from the proxy's Forge reset and a second reset on top of
+     * it kicks it ("Can't serialize unregistered packet"). Returns true when the departure was deferred (it runs by
+     * itself later). Never defers while the server is stopping.
+     */
+    private static boolean deferWhileFresh(ServerPlayer player, String server, Runnable departure) {
+        int gap = TeleportConfig.getOr(TeleportConfig.SWITCH_GAP_SECONDS, 3);
+        Long at = LOGIN_AT.get(player.getUUID());
+        if (gap <= 0 || at == null || !player.server.isRunning()) {
+            return false;
+        }
+        long wait = at + gap * 1000L - System.currentTimeMillis();
+        if (wait <= 0) {
+            return false;
+        }
+        if (!WAITING.add(player.getUUID())) {
+            return true;
+        }
+        player.displayClientMessage(Component.translatable("message.bsp_teleport.leaving_in", server, (wait + 999) / 1000), true);
+        Scheduler.later((int) (wait / 50) + 1, () -> {
+            WAITING.remove(player.getUUID());
+            if (!player.hasDisconnected() && !player.isRemoved()) {
+                departure.run();
+            }
+        });
+        return true;
+    }
+
     @Override
     public boolean teleport(ServerPlayer player, Destination destination) {
         if (player.isDeadOrDying() || player.hasDisconnected()) {
@@ -57,6 +104,9 @@ public final class TeleportService implements BspTeleportApi {
         }
         if (player.connection == null) {
             return false;
+        }
+        if (deferWhileFresh(player, destination.server(), () -> teleport(player, destination))) {
+            return true;
         }
         UUID uuid = player.getUUID();
         if (!Storage.enabled() && !RegionGuard.announceLanding(uuid, destination)) {
@@ -76,6 +126,9 @@ public final class TeleportService implements BspTeleportApi {
             return false;
         }
         Teleports.recordBack(player);
+        if (deferWhileFresh(player, server, () -> sendToServer(player, server))) {
+            return true;
+        }
         leave(player, server);
         return true;
     }

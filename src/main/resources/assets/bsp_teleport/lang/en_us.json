@@ -291,6 +291,7 @@
   "message.bsp_teleport.failed": "The teleport could not be started.",
   "message.bsp_teleport.teleported": "Teleported to %s.",
   "message.bsp_teleport.moving": "Stand still, then try again.",
+  "message.bsp_teleport.leaving_in": "Leaving for %s in %s s.",
   "message.bsp_teleport.home.set": "Home %s set.",
   "message.bsp_teleport.home.updated": "Home %s moved here.",
   "message.bsp_teleport.home.deleted": "Home %s deleted.",

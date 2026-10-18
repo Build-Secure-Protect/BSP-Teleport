@@ -23,6 +23,7 @@ MESSAGES = {
     "failed": "The teleport could not be started.",
     "teleported": "Teleported to %s.",
     "moving": "Stand still, then try again.",
+    "leaving_in": "Leaving for %s in %s s.",
     # Homes
     "home.set": "Home %s set.",
     "home.updated": "Home %s moved here.",

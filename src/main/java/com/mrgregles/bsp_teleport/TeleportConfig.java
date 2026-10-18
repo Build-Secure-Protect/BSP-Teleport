@@ -9,7 +9,7 @@ public final class TeleportConfig {
     public static final ForgeConfigSpec SPEC;
 
     public static final ForgeConfigSpec.ConfigValue<String> SERVER_NAME;
-    public static final ForgeConfigSpec.IntValue LANDING_SECONDS;
+    public static final ForgeConfigSpec.IntValue LANDING_SECONDS, SWITCH_GAP_SECONDS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SERVER_ALIASES;
 
     public static final ForgeConfigSpec.IntValue WARMUP_SECONDS, COOLDOWN_SECONDS, INVULNERABLE_SECONDS, SKIP_COOLDOWN_COINS;
@@ -51,6 +51,8 @@ public final class TeleportConfig {
                 .define("serverName", "server-1");
         LANDING_SECONDS = b.comment("How long a cross-server landing waits for its player to arrive before it is forgotten.")
                 .defineInRange("landingSeconds", 120, 10, 3600);
+        SWITCH_GAP_SECONDS = b.comment("Seconds after a player's login before they may be moved to another server again (B5: a second proxy switch on top of a fresh one kicks the client). 0 turns the wait off.")
+                .defineInRange("switchGapSeconds", 3, 0, 60);
         SERVER_ALIASES = b.comment("BSP-Core names servers by its storage.serverId. When that differs from the proxy name, map it here as \"bspCoreId=proxyName\".")
                 .defineListAllowEmpty("serverAliases", List.of(), o -> o instanceof String);
         b.pop();
