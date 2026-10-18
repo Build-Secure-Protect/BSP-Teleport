@@ -7,13 +7,17 @@ import java.util.List;
 
 /** Everything the admin panel shows, built on the server and sent whole. */
 public record AdminData(String server, boolean readOnly, String storage, String messaging,
-                        List<Setting> settings, List<WarpRow> warps, List<ServerRow> servers) {
+                        List<Setting> settings, List<WarpRow> warps, List<ServerRow> servers, List<PortalEntry> portals) {
 
     /** One config value. {@code kind} is INT, BOOL or TEXT; INT values carry min, max and step. */
     public record Setting(String id, String value, String kind, int min, int max, int step) {
     }
 
-    public record WarpRow(String name, String server, int cost, boolean restricted, String icon) {
+    public record WarpRow(String name, String server, int cost, boolean restricted, String icon, boolean portal) {
+    }
+
+    /** One portal on the network, from its shared row. */
+    public record PortalEntry(String id, String name, String server, String world, int x, int y, int z, String destination, String linkId, String status, String doors) {
     }
 
     public record ServerRow(String name, boolean up, boolean here, List<String> players) {
@@ -36,6 +40,7 @@ public record AdminData(String server, boolean readOnly, String storage, String 
             buf.writeUtf(w.name()).writeUtf(w.server()).writeUtf(w.icon());
             buf.writeVarInt(w.cost());
             buf.writeBoolean(w.restricted());
+            buf.writeBoolean(w.portal());
         }
         buf.writeVarInt(servers.size());
         for (ServerRow s : servers) {
@@ -44,6 +49,14 @@ public record AdminData(String server, boolean readOnly, String storage, String 
             buf.writeBoolean(s.here());
             buf.writeVarInt(s.players().size());
             s.players().forEach(buf::writeUtf);
+        }
+        buf.writeVarInt(portals.size());
+        for (PortalEntry p : portals) {
+            buf.writeUtf(p.id()).writeUtf(p.name()).writeUtf(p.server()).writeUtf(p.world());
+            buf.writeInt(p.x());
+            buf.writeInt(p.y());
+            buf.writeInt(p.z());
+            buf.writeUtf(p.destination()).writeUtf(p.linkId()).writeUtf(p.status()).writeUtf(p.doors());
         }
     }
 
@@ -60,7 +73,9 @@ public record AdminData(String server, boolean readOnly, String storage, String 
         List<WarpRow> warps = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
             String wn = buf.readUtf(), ws = buf.readUtf(), wi = buf.readUtf();
-            warps.add(new WarpRow(wn, ws, buf.readVarInt(), buf.readBoolean(), wi));
+            int cost = buf.readVarInt();
+            boolean restricted = buf.readBoolean(), portal = buf.readBoolean();
+            warps.add(new WarpRow(wn, ws, cost, restricted, wi, portal));
         }
         n = buf.readVarInt();
         List<ServerRow> servers = new ArrayList<>(n);
@@ -74,6 +89,13 @@ public record AdminData(String server, boolean readOnly, String storage, String 
             }
             servers.add(new ServerRow(name, up, here, players));
         }
-        return new AdminData(server, readOnly, storage, messaging, settings, warps, servers);
+        n = buf.readVarInt();
+        List<PortalEntry> portals = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            String id = buf.readUtf(), pn = buf.readUtf(), ps = buf.readUtf(), pw = buf.readUtf();
+            int x = buf.readInt(), y = buf.readInt(), z = buf.readInt();
+            portals.add(new PortalEntry(id, pn, ps, pw, x, y, z, buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readUtf()));
+        }
+        return new AdminData(server, readOnly, storage, messaging, settings, warps, servers, portals);
     }
 }

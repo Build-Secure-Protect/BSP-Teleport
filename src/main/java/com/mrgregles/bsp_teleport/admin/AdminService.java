@@ -4,7 +4,10 @@ import com.mrgregles.bsp_teleport.BSPTeleport;
 import com.mrgregles.bsp_teleport.TeleportConfig;
 import com.mrgregles.bsp_teleport.api.BspTeleportApi;
 import com.mrgregles.bsp_teleport.compat.BspCore;
+import com.mrgregles.bsp_teleport.data.PortalRow;
 import com.mrgregles.bsp_teleport.data.Position;
+import com.mrgregles.bsp_teleport.portal.PortalActions;
+import com.mrgregles.bsp_teleport.portal.Portals;
 import com.mrgregles.bsp_teleport.data.TeleportData;
 import com.mrgregles.bsp_teleport.data.Warp;
 import com.mrgregles.bsp_teleport.util.Icons;
@@ -107,6 +110,24 @@ public final class AdminService {
             case BRING_PLAYER -> AdminActions.bringPlayer(player, a);
             case GO_PLAYER -> AdminActions.goToPlayer(player, a);
             case GO_OFFLINE -> AdminActions.goToOffline(player, a);
+            case WARP_PORTAL -> {
+                editWarp(player, a, w -> w.withPortal(Boolean.parseBoolean(b)));
+                Portals.destinationsChanged();
+                open(player);
+            }
+            case GO_PORTAL -> {
+                PortalRow row = Portals.rowById(a);
+                if (row != null) {
+                    PortalActions.goTo(player, row);
+                }
+            }
+            case PORTAL_COMMAND -> {
+                PortalRow row = Portals.rowById(a);
+                if (row != null) {
+                    PortalActions.command(player, row, b);
+                }
+                open(player);
+            }
         }
     }
 
@@ -189,7 +210,7 @@ public final class AdminService {
         }
         List<AdminData.WarpRow> warps = new ArrayList<>();
         for (Warp w : TeleportData.get(player.server).warps()) {
-            warps.add(new AdminData.WarpRow(w.name(), w.position().server(), w.cost(), w.restricted(), w.icon()));
+            warps.add(new AdminData.WarpRow(w.name(), w.position().server(), w.cost(), w.restricted(), w.icon(), w.portal()));
         }
         List<AdminData.ServerRow> servers = new ArrayList<>();
         List<String> here = new ArrayList<>();
@@ -202,7 +223,13 @@ public final class AdminService {
                 servers.add(new AdminData.ServerRow(e.getKey(), PlayerDirectory.isOnline(e.getKey()), false, e.getValue()));
             }
         }
-        return new AdminData(TeleportConfig.serverName(), !Permissions.isAdmin(player), Storage.status(player.server), Messenger.status(), settings, warps, servers);
+        List<AdminData.PortalEntry> portals = new ArrayList<>();
+        for (PortalRow r : Portals.rows()) {
+            portals.add(new AdminData.PortalEntry(r.id(), r.name(), r.server(), r.world(), r.x(), r.y(), r.z(), r.destination().describe() + (r.arriveOnly() ? " (arrive only)" : ""),
+                    r.linkId(), r.status(), r.doors()));
+        }
+        portals.sort((x, y) -> x.server().equals(y.server()) ? x.name().compareToIgnoreCase(y.name()) : x.server().equals(TeleportConfig.serverName()) ? -1 : y.server().equals(TeleportConfig.serverName()) ? 1 : x.server().compareTo(y.server()));
+        return new AdminData(TeleportConfig.serverName(), !Permissions.isAdmin(player), Storage.status(player.server), Messenger.status(), settings, warps, servers, portals);
     }
 
     private static int parseInt(String s, int fallback) {

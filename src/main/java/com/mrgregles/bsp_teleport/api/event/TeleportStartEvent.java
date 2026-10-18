@@ -32,7 +32,7 @@ public class TeleportStartEvent extends Event {
         return destination;
     }
 
-    /** HOME, WARP, SPAWN, BACK, RANDOM, REQUEST or OTHER. */
+    /** HOME, WARP, SPAWN, BACK, RANDOM, REQUEST, PORTAL (a player stepped into a portal) or OTHER. */
     public String kind() {
         return kind;
     }

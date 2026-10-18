@@ -1,0 +1,233 @@
+<title>Portal Concepts</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: dark board like the band and admin concept pages. Sections: controls, three block looks (frame, core,
+   door textures plus a live portal front), three core screens, three admin panel PORTALS tabs, rules, decided, picks. */
+:root{ --bg:#0f1115; --panel:#171a21; --line:#2a2f3a; --fg:#e8eaf0; --muted:#9aa3b5; --tq:#19d3b0; --on:#0b0d11; --air:#1c2230;
+  --h-bg:#10151c; --h-fg:#e6eaf2; --h-muted:#9aa3b5; --h-slot:#0c0e12; --h-dim:#2a2f3a; --h-tq:#19d3b0; --h-vio:#b58cff; --h-gold:#ffd23a; --h-bad:#ff6b5c; --h-ok:#8fe04a;
+  --display:"Silkscreen","Courier New",monospace; --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme:dark; }
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){ --bg:#f3f1ea; --panel:#fff; --line:#d9d4c7; --fg:#1a1b20; --muted:#5f6472; --tq:#0c8f78; --on:#fff; --air:#cfd3dc; color-scheme:light; } }
+:root[data-theme="light"]{ --bg:#f3f1ea; --panel:#fff; --line:#d9d4c7; --fg:#1a1b20; --muted:#5f6472; --tq:#0c8f78; --on:#fff; --air:#cfd3dc; color-scheme:light; }
+body{ background:var(--bg); color:var(--fg); font-family:var(--body); margin:0; font-size:14px; line-height:1.5; }
+.wrap{ max-width:1100px; margin:0 auto; padding-block:28px 56px; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); display:flex; flex-direction:column; gap:30px; }
+h1{ font-family:var(--display); font-size:clamp(20px,3vw,28px); margin:0 0 6px; color:var(--tq); text-wrap:balance; }
+h2{ font-family:var(--display); font-size:15px; margin:0 0 10px; letter-spacing:.04em; text-transform:uppercase; }
+h3{ font-size:14px; margin:0 0 4px; }
+p{ margin:0; max-width:70ch; } .lede{ color:var(--muted); }
+code{ font-size:12.5px; }
+.card{ background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:14px 16px; }
+.card ol, .card ul{ margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px; }
+.ctl{ display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; } .key{ color:var(--muted); font-size:12.5px; }
+.ctl label{ display:inline-flex; gap:6px; align-items:center; font-size:13px; }
+.ctl select{ font:inherit; font-size:12.5px; background:var(--panel); color:var(--fg); border:1px solid var(--line); border-radius:4px; padding:2px 6px; }
+.grid{ display:grid; grid-template-columns:1fr; gap:22px; }
+.opt{ display:flex; flex-direction:column; gap:10px; min-width:0; }
+.opt .cap{ color:var(--muted); font-size:12.5px; max-width:80ch; }
+.opt .name{ font-family:var(--display); font-size:13px; color:var(--tq); }
+/* block looks */
+.look{ display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start; min-width:0; }
+@media (max-width:640px){ .look{ grid-template-columns:1fr; } }
+.swatches{ display:flex; gap:10px; flex-wrap:wrap; }
+.sw{ display:flex; flex-direction:column; align-items:center; gap:4px; font-size:11px; color:var(--muted); }
+.sw .px{ width:64px; height:64px; border:1px solid var(--line); background-size:100% 100%; image-rendering:pixelated; }
+.sw .px.flip{ transform:scaleX(-1); }
+.front{ position:relative; display:grid; grid-template-columns:repeat(9,24px); grid-auto-rows:24px; gap:0; width:216px; max-width:100%; background:var(--air); border:1px solid var(--line); }
+.front .c{ width:24px; height:24px; background-size:100% 100%; image-rendering:pixelated; }
+.front .c.flip{ transform:scaleX(-1); }
+.front .c.air{ background:var(--air); }
+.front .c.field{ position:relative; overflow:hidden; background:var(--pc,#19d3b0); }
+.front .c.field:before{ content:""; position:absolute; inset:-60%; background:repeating-conic-gradient(from 0deg, rgba(0,0,0,.38) 0 9deg, rgba(255,255,255,0) 9deg 20deg); animation:swirl 14s linear infinite; }
+.front .c.field:after{ content:""; position:absolute; inset:0; background:radial-gradient(circle at 50% 50%, rgba(255,255,255,.45), rgba(255,255,255,0) 65%); }
+.front .pane{ position:absolute; top:24px; height:96px; width:0; background-size:24px 24px; image-rendering:pixelated; transition:width .6s ease; pointer-events:none; }
+.front .pane.l{ left:24px; } .front .pane.r{ right:24px; }
+.front .pane .edge{ position:absolute; top:0; bottom:0; width:24px; background-size:24px 24px; image-rendering:pixelated; }
+.front .pane.l .edge{ right:0; transform:scaleX(-1); } .front .pane.r .edge{ left:0; }
+.frontwrap{ display:flex; flex-direction:column; gap:6px; min-width:0; }
+.frontwrap .st{ font-size:11.5px; color:var(--muted); }
+@keyframes swirl{ to{ transform:rotate(360deg); } }
+@media (prefers-reduced-motion: reduce){ .front .c.field:before{ animation:none; } .front .pane{ transition:none; } }
+/* hud screens */
+.hud{ background:var(--h-bg); color:var(--h-fg); border:2px solid var(--h-vio); font-family:var(--display); font-size:11px; line-height:1.25; width:100%; max-width:700px; box-sizing:border-box; padding:10px 10px 30px; position:relative; min-height:300px; }
+.hud .ttl{ text-transform:uppercase; letter-spacing:.06em; font-size:12px; font-weight:700; display:flex; justify-content:space-between; gap:8px; align-items:center; color:var(--h-vio); flex-wrap:wrap; }
+.hud .help{ font-size:8.5px; color:var(--h-muted); margin-top:2px; }
+.hud .tabs{ display:flex; gap:4px; flex-wrap:wrap; }
+.hud .tab{ background:var(--h-slot); border:1px solid var(--h-dim); padding:2px 8px; font-size:9px; text-transform:uppercase; color:var(--h-muted); }
+.hud .tab.on{ border-color:var(--h-vio); color:var(--h-vio); } .hud .tab.off{ opacity:.45; }
+.hud .list{ display:flex; flex-direction:column; gap:4px; margin-top:8px; }
+.hud .row{ display:grid; grid-template-columns:1fr auto; gap:6px; align-items:center; background:var(--h-slot); border:1px solid var(--h-dim); padding:4px 6px; min-width:0; }
+.hud .row .n{ font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hud .row .s{ font-size:8.5px; color:var(--h-muted); } .hud .row .s b{ color:var(--h-vio); font-weight:400; } .hud .row .s em{ color:var(--h-gold); font-style:normal; } .hud .row .s i{ color:var(--h-bad); font-style:normal; } .hud .row .s u{ color:var(--h-ok); text-decoration:none; }
+.hud .acts{ display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end; }
+.hud .b{ background:var(--h-slot); border:1px solid var(--h-tq); color:var(--h-tq); padding:2px 6px; font-size:9px; text-transform:uppercase; }
+.hud .b.dim{ border-color:var(--h-dim); color:var(--h-muted); } .hud .b.bad{ border-color:var(--h-bad); color:var(--h-bad); } .hud .b.gold{ border-color:var(--h-gold); color:var(--h-gold); } .hud .b.vio{ border-color:var(--h-vio); color:var(--h-vio); } .hud .b.ok{ border-color:var(--h-ok); color:var(--h-ok); }
+.hud .foot{ position:absolute; left:10px; right:10px; bottom:8px; display:flex; justify-content:space-between; gap:8px; font-size:8.5px; color:var(--h-muted); align-items:center; flex-wrap:wrap; }
+.hud .foot .ok{ color:var(--h-ok); } .hud .foot .bad{ color:var(--h-bad); } .hud .foot .gold{ color:var(--h-gold); }
+.hud .set{ display:grid; grid-template-columns:1fr auto; gap:6px; align-items:center; background:var(--h-slot); border:1px solid var(--h-dim); padding:3px 6px; }
+.hud .set .v{ display:flex; gap:3px; align-items:center; flex-wrap:wrap; justify-content:flex-end; } .hud .set .v span.val{ min-width:34px; text-align:center; color:var(--h-gold); }
+.hud .set .s{ font-size:8.5px; color:var(--h-muted); }
+.hud .set.off{ opacity:.45; }
+.hud .status{ margin-top:8px; padding:4px 6px; border:1px solid var(--h-dim); background:var(--h-slot); font-size:9px; text-transform:uppercase; letter-spacing:.04em; }
+.hud .status.ok{ border-color:var(--h-ok); color:var(--h-ok); } .hud .status.bad{ border-color:var(--h-bad); color:var(--h-bad); } .hud .status.warn{ border-color:var(--h-gold); color:var(--h-gold); }
+.hud .pills{ display:flex; gap:4px; flex-wrap:wrap; margin-top:6px; }
+.hud .pal{ display:grid; grid-template-columns:repeat(12,16px); gap:3px; margin-top:4px; }
+.hud .pal span{ width:16px; height:16px; border:1px solid var(--h-dim); box-sizing:border-box; } .hud .pal span.on{ outline:2px solid var(--h-fg); outline-offset:-1px; }
+.hud h4{ margin:8px 0 4px; font-size:9px; text-transform:uppercase; color:var(--h-muted); letter-spacing:.06em; }
+.hud .two{ display:grid; grid-template-columns:1fr 1fr; gap:8px; } @media (max-width:560px){ .hud .two{ grid-template-columns:1fr; } }
+.hud .steps{ display:grid; grid-template-columns:120px 1fr; gap:8px; margin-top:8px; } @media (max-width:560px){ .hud .steps{ grid-template-columns:1fr; } }
+.hud .steps .nav{ display:flex; flex-direction:column; gap:3px; }
+.hud .steps .it{ background:var(--h-slot); border:1px solid var(--h-dim); padding:4px 6px; font-size:9px; text-transform:uppercase; color:var(--h-muted); display:flex; justify-content:space-between; gap:4px; }
+.hud .steps .it.on{ border-color:var(--h-vio); color:var(--h-vio); } .hud .steps .it.off{ opacity:.45; } .hud .steps .it .tick{ color:var(--h-ok); } .hud .steps .it .x{ color:var(--h-bad); }
+.hud .stage{ position:relative; height:170px; margin-top:8px; background:var(--h-slot); border:1px solid var(--h-dim); overflow:hidden; }
+.hud .node{ position:absolute; transform:translate(-50%,-50%); background:var(--h-bg); border:1px solid var(--h-tq); padding:3px 5px; text-align:center; min-width:64px; font-size:8.5px; }
+.hud .node .c{ color:var(--h-muted); } .hud .node.closed{ border-color:var(--h-gold); } .hud .node.bad{ border-color:var(--h-bad); } .hud .node.sel{ background:var(--h-tq); color:var(--on); } .hud .node.sel .c{ color:var(--on); }
+.hud .link{ position:absolute; height:1px; background:var(--h-vio); transform-origin:0 0; } .hud .link.dash{ background:repeating-linear-gradient(90deg, var(--h-muted) 0 4px, transparent 4px 8px); }
+.hud .srv{ font-size:9px; text-transform:uppercase; color:var(--h-gold); letter-spacing:.06em; margin-top:8px; display:flex; justify-content:space-between; }
+</style>
+<div class="wrap">
+<section><h1>Portal Concepts</h1>
+<p class="lede">Portals for BSP-Teleport: an admin-only Portal Core and Portal Frame blocks make a multiblock of any shape in one vertical plane; with a destination the opening fills with a coloured field, and the portal opens and closes by hand, by redstone or on a clock with hangar doors sliding in from both sides. Three jobs on this page, three options each: the look of the blocks, the core screen, and the PORTALS tab on the admin panel. The controls below drive every mock-up at once.</p>
+<div class="card"><div class="ctl"><span class="key"><b>State:</b></span>
+<label>Colour <select id="colour"></select></label>
+<label>Doors <select id="dstyle"><option value="blocks">Blocks</option><option value="rendered">Rendered</option></select></label>
+<label>Door state <select id="dstate"><option value="open">Open</option><option value="closing">Closing</option><option value="closed">Closed</option></select></label>
+<label>Portal <select id="pstate"><option value="ready">Ready (linked)</option><option value="nodest">No destination</option><option value="waiting">Waiting for partner</option><option value="noframe">No frame</option></select></label>
+<label>Mode <select id="mode"><option value="manual">Manual</option><option value="redstone">Redstone</option><option value="real">Real clock</option><option value="game">Game clock</option></select></label>
+<label><input type="checkbox" id="down"> destination server down</label>
+<label><input type="checkbox" id="lock"> locked</label></div></div></section>
+
+<section><h2>1. The blocks</h2>
+<p class="lede" style="margin-bottom:10px">Each option shows the four textures at 16 by 16 (frame, core, door body, the door edge that meets the other door) and a 9 by 6 portal front with a 7 by 4 opening and the core in the bottom row. The Colour control tints the field; option C also tints the frame. Door state shows the two door styles from D60: Blocks fills cells from both ends, Rendered slides two panels.</p>
+<div class="grid" id="looks"></div>
+<div class="card" style="margin-top:4px"><h3>What all three share</h3><ol>
+<li>Frame and core are full cubes with the same panel language on every face, so any ring shape reads as one machine. The core has one distinct face so an admin can find it; its facing (set when placed, flippable on the screen) is the side players arrive on.</li>
+<li>The field block is the Nether portal idea: not solid, light 11, one animated swirl texture tinted by a 24-colour blockstate property (shown in the Colour control). Blocks cannot be placed in it.</li>
+<li>Door blocks are solid. On close the field goes at once and the doors fill in from both ends over about half a second; Rendered draws the same doors as sliding panels and still places invisible solid cells so the wall is real.</li>
+<li>Unready portals (no destination, open frame, two cores) show an empty frame. Closed portals show doors. Only a ready, open portal shows the field.</li></ol></div></section>
+
+<section><h2>2. The core screen</h2>
+<p class="lede" style="margin-bottom:10px">Right-click on the core, admins only (moderators read-only). Same content in all three: a status line, the destination, the look, the open/close mode, and a greyed ACCESS tab for the later system. Each layout is shown on a different part so all of it is visible: A on DESTINATION, B everything at once, C on OPEN/CLOSE.</p>
+<div class="grid" id="cores"></div></section>
+
+<section><h2>3. The admin panel PORTALS tab</h2>
+<p class="lede" style="margin-bottom:10px">A new tab on the Map panel from phase 5: every portal on the network with its server, state and destination, and Go to, Open, Close and Lock. The WARPS tab gets a Portal switch per warp (shown under option A). Tick "destination server down" to see a portal whose server has gone away.</p>
+<div class="grid" id="panels"></div></section>
+
+<section><h2>Rules the mock-ups assume</h2><div class="card"><ul>
+<li><b>Shape (D54):</b> frame blocks in one vertical plane, joined by flat faces; the opening is the enclosed air of that plane; the core counts as a frame block; one core per frame; 24 by 24 at most, 300 opening cells at most.</li>
+<li><b>Destination (D55):</b> one of Warp, Portal warp, Random (a server), Position, Link (an id shared by exactly two cores, two-way, "arrive only" possible).</li>
+<li><b>Destination down (D57):</b> "The portal is not answering" and nothing moves; with "close when the destination is down" on, the doors shut by themselves and reopen when it is back.</li>
+<li><b>Modes (D59):</b> Manual, Redstone, Real clock, Game clock, plus Lock over any mode.</li>
+<li><b>On use (D61):</b> no warm-up, no band cooldown; 5 s per player per portal; the raid rule and thief block still apply; zone checks skipped; cross-server trips carry totems through BSP-Core.</li></ul></div></section>
+
+<section><h2>Decided (owner, 2026-10-18)</h2><div class="card"><ol>
+<li><b>D53</b> Blocks portal_core, portal_frame (items) and portal_field, portal_door (mod-placed); admin-only, unbreakable by anything else; the player version later is the Warp Gate, a separate breakable block set.</li>
+<li><b>D54 to D56</b> shape, destinations, landing in front of the core's facing.</li>
+<li><b>D57</b> destination watch with "close when down".</li>
+<li><b>D58</b> one swirl texture, 24 colours, hangar-style frame and doors, three mock-ups first (this page).</li>
+<li><b>D59, D60</b> modes and Lock; two door styles per portal, Blocks and Rendered.</li>
+<li><b>D61 to D65</b> rules on use, the shared portals table, the screens and commands, the ACCESS placeholders, the PORTAL teleport kind.</li></ol></div></section>
+
+<section><h2>Picks to make</h2><div class="card"><ol>
+<li><b>Block look:</b> A Hangar, B Bulkhead or C Lumen. Default: A.</li>
+<li><b>Core screen:</b> A Tabs, B Board or C Steps. Default: A (same bones as the band and the panel).</li>
+<li><b>PORTALS tab:</b> A List, B By server or C Link map. Default: A.</li>
+<li><b>Colour palette:</b> the 24 in the Colour control (16 dyes plus turquoise, violet, gold, rose, mint, amber, ice, ember). Default: as shown.</li>
+<li><b>Door speed:</b> one cell per side every 2 ticks for Blocks, the same travel time for Rendered. Default: as shown.</li></ol></div></section>
+</div>
+<script>
+(function(){
+  var COLOURS=[ ['white','#f0f0f0'],['light gray','#9d9d97'],['gray','#474f52'],['black','#1d1d21'],['red','#b02e26'],['orange','#f9801d'],['yellow','#fed83d'],['lime','#80c71f'],['green','#5e7c16'],['cyan','#169c9c'],['light blue','#3ab3da'],['blue','#3c44aa'],['purple','#8932b8'],['magenta','#c74ebd'],['pink','#f38baa'],['brown','#835432'],['turquoise','#19d3b0'],['violet','#b58cff'],['gold','#ffd23a'],['rose','#ff6b8a'],['mint','#8fe0a4'],['amber','#ff9f1c'],['ice','#bfefff'],['ember','#ff5a2a'] ];
+  var S={ colour:16, dstyle:'blocks', dstate:'open', pstate:'ready', mode:'manual', down:false, lock:false };
+
+  /* ---- textures: 16 rows of 16 chars; '.' base, '-' light, '=' mid, '#' seam, 'Y'/'K' stripe, 'C' core accent, 'P' portal colour, 'G' glow ---- */
+  var A_FRAME=['################','#..............#','#.--------.....#','#.-......-..==.#','#.-......-..==.#','#.--------.....#','#..............#','################','#..............#','#..----------..#','#..-........-..#','#..-........-..#','#..----------..#','#..............#','#..............#','################'];
+  var A_CORE=['################','#..............#','#..##########..#','#..#........#..#','#..#..PPPP..#..#','#..#.PCCCCP.#..#','#..#.PCCCCP.#..#','#..#.PCCCCP.#..#','#..#.PCCCCP.#..#','#..#..PPPP..#..#','#..#........#..#','#..##########..#','#..............#','#.=.=.=.=.=.=..#','#..............#','################'];
+  var A_DOOR=['################','#..............#','#.------------.#','#.------------.#','#..............#','#==============#','#..............#','#.------------.#','#.------------.#','#.------------.#','#..............#','#==============#','#..............#','#.------------.#','#..............#','################'];
+  var B_FRAME=['################','#..............#','#.##........##.#','#.##........##.#','#....=..=..=...#','#....=..=..=...#','#....=..=..=...#','#....=..=..=...#','#....=..=..=...#','#....=..=..=...#','#....=..=..=...#','#....=..=..=...#','#.##........##.#','#.##........##.#','#..............#','################'];
+  var B_CORE=['################','#..............#','#.##...PP...##.#','#.##..PCCP..##.#','#....PCCCCP....#','#...PCCCCCCP...#','#..PCCCCCCCCP..#','#..PCCCCCCCCP..#','#..PCCCCCCCCP..#','#..PCCCCCCCCP..#','#...PCCCCCCP...#','#....PCCCCP....#','#.##..PCCP..##.#','#.##...PP...##.#','#..............#','################'];
+  var B_DOOR=['################','#..............#','#.=..=..=..=...#','#.=..=..=..=...#','#.=..=..=..=...#','#.=..=..=..=...#','#.=..=..=..=...#','#.=..=..=..=...#','#.=..=..=..=...#','#.=..=..=..=...#','#.=..=..=..=...#','#.=..=..=..=...#','#.=..=..=..=...#','#.=..=..=..=...#','#..............#','################'];
+  var C_FRAME=['================','=..............=','=..GGGGGGGGGG..=','=..GPPPPPPPPG..=','=..GP......PG..=','=..GP......PG..=','=..GP......PG..=','=..GP......PG..=','=..GP......PG..=','=..GP......PG..=','=..GP......PG..=','=..GP......PG..=','=..GPPPPPPPPG..=','=..GGGGGGGGGG..=','=..............=','================'];
+  var C_CORE=['================','=..............=','=..GGGGGGGGGG..=','=..GPPPPPPPPG..=','=..GP......PG..=','=..GP.PPPP.PG..=','=..GP.PCCP.PG..=','=..GP.PCCP.PG..=','=..GP.PPPP.PG..=','=..GP......PG..=','=..GP......PG..=','=..GP......PG..=','=..GPPPPPPPPG..=','=..GGGGGGGGGG..=','=..............=','================'];
+  var C_DOOR=['================','=..............=','=..............=','=..............=','=..............=','=..............=','=..............=','=--------------=','=..............=','=..............=','=..............=','=..............=','=..............=','=..............=','=..............=','================'];
+
+  function hazard(rows){ return rows.map(function(r,y){ var out=''; for(var x=0;x<16;x++){ out+= x>=12 ? (((x+y)%4)<2?'Y':'K') : r[x]; } return out; }); }
+  function light(rows){ return rows.map(function(r,y){ var out=''; for(var x=0;x<16;x++){ out+= x>=14 ? 'P' : x===13 ? 'G' : r[x]; } return out; }); }
+
+  var LOOKS=[
+    { name:'A. Hangar', cap:'Closest to the screenshot: white panels, dark seams, a vent on the frame, a turquoise lens on the core, and a yellow and black hazard stripe where the doors meet. The classic look; reads at a distance.',
+      pal:{'.':'#e8ecef','-':'#d2d9df','=':'#9ba5af','#':'#3b434c','Y':'#f0c233','K':'#2b2f34','C':'#19d3b0','G':'#ffffff'}, frame:A_FRAME, core:A_CORE, door:A_DOOR, edge:hazard(A_DOOR) },
+    { name:'B. Bulkhead', cap:'Heavier steel: darker plates, bolted corners, vertical slats on the doors, a violet diamond on the core and a red and black stripe at the meeting edge. Suits a fortress or arena gate.',
+      pal:{'.':'#b3bbc3','-':'#c9d0d6','=':'#7f8891','#':'#262b31','Y':'#ff6b5c','K':'#2b2f34','C':'#b58cff','G':'#e0e4e8'}, frame:B_FRAME, core:B_CORE, door:B_DOOR, edge:hazard(B_DOOR) },
+    { name:'C. Lumen', cap:'Clean white with a thin inset light that takes the portal colour on every frame block and core, and a lit edge on the doors instead of a stripe. Every portal looks different without a second texture; least industrial.',
+      pal:{'.':'#f3f5f7','-':'#e3e7ea','=':'#c5cbd1','#':'#4a525b','Y':'#ffffff','K':'#ffffff','C':'#ffffff','G':'#ffffff'}, frame:C_FRAME, core:C_CORE, door:C_DOOR, edge:light(C_DOOR) } ];
+
+  function svg(rows, pal, pc){ var s='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">'; for(var y=0;y<16;y++){ if(rows[y].length!==16) throw new Error('bad row '+y); for(var x=0;x<16;x++){ var ch=rows[y][x]; var col= ch==='P' ? pc : pal[ch]; s+='<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="'+col+'"/>'; } } return "url('data:image/svg+xml,"+encodeURIComponent(s+'</svg>')+"')"; }
+
+  function front(look, pc){
+    var W=9, H=6, cells='', ready=S.pstate==='ready';
+    var closed = ready && (S.dstate==='closed' || S.lock || S.down);
+    var closing = ready && !closed && S.dstate==='closing';
+    var inner=7, leftN = closed ? 4 : closing ? 2 : 0, rightN = closed ? 3 : closing ? 2 : 0;
+    var fr=svg(look.frame,look.pal,pc), co=svg(look.core,look.pal,pc), dr=svg(look.door,look.pal,pc), ed=svg(look.edge,look.pal,pc);
+    for(var y=0;y<H;y++) for(var x=0;x<W;x++){
+      var border = y===0||y===H-1||x===0||x===W-1;
+      if(border){ cells += (y===H-1&&x===4) ? '<div class="c" style="background-image:'+co+'"></div>' : '<div class="c" style="background-image:'+fr+'"></div>'; continue; }
+      var i=x-1;
+      if(S.dstyle==='blocks' && (i<leftN || i>=inner-rightN)){ var edgeL = i===leftN-1, edgeR = i===inner-rightN; cells += '<div class="c'+(edgeL?' flip':'')+'" style="background-image:'+((edgeL||edgeR)?ed:dr)+'"></div>'; continue; }
+      if(ready && !closed && !closing){ cells += '<div class="c field" style="--pc:'+pc+'"></div>'; continue; }
+      cells += '<div class="c air"></div>';
+    }
+    var panes='';
+    if(S.dstyle==='rendered'){ var lw = closed ? 96 : closing ? 48 : 0, rw = closed ? 72 : closing ? 48 : 0; panes='<div class="pane l" style="width:'+lw+'px;background-image:'+dr+'"><div class="edge" style="background-image:'+ed+'"></div></div><div class="pane r" style="width:'+rw+'px;background-image:'+dr+'"><div class="edge" style="background-image:'+ed+'"></div></div>'; }
+    var st = !ready ? 'Unready: empty frame' : closed ? (S.lock?'Locked: doors closed':S.down?'Destination down: doors closed by the watch':'Closed') : closing ? 'Closing: field off, doors moving' : 'Open: field lit';
+    return '<div class="frontwrap"><div class="front">'+cells+panes+'</div><div class="st">'+st+'</div></div>';
+  }
+  function lookCard(look){ var pc=COLOURS[S.colour][1]; var sw=[['frame',look.frame,''],['core',look.core,''],['door',look.door,''],['door edge',look.edge,'']].map(function(t){ return '<div class="sw"><div class="px" style="background-image:'+svg(t[1],look.pal,pc)+'"></div>'+t[0]+'</div>'; }).join(''); return '<div class="look"><div class="swatches">'+sw+'</div>'+front(look,pc)+'</div>'; }
+
+  /* ---- core screen ---- */
+  function statusLine(){ var m={ ready:['ok','Ready: linked to Market Gate on BSP-SafeRoom'], nodest:['warn','No destination: pick one below'], waiting:['warn','Waiting for partner: no other core uses hub-east yet'], noframe:['bad','No frame: the frame must close around the opening'] }; var s=m[S.pstate]; if(S.pstate==='ready'&&S.down) s=['bad','Destination down: BSP-SafeRoom is not up, doors closed']; else if(S.pstate==='ready'&&S.lock) s=['warn','Locked: nobody passes until unlocked']; return '<div class="status '+s[0]+'">'+s[1]+'</div>'; }
+  function pill(t,on,off){ return '<span class="b '+(on?'vio':'dim')+(off?' off':'')+'">'+t+'</span>'; }
+  function sw(on){ return '<span class="b '+(on?'ok':'dim')+'">'+(on?'on':'off')+'</span>'; }
+  function setRow(n,s,v,off){ return '<div class="set'+(off?' off':'')+'"><div><div class="n">'+n+'</div><div class="s">'+s+'</div></div><div class="v">'+v+'</div></div>'; }
+  function destPane(){ var link=S.pstate!=='nodest'; return '<h4>Destination</h4><div class="pills">'+pill('warp',false)+pill('portal warp',false)+pill('random',false)+pill('position',false)+pill('link',link)+'</div><div class="list">'+(link?setRow('Link id','shared by exactly two cores, anywhere on the network','<span class="val">hub-east</span><span class="b dim">edit</span>')+setRow('Partner', S.pstate==='waiting'?'none yet':'Market Gate, BSP-SafeRoom, 120 64 -40','<span class="b '+(S.pstate==='waiting'?'dim':'')+'">go</span>')+setRow('Arrive only','players may arrive here but not leave through it',sw(false)):setRow('Pick a kind','warp, portal warp, random on a server, a position, or a link','<span class="b dim">-</span>'))+setRow('Close when destination is down','the doors shut while the partner or its server is away and reopen after',sw(true))+'</div>'; }
+  function lookPane(){ var pc=COLOURS[S.colour]; return '<h4>Look</h4><div class="list"><div class="set"><div><div class="n">Colour: '+pc[0]+'</div><div class="pal">'+COLOURS.map(function(c,i){ return '<span class="'+(i===S.colour?'on':'')+'" style="background:'+c[1]+'"></span>'; }).join('')+'</div></div><div class="v"><span class="b dim">-</span><span class="b dim">+</span></div></div>'+setRow('Doors','Blocks fill in cell by cell; Rendered slides smooth panels',pill('blocks',S.dstyle==='blocks')+pill('rendered',S.dstyle==='rendered'))+setRow('Facing','players arrive on this side of the opening','<span class="val">south</span><span class="b dim">flip</span>')+setRow('Name','shown as Through <name> on use','<span class="val">Hub East</span><span class="b dim">edit</span>')+setRow('Arrival line','optional, shown on arrival','<span class="val">-</span><span class="b dim">edit</span>')+'</div>'; }
+  function modePane(){ var m=S.mode; var rows=''; if(m==='manual') rows=setRow('Portal','open or close it now','<span class="b '+(S.dstate==='open'?'ok':'')+'">open</span><span class="b '+(S.dstate!=='open'?'bad':'')+'">close</span>'); if(m==='redstone') rows=setRow('Redstone','the core reads power on any side',pill('open when powered',true)+pill('closed when powered',false)); if(m==='real') rows=setRow('Real clock','opens and closes at these times, zone from portals.timeZone (Europe/London)','<span class="val">18:00</span><span class="s">to</span><span class="val">23:00</span>'); if(m==='game') rows=setRow('Game clock','world time of this world, 0 to 24000','<span class="val">0</span><span class="s">to</span><span class="val">12000</span>'); return '<h4>Open / close</h4><div class="pills">'+pill('manual',m==='manual')+pill('redstone',m==='redstone')+pill('real clock',m==='real')+pill('game clock',m==='game')+'</div><div class="list">'+rows+setRow('Lock','forces the portal closed in any mode',sw(S.lock))+setRow('Cooldown per player','seconds before the same player may use it again','<span class="b dim">-</span><span class="val">5 s</span><span class="b dim">+</span>')+'</div>'; }
+  function accessPane(){ return '<h4>Access (coming later)</h4><div class="list">'+setRow('Rank','a LuckPerms group or a RankUp rung, this or better','<span class="b dim">add</span>',true)+setRow('Held item','item id and count, optionally used up','<span class="b dim">add</span>',true)+setRow('Permission node','bsp_teleport.portal.<name>','<span class="b dim">add</span>',true)+setRow('Coins per pass','Shatter Coins charged on use','<span class="b dim">add</span>',true)+setRow('Bought access','one-time price through the bank','<span class="b dim">add</span>',true)+setRow('Region member','a Region Guard region the player belongs to','<span class="b dim">add</span>',true)+'</div><div class="help">All rules in the list must pass. The same list will be usable on warps and servers.</div>'; }
+  function foot(){ return '<div class="foot"><span>BSP-Spawn  overworld  120 64 -40</span><span>frame 9x6, opening 28 cells</span><span class="'+(S.pstate==='ready'?'ok':'bad')+'">'+(S.pstate==='ready'?'ready':'not ready')+'</span></div>'; }
+
+  function coreTabs(){ return '<div class="hud"><div class="ttl"><span>Portal Core: Hub East</span><div class="tabs"><span class="tab on">destination</span><span class="tab">look</span><span class="tab">open/close</span><span class="tab off">access</span></div></div><div class="help">One destination per portal. Links are two-way unless Arrive only is on.</div>'+statusLine()+destPane()+foot()+'</div>'; }
+  function coreBoard(){ return '<div class="hud" style="max-width:760px"><div class="ttl"><span>Portal Core: Hub East</span><span class="help">everything on one screen</span></div>'+statusLine()+'<div class="two"><div>'+destPane()+modePane()+'</div><div>'+lookPane()+accessPane()+'</div></div>'+foot()+'</div>'; }
+  function coreSteps(){ var fr=S.pstate!=='noframe', de=S.pstate==='ready'; function it(n,ok,on,off){ return '<span class="it'+(on?' on':'')+(off?' off':'')+'"><span>'+n+'</span><span class="'+(ok?'tick':'x')+'">'+(ok?'ok':'!')+'</span></span>'; } return '<div class="hud"><div class="ttl"><span>Portal Core: Hub East</span><span class="help">step by step</span></div>'+statusLine()+'<div class="steps"><div class="nav">'+it('1 frame',fr,false)+it('2 destination',de,false)+it('3 look',true,false)+it('4 open/close',true,true)+'<span class="it off"><span>5 access</span><span>later</span></span></div><div>'+modePane()+'</div></div>'+foot()+'</div>'; }
+
+  /* ---- admin panel PORTALS tab ---- */
+  var PORTALS=[ {n:'Hub East', s:'BSP-Spawn', d:'link hub-east: Market Gate (BSP-SafeRoom)', st:'open'}, {n:'Market Gate', s:'BSP-SafeRoom', d:'link hub-east: Hub East (BSP-Spawn)', st:'closed', why:'real clock, opens 18:00'}, {n:'Wilds Drop', s:'BSP-Spawn', d:'random on BSP-Wilds', st:'open', wilds:true}, {n:'Arena Door', s:'BSP-SafeRoom', d:'portal warp arena', st:'locked'}, {n:'Old Gate', s:'BSP-Spawn', d:'-', st:'unready', why:'no destination'} ];
+  function pstate(p){ if(p.wilds&&S.down) return '<i>destination down, doors closed</i>'; if(p.st==='open') return '<u>open</u>'; if(p.st==='closed') return '<em>closed</em> ('+p.why+')'; if(p.st==='locked') return '<i>locked</i>'; return '<i>unready</i> ('+p.why+')'; }
+  function pacts(p){ var un=p.st==='unready'; return '<span class="b">go to</span><span class="b '+(un?'dim':'ok')+'">open</span><span class="b '+(un?'dim':'bad')+'">close</span><span class="b '+(p.st==='locked'?'gold':'dim')+'">'+(p.st==='locked'?'unlock':'lock')+'</span>'; }
+  function prow(p, noServer){ return '<div class="row"><div><div class="n">'+p.n+'</div><div class="s">'+(noServer?'':'<b>'+p.s+'</b>  ')+pstate(p)+'<br>'+p.d+'</div></div><div class="acts">'+pacts(p)+'</div></div>'; }
+  function pfoot(){ return '<div class="foot"><span>this server: BSP-Spawn</span><span class="ok">storage: mysql ok</span><span class="'+(S.down?'bad':'ok')+'">'+(S.down?'BSP-Wilds down':'all servers up')+'</span></div>'; }
+  function panelList(){ return '<div class="hud"><div class="ttl"><span>Teleport Admin</span><div class="tabs"><span class="tab">network</span><span class="tab">settings</span><span class="tab">warps</span><span class="tab on">portals</span></div></div><div class="help">Every portal on the network. Open and Close act now; the mode on the core takes over again afterwards.</div><div class="list">'+PORTALS.map(function(p){ return prow(p,false); }).join('')+'</div><h4>Warps tab, for comparison: the portal switch</h4><div class="list" style="margin-top:0"><div class="row"><div><div class="n">arena  <span style="color:var(--h-vio)">portal</span></div><div class="s"><b>BSP-SafeRoom</b>  only portals reach it</div></div><div class="acts"><span class="b">go</span><span class="b dim">move here</span><span class="b vio">portal: on</span><span class="b bad">del</span></div></div></div>'+pfoot()+'</div>'; }
+  function panelByServer(){ var servers=['BSP-Spawn','BSP-SafeRoom']; return '<div class="hud"><div class="ttl"><span>Teleport Admin</span><div class="tabs"><span class="tab">network</span><span class="tab">settings</span><span class="tab">warps</span><span class="tab on">portals</span></div></div><div class="help">Grouped by server, this server first. A server that is down shows its portals greyed.</div>'+servers.map(function(sv){ var mine=PORTALS.filter(function(p){ return p.s===sv; }); return '<div class="srv"><span>'+sv+(sv==='BSP-Spawn'?' (this server)':'')+'</span><span>'+mine.length+' portals</span></div><div class="list" style="margin-top:4px">'+mine.map(function(p){ return prow(p,true); }).join('')+'</div>'; }).join('')+pfoot()+'</div>'; }
+  function panelMap(){
+    var pos={ 'Hub East':[22,30], 'Market Gate':[78,30], 'Wilds Drop':[22,75], 'Arena Door':[78,75], 'Old Gate':[50,52] };
+    function line(a,b,dash){ var dx=(b[0]-a[0])*6.6, dy=(b[1]-a[1])*1.7; var len=Math.sqrt(dx*dx+dy*dy), ang=Math.atan2(dy,dx)*180/Math.PI; return '<span class="link'+(dash?' dash':'')+'" style="left:'+a[0]+'%;top:'+a[1]+'%;width:'+len+'px;transform:rotate('+ang+'deg)"></span>'; }
+    var ln=line(pos['Hub East'],pos['Market Gate'],false)+line(pos['Wilds Drop'],[50,95],true)+line(pos['Arena Door'],[95,95],true);
+    var nodes=PORTALS.map(function(p){ var cls='node'+(p.n==='Hub East'?' sel':'')+(p.st==='closed'?' closed':'')+((p.st==='locked'||p.st==='unready'||(p.wilds&&S.down))?' bad':''); return '<div class="'+cls+'" style="left:'+pos[p.n][0]+'%;top:'+pos[p.n][1]+'%"><div>'+p.n+'</div><div class="c">'+p.s+'</div></div>'; }).join('');
+    return '<div class="hud"><div class="ttl"><span>Teleport Admin</span><div class="tabs"><span class="tab">network</span><span class="tab">settings</span><span class="tab">warps</span><span class="tab on">portals</span></div></div><div class="help">Portals as nodes, links as violet lines, other destinations dashed. Click a portal, then an action.</div><div class="stage">'+ln+nodes+'</div><h4>Hub East (selected)</h4><div class="list" style="margin-top:0">'+prow(PORTALS[0],false)+'</div>'+pfoot()+'</div>'; }
+
+  var CORES=[ {name:'A. Tabs', cap:'Four tabs across the header (DESTINATION, LOOK, OPEN/CLOSE, ACCESS greyed), one at a time, status line under the title. Same bones as the band and the panel, so nothing new to learn. Shown on DESTINATION.', draw:coreTabs},
+              {name:'B. Board', cap:'Everything on one wider screen in two columns: destination and open/close on the left, look and the greyed access list on the right. Fastest for an admin setting up many portals; the busiest.', draw:coreBoard},
+              {name:'C. Steps', cap:'A step list down the left (frame, destination, look, open/close, access) with a tick or a warning per step, the chosen step on the right. The status is always visible as which step is not ticked. Shown on OPEN/CLOSE; change Mode above to see each form.', draw:coreSteps} ];
+  var PANELS=[ {name:'A. List', cap:'One list of every portal on the network: name, server, state with its reason, destination, and the four actions. The WARPS tab row below it shows the Portal switch.', draw:panelList},
+               {name:'B. By server', cap:'The same rows grouped under server headings, this server first, with a count per server. Easier once there are many portals; one more line per server.', draw:panelByServer},
+               {name:'C. Link map', cap:'Portals drawn as nodes with their links as lines (dashed for a warp, random or position destination), a detail row for the selected one. The most visual, like the Map layout of the panel itself; the least room for a long list.', draw:panelMap} ];
+
+  function renderInto(id, opts, draw){ var el=document.getElementById(id); el.innerHTML=''; opts.forEach(function(o){ var d=document.createElement('div'); d.className='opt'; d.innerHTML='<div class="name">'+o.name+'</div>'+(draw?draw(o):o.draw())+'<div class="cap">'+o.cap+'</div>'; el.appendChild(d); }); }
+  function render(){ renderInto('looks',LOOKS,lookCard); renderInto('cores',CORES); renderInto('panels',PANELS); }
+
+  var colourSel=document.getElementById('colour'); COLOURS.forEach(function(c,i){ var o=document.createElement('option'); o.value=i; o.textContent=c[0]; if(i===S.colour) o.selected=true; colourSel.appendChild(o); });
+  colourSel.addEventListener('change',function(e){ S.colour=parseInt(e.target.value,10); render(); });
+  ['dstyle','dstate','pstate','mode'].forEach(function(id){ document.getElementById(id).addEventListener('change',function(e){ S[id]=e.target.value; render(); }); });
+  ['down','lock'].forEach(function(id){ document.getElementById(id).addEventListener('change',function(e){ S[id]=e.target.checked; render(); }); });
+  render();
+})();
+</script>

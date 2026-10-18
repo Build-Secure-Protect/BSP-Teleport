@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "front": "bsp_teleport:block/portal_core_front",
+    "side": "bsp_teleport:block/portal_frame",
+    "top": "bsp_teleport:block/portal_frame"
+  }
+}

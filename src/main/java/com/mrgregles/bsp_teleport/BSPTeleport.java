@@ -9,6 +9,8 @@ import com.mrgregles.bsp_teleport.compat.RegionGuard;
 import com.mrgregles.bsp_teleport.request.TeleportRequests;
 import com.mrgregles.bsp_teleport.network.BandPackets;
 import com.mrgregles.bsp_teleport.network.Messenger;
+import com.mrgregles.bsp_teleport.portal.Portals;
+import com.mrgregles.bsp_teleport.registry.ModBlocks;
 import com.mrgregles.bsp_teleport.registry.ModItems;
 import com.mrgregles.bsp_teleport.storage.Storage;
 import com.mrgregles.bsp_teleport.teleport.PendingLandings;
@@ -37,6 +39,8 @@ public class BSPTeleport {
         context.registerConfig(ModConfig.Type.SERVER, TeleportConfig.SPEC);
         context.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
         BspTeleportApiSetter.set(TeleportService.INSTANCE);
+        ModBlocks.BLOCKS.register(context.getModEventBus());
+        ModBlocks.BLOCK_ENTITIES.register(context.getModEventBus());
         ModItems.ITEMS.register(context.getModEventBus());
         ModItems.TABS.register(context.getModEventBus());
         BandPackets.register();
@@ -62,6 +66,8 @@ public class BSPTeleport {
         MinecraftForge.EVENT_BUS.addListener(Teleports::onDeath);
         MinecraftForge.EVENT_BUS.addListener(Teleports::onLoggedOut);
         MinecraftForge.EVENT_BUS.addListener(TeleportRequests::onServerTick);
+        MinecraftForge.EVENT_BUS.addListener(Portals::onServerStopping);
+        MinecraftForge.EVENT_BUS.addListener(Portals::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(TeleportCommands::onRegisterCommands);
         MinecraftForge.EVENT_BUS.addListener(AdminCommands::onRegisterCommands);
         MinecraftForge.EVENT_BUS.addListener(AdminCommands::onPermissionNodes);

@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "axis=x,part=body": {
+      "model": "bsp_teleport:block/portal_door"
+    },
+    "axis=x,part=hidden": {
+      "model": "bsp_teleport:block/portal_door_hidden"
+    },
+    "axis=x,part=edge_left": {
+      "model": "bsp_teleport:block/portal_door_x_left"
+    },
+    "axis=x,part=edge_right": {
+      "model": "bsp_teleport:block/portal_door_x_right"
+    },
+    "axis=z,part=body": {
+      "model": "bsp_teleport:block/portal_door"
+    },
+    "axis=z,part=hidden": {
+      "model": "bsp_teleport:block/portal_door_hidden"
+    },
+    "axis=z,part=edge_left": {
+      "model": "bsp_teleport:block/portal_door_z_left"
+    },
+    "axis=z,part=edge_right": {
+      "model": "bsp_teleport:block/portal_door_z_right"
+    }
+  }
+}

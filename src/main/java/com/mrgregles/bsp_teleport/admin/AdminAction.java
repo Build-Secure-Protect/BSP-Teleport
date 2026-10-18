@@ -32,5 +32,11 @@ public enum AdminAction {
     /** player */
     GO_PLAYER,
     /** player */
-    GO_OFFLINE
+    GO_OFFLINE,
+    /** name;true|false: a portal warp (only portals reach it) or an ordinary one */
+    WARP_PORTAL,
+    /** row id: go to the portal (its exit, else the core) */
+    GO_PORTAL,
+    /** row id;open|close|lock|unlock */
+    PORTAL_COMMAND
 }

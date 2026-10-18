@@ -6,6 +6,7 @@ import com.mrgregles.bsp_teleport.api.BspTeleportApi;
 import com.mrgregles.bsp_teleport.api.Destination;
 import com.mrgregles.bsp_teleport.data.Position;
 import com.mrgregles.bsp_teleport.request.TeleportRequests;
+import com.mrgregles.bsp_teleport.portal.Portals;
 import com.mrgregles.bsp_teleport.storage.Storage;
 import com.mrgregles.bsp_teleport.teleport.RandomTeleport;
 import com.mrgregles.bsp_teleport.teleport.TeleportKind;
@@ -138,6 +139,15 @@ public final class Messenger {
         send(new Message(Message.Type.WARPS_CHANGED, Message.To.ALL, Message.ALL));
     }
 
+    /** Asks the server a portal stands on to open, close, lock or unlock it. */
+    public static boolean portalCommand(String server, String rowId, String command) {
+        return send(new Message(Message.Type.PORTAL_DO, Message.To.SERVER, server).put("id", rowId).put("command", command));
+    }
+
+    public static void portalsChanged() {
+        send(new Message(Message.Type.PORTALS_CHANGED, Message.To.ALL, Message.ALL));
+    }
+
     /** A chat line to a player wherever they are on the network. */
     public static boolean tell(String playerName, String text) {
         return send(new Message(Message.Type.TELL, Message.To.PLAYER, playerName).put("text", text));
@@ -198,6 +208,8 @@ public final class Messenger {
             }
             case HOMES_WIPED -> com.mrgregles.bsp_teleport.data.TeleportData.get(server).clearHomes();
             case WARPS_CHANGED -> Storage.reloadWarps(server);
+            case PORTALS_CHANGED -> Storage.reloadPortals(server);
+            case PORTAL_DO -> Portals.applyCommand(server, m.get("id"), m.get("command"));
             case TP_REQUEST -> {
                 if (m.to == Message.To.ALL) {
                     for (ServerPlayer p : new ArrayList<>(server.getPlayerList().getPlayers())) {
@@ -267,11 +279,17 @@ public final class Messenger {
 
     /** Asks {@code targetServer} for a random spot; the answer comes back as RTP_RESULT for the player. */
     public static boolean requestRandomSpot(ServerPlayer player, String targetServer) {
-        return send(new Message(Message.Type.RTP_REQUEST, Message.To.SERVER, targetServer).put("player", player.getGameProfile().getName()).put("uuid", player.getUUID().toString()));
+        return requestRandomSpot(player, targetServer, "");
+    }
+
+    /** As above; a non-empty {@code portal} (the core's row id) makes the answer go through the portal rules instead of the warm-up. */
+    public static boolean requestRandomSpot(ServerPlayer player, String targetServer, String portal) {
+        return send(new Message(Message.Type.RTP_REQUEST, Message.To.SERVER, targetServer).put("player", player.getGameProfile().getName())
+                .put("uuid", player.getUUID().toString()).put("portal", portal));
     }
 
     private static void onRtpRequest(MinecraftServer server, Message m) {
-        Message reply = new Message(Message.Type.RTP_RESULT, Message.To.PLAYER, m.get("player"));
+        Message reply = new Message(Message.Type.RTP_RESULT, Message.To.PLAYER, m.get("player")).put("portal", m.get("portal"));
         ServerLevel level = RandomTeleport.arrivalWorld(server);
         UUID owner = null;
         try {
@@ -294,6 +312,10 @@ public final class Messenger {
             return;
         }
         Position spot = Position.parse(m.get("position"));
+        if (!m.get("portal").isEmpty()) {
+            Portals.remoteRandomSpot(player, m.get("portal"), spot);
+            return;
+        }
         Teleports.start(player, spot.toDestination(""), Component.translatable("message.bsp_teleport.rtp.name_on", m.source), TeleportKind.RANDOM, null);
     }
 

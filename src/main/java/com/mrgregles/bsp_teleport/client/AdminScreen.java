@@ -19,11 +19,11 @@ import java.util.List;
  * deleting a warp, asks "are you sure" in a popup first. Moderators see everything and can press nothing.
  */
 public class AdminScreen extends Screen {
-    private static final int W = 300, H = 214, TAB_W = 50;
+    private static final int W = 300, H = 214, TAB_W = 46;
     private static final int TQ = BandClient.TQ, BG = BandClient.BG, SLOT = BandClient.SLOT, DIM = BandClient.DIM, MUTED = BandClient.MUTED,
             TEXT = BandClient.TEXT, VIO = BandClient.VIO, GOLD = BandClient.GOLD, BAD = BandClient.BAD, OK = BandClient.OK;
 
-    private enum Tab { NETWORK, SETTINGS, WARPS }
+    private enum Tab { NETWORK, SETTINGS, WARPS, PORTALS }
 
     private record Hit(int x, int y, int w, int h, Runnable action) {
         boolean contains(double mx, double my) {
@@ -39,6 +39,9 @@ public class AdminScreen extends Screen {
     private Tab tab = Tab.NETWORK;
     private String selectedServer;
     private boolean pickingTarget;
+    /** PORTALS tab: the node map instead of the grouped list (D66), and the selected portal on it. */
+    private boolean portalMap;
+    private String selectedPortal = "";
     private int scroll;
     private int left, top;
     /** Everything is drawn this many times bigger than vanilla's GUI scale; mouse positions are divided by it. */
@@ -143,6 +146,7 @@ public class AdminScreen extends Screen {
             case NETWORK -> drawNetwork(g);
             case SETTINGS -> drawSettings(g);
             case WARPS -> drawWarps(g);
+            case PORTALS -> drawPortals(g);
         }
         drawFooter(g);
         super.render(g, (int) (mouseX / scale), (int) (mouseY / scale), partial);
@@ -321,12 +325,14 @@ public class AdminScreen extends Screen {
             }
             g.drawString(font, w.name(), left + 30, y + 4, TEXT, false);
             String sub = (w.server().equals(data.server()) ? "" : w.server() + "  ") + (w.cost() > 0 ? w.cost() + "c  " : "")
-                    + Component.translatable(w.restricted() ? "screen.bsp_teleport.admin.restricted" : "screen.bsp_teleport.admin.open").getString();
-            small(g, sub, left + 30 + font.width(w.name()) + 6, y + 5, w.server().equals(data.server()) ? MUTED : VIO);
+                    + Component.translatable(w.restricted() ? "screen.bsp_teleport.admin.restricted" : "screen.bsp_teleport.admin.open").getString()
+                    + (w.portal() ? "  " + Component.translatable("screen.bsp_teleport.admin.portal").getString() : "");
+            small(g, sub, left + 30 + font.width(w.name()) + 6, y + 5, w.portal() ? VIO : w.server().equals(data.server()) ? MUTED : VIO);
             int bx = left + W - 14;
             if (!data.readOnly()) {
                 bx = button(g, bx, y + 2, Component.translatable("screen.bsp_teleport.admin.del").getString(), BAD, BAD, () -> ask(
                         Component.translatable("screen.bsp_teleport.admin.confirm_del", w.name()).getString(), () -> send(AdminAction.DEL_WARP, w.name()))) - 2;
+                bx = button(g, bx, y + 2, "P", w.portal() ? VIO : DIM, w.portal() ? VIO : MUTED, () -> send(AdminAction.WARP_PORTAL, w.name() + ";" + !w.portal())) - 2;
                 bx = button(g, bx, y + 2, w.restricted() ? "R" : "O", w.restricted() ? VIO : DIM, w.restricted() ? VIO : MUTED, () -> send(AdminAction.WARP_RESTRICT, w.name() + ";" + !w.restricted())) - 2;
                 bx = button(g, bx, y + 2, "+", DIM, GOLD, () -> send(AdminAction.WARP_COST, w.name() + ";" + (w.cost() + 10))) - 2;
                 bx = button(g, bx, y + 2, "-", DIM, GOLD, () -> send(AdminAction.WARP_COST, w.name() + ";" + Math.max(0, w.cost() - 10))) - 2;
@@ -342,6 +348,111 @@ public class AdminScreen extends Screen {
                 nameBox.setValue("");
             });
         }
+    }
+
+    private void drawPortals(GuiGraphics g) {
+        int y = top + 28;
+        small(g, Component.translatable("screen.bsp_teleport.admin.portals_help").getString(), left + 10, y, MUTED);
+        button(g, left + W - 10, y - 2, Component.translatable(portalMap ? "screen.bsp_teleport.admin.list" : "screen.bsp_teleport.admin.map").getString(), VIO, VIO, () -> {
+            portalMap = !portalMap;
+            scroll = 0;
+        });
+        y += 12;
+        List<AdminData.PortalEntry> portals = data.portals();
+        if (portals.isEmpty()) {
+            small(g, Component.translatable("screen.bsp_teleport.admin.portals_none").getString(), left + 12, y + 4, MUTED);
+            return;
+        }
+        int bottom = top + H - 24;
+        if (portalMap) {
+            int sx = left + 10, sw = W - 20, sh = 96;
+            g.fill(sx, y, sx + sw, y + sh, DIM);
+            g.fill(sx + 1, y + 1, sx + sw - 1, y + sh - 1, SLOT);
+            int n = portals.size(), cx = sx + sw / 2, cy = y + sh / 2;
+            int[] nx = new int[n], ny = new int[n];
+            for (int i = 0; i < n; i++) {
+                double a = -Math.PI / 2 + i * Math.PI * 2 / n;
+                nx[i] = n == 1 ? cx : cx + (int) (Math.cos(a) * (sw / 2 - 52));
+                ny[i] = n == 1 ? cy : cy + (int) (Math.sin(a) * (sh / 2 - 14));
+            }
+            for (int i = 0; i < n; i++) {
+                for (int j = i + 1; j < n; j++) {
+                    if (!portals.get(i).linkId().isEmpty() && portals.get(i).linkId().equals(portals.get(j).linkId())) {
+                        line(g, nx[i], ny[i], nx[j], ny[j], VIO);
+                    }
+                }
+            }
+            if (selectedPortal.isEmpty() || portals.stream().noneMatch(p -> p.id().equals(selectedPortal))) {
+                selectedPortal = portals.get(0).id();
+            }
+            for (int i = 0; i < n; i++) {
+                AdminData.PortalEntry p = portals.get(i);
+                boolean on = p.id().equals(selectedPortal);
+                int bw = Math.max(60, (int) (font.width(p.name()) * 0.75f) + 10), bh = 18;
+                int bx = nx[i] - bw / 2, by = ny[i] - bh / 2;
+                int border = portalColour(p);
+                g.fill(bx, by, bx + bw, by + bh, border);
+                g.fill(bx + 1, by + 1, bx + bw - 1, by + bh - 1, on ? 0xFF0F2A28 : BG);
+                small(g, clip(p.name(), bw - 6), bx + 3, by + 2, on ? TQ : TEXT);
+                small(g, clip(p.server(), bw - 6), bx + 3, by + 10, p.server().equals(data.server()) ? GOLD : MUTED);
+                hits.add(new Hit(bx, by, bw, bh, () -> selectedPortal = p.id()));
+            }
+            y += sh + 4;
+            for (AdminData.PortalEntry p : portals) {
+                if (p.id().equals(selectedPortal)) {
+                    portalRow(g, y, p, true);
+                }
+            }
+            return;
+        }
+        String lastServer = null;
+        int i = 0;
+        for (AdminData.PortalEntry p : portals) {
+            if (!p.server().equals(lastServer)) {
+                lastServer = p.server();
+                if (i++ >= scroll) {
+                    if (y + 10 > bottom) {
+                        break;
+                    }
+                    small(g, p.server().toUpperCase() + (p.server().equals(data.server()) ? "  (" + Component.translatable("screen.bsp_teleport.admin.this_server").getString() + ")" : ""), left + 12, y, GOLD);
+                    y += 10;
+                }
+            }
+            if (i++ < scroll) {
+                continue;
+            }
+            if (y + 18 > bottom) {
+                break;
+            }
+            portalRow(g, y, p, false);
+            y += 20;
+        }
+    }
+
+    /** Turquoise for a lit portal, gold for one that is closed or waiting on a destination, red for a broken frame, a lock or a server that is down. */
+    private int portalColour(AdminData.PortalEntry p) {
+        return switch (p.status()) {
+            case "READY" -> "open".equals(p.doors()) ? TQ : "locked".equals(p.doors()) ? BAD : GOLD;
+            case "NO_DESTINATION", "WAITING", "MISSING", "LINK_IN_USE" -> GOLD;
+            default -> BAD;
+        };
+    }
+
+    private void portalRow(GuiGraphics g, int y, AdminData.PortalEntry p, boolean withServer) {
+        g.fill(left + 10, y, left + W - 10, y + 18, DIM);
+        g.fill(left + 11, y + 1, left + W - 11, y + 17, SLOT);
+        g.drawString(font, p.name(), left + 14, y + 2, TEXT, false);
+        String state = p.status().toLowerCase().replace('_', ' ') + (p.doors().isEmpty() ? "" : ", " + p.doors());
+        small(g, clip((withServer ? p.server() + "  " : "") + p.x() + "," + p.y() + "," + p.z() + "  " + state + "  " + p.destination(), W - 150), left + 14, y + 11, portalColour(p));
+        int bx = left + W - 14;
+        if (!data.readOnly()) {
+            boolean locked = "locked".equals(p.doors());
+            bx = button(g, bx, y + 3, Component.translatable(locked ? "screen.bsp_teleport.admin.unlock" : "screen.bsp_teleport.admin.lock").getString(), locked ? BAD : DIM, locked ? BAD : MUTED,
+                    () -> send(AdminAction.PORTAL_COMMAND, p.id() + ";" + (locked ? "unlock" : "lock"))) - 2;
+            bx = button(g, bx, y + 3, Component.translatable("screen.bsp_teleport.admin.close_now").getString(), DIM, MUTED, () -> send(AdminAction.PORTAL_COMMAND, p.id() + ";close")) - 2;
+            bx = button(g, bx, y + 3, Component.translatable("screen.bsp_teleport.admin.open_now").getString(), DIM, OK, () -> send(AdminAction.PORTAL_COMMAND, p.id() + ";open")) - 2;
+        }
+        button(g, bx, y + 3, Component.translatable("screen.bsp_teleport.admin.go").getString(), TQ, TQ, () -> go(AdminAction.GO_PORTAL, p.id()));
     }
 
     private void drawFooter(GuiGraphics g) {
@@ -466,6 +577,7 @@ public class AdminScreen extends Screen {
             case NETWORK -> sel == null ? 0 : sel.players().size();
             case SETTINGS -> data.settings().size();
             case WARPS -> data.warps().size();
+            case PORTALS -> portalMap ? 0 : data.portals().size() + (int) data.portals().stream().map(AdminData.PortalEntry::server).distinct().count();
         };
         scroll = Math.max(0, Math.min(Math.max(0, count - 1), scroll - (int) Math.signum(delta)));
         return true;

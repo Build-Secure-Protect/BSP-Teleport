@@ -47,6 +47,8 @@ public final class AdminCommands {
                     return 1;
                 }))
                 .then(Commands.literal("status").executes(AdminCommands::status))
+                .then(PortalCommands.portal())
+                .then(PortalCommands.portalWarp())
                 .then(Commands.literal("players").executes(AdminCommands::players))
                 .then(Commands.literal("send")
                         .then(Commands.argument("player", EntityArgument.player())

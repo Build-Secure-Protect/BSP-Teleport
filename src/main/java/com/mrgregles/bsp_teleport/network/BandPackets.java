@@ -7,6 +7,10 @@ import com.mrgregles.bsp_teleport.admin.AdminService;
 import com.mrgregles.bsp_teleport.band.BandAction;
 import com.mrgregles.bsp_teleport.band.BandData;
 import com.mrgregles.bsp_teleport.band.BandService;
+import com.mrgregles.bsp_teleport.portal.PortalScreenAction;
+import com.mrgregles.bsp_teleport.portal.PortalScreenData;
+import com.mrgregles.bsp_teleport.portal.PortalScreenService;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -31,6 +35,11 @@ public final class BandPackets {
         CHANNEL.registerMessage(0, Data.class, (m, buf) -> m.data().encode(buf), buf -> new Data(BandData.decode(buf)), Data::handle);
         CHANNEL.registerMessage(1, Action.class, (m, buf) -> buf.writeEnum(m.action()).writeUtf(m.arg()), buf -> new Action(buf.readEnum(BandAction.class), buf.readUtf()), Action::handle);
         CHANNEL.registerMessage(2, Admin.class, (m, buf) -> m.data().encode(buf), buf -> new Admin(AdminData.decode(buf)), Admin::handle);
+        CHANNEL.registerMessage(4, Portal.class, (m, buf) -> m.data().encode(buf), buf -> new Portal(PortalScreenData.decode(buf)), Portal::handle);
+        CHANNEL.registerMessage(5, PortalDo.class, (m, buf) -> {
+            buf.writeBlockPos(m.pos());
+            buf.writeEnum(m.action()).writeUtf(m.arg());
+        }, buf -> new PortalDo(buf.readBlockPos(), buf.readEnum(PortalScreenAction.class), buf.readUtf()), PortalDo::handle);
         CHANNEL.registerMessage(3, AdminDo.class, (m, buf) -> buf.writeEnum(m.action()).writeUtf(m.arg()), buf -> new AdminDo(buf.readEnum(AdminAction.class), buf.readUtf()), AdminDo::handle);
     }
 
@@ -62,6 +71,35 @@ public final class BandPackets {
                 ServerPlayer player = ctx.get().getSender();
                 if (player != null) {
                     AdminService.handle(player, action, arg);
+                }
+            });
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    public static void sendPortal(ServerPlayer player, PortalScreenData data) {
+        if (canReceive(player)) {
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Portal(data));
+        }
+    }
+
+    public static void sendPortalAction(BlockPos pos, PortalScreenAction action, String arg) {
+        CHANNEL.sendToServer(new PortalDo(pos, action, arg));
+    }
+
+    public record Portal(PortalScreenData data) {
+        void handle(Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> com.mrgregles.bsp_teleport.client.PortalScreen.show(data)));
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    public record PortalDo(BlockPos pos, PortalScreenAction action, String arg) {
+        void handle(Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> {
+                ServerPlayer player = ctx.get().getSender();
+                if (player != null) {
+                    PortalScreenService.handle(player, pos, action, arg);
                 }
             });
             ctx.get().setPacketHandled(true);

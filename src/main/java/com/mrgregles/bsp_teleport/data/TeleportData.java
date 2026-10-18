@@ -32,6 +32,8 @@ public class TeleportData extends SavedData {
     /** Homes per player, oldest first: the first N are the ones that fit the player's slots. */
     private final Map<UUID, LinkedHashMap<String, Home>> homes = new HashMap<>();
     private final Map<String, Warp> warps = new LinkedHashMap<>();
+    /** Portal rows (D62): every row in local mode, this server's own rows in network mode (the shared table holds the rest). */
+    private final Map<String, PortalRow> portals = new LinkedHashMap<>();
     /** Where each player last logged out, for {@code /tpoffline}. */
     private final Map<UUID, Position> offline = new HashMap<>();
     /** Players who do not want teleport requests. */
@@ -224,6 +226,30 @@ public class TeleportData extends SavedData {
         setDirty();
     }
 
+    // Portals
+
+    public Collection<PortalRow> portals() {
+        return portals.values();
+    }
+
+    @Nullable
+    public PortalRow portal(String id) {
+        return portals.get(id);
+    }
+
+    public void setPortal(PortalRow row) {
+        portals.put(row.id(), row);
+        setDirty();
+    }
+
+    public boolean deletePortal(String id) {
+        boolean removed = portals.remove(id) != null;
+        if (removed) {
+            setDirty();
+        }
+        return removed;
+    }
+
     // Persistence
 
     @Override
@@ -241,6 +267,9 @@ public class TeleportData extends SavedData {
         ListTag warpList = new ListTag();
         warps.values().forEach(w -> warpList.add(w.save()));
         tag.put("Warps", warpList);
+        ListTag portalList = new ListTag();
+        portals.values().forEach(r -> portalList.add(r.save()));
+        tag.put("Portals", portalList);
         if (spawn != null) {
             tag.put("Spawn", spawn.save());
         }
@@ -284,6 +313,10 @@ public class TeleportData extends SavedData {
         for (Tag t : tag.getList("Warps", Tag.TAG_COMPOUND)) {
             Warp warp = Warp.load((CompoundTag) t);
             data.warps.put(warp.name(), warp);
+        }
+        for (Tag t : tag.getList("Portals", Tag.TAG_COMPOUND)) {
+            PortalRow row = PortalRow.load((CompoundTag) t);
+            data.portals.put(row.id(), row);
         }
         if (tag.contains("Spawn")) {
             data.spawn = Position.load(tag.getCompound("Spawn"));

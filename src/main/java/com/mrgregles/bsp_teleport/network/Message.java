@@ -28,6 +28,10 @@ public final class Message {
         /** Where is this player? Answered with POSITION_RESULT to the asking player. */
         POSITION_REQUEST, POSITION_RESULT,
         HOMES_CHANGED, HOMES_WIPED, WARPS_CHANGED,
+        /** A portal row was written or deleted: re-read the shared table. */
+        PORTALS_CHANGED,
+        /** Open, close, lock or unlock a portal on the target server: "id", "command". */
+        PORTAL_DO,
         RTP_REQUEST, RTP_RESULT,
         TELL,
         CUSTOM

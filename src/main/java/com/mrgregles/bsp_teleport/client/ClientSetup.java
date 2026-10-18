@@ -1,7 +1,11 @@
 package com.mrgregles.bsp_teleport.client;
 
 import com.mrgregles.bsp_teleport.BSPTeleport;
+import com.mrgregles.bsp_teleport.block.PortalFieldBlock;
+import com.mrgregles.bsp_teleport.registry.ModBlocks;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -21,5 +25,17 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void onSetup(FMLClientSetupEvent event) {
         BandClient.onClientSetup(event);
+    }
+
+    /** The Rendered door style (D60) is drawn by a block entity renderer on the core. */
+    @SubscribeEvent
+    public static void onRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(ModBlocks.PORTAL_CORE_ENTITY.get(), PortalCoreRenderer::new);
+    }
+
+    /** The portal field's grey texture takes its colour from the block state (D58). */
+    @SubscribeEvent
+    public static void onBlockColours(RegisterColorHandlersEvent.Block event) {
+        event.register((state, level, pos, tintIndex) -> state.getValue(PortalFieldBlock.COLOUR).tint(), ModBlocks.PORTAL_FIELD.get());
     }
 }

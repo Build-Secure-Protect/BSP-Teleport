@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "bsp_teleport:block/portal_field_x"
+    },
+    "axis=z": {
+      "model": "bsp_teleport:block/portal_field_z"
+    }
+  }
+}

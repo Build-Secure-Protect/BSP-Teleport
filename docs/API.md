@@ -39,7 +39,7 @@ The Redis channel is `bsp_teleport:<redis.cluster>:v<API_VERSION>`, so servers r
 
 | Event | When | Cancel means |
 |---|---|---|
-| `TeleportStartEvent` | a player asked for a teleport (home, warp, spawn, back, random, request); fired after the cooldown and region checks, before the warm-up; `player()`, `destination()`, `kind()` | the teleport is refused; `setReason(text)` tells the player why. Forced API moves do not fire it. |
+| `TeleportStartEvent` | a player asked for a teleport (home, warp, spawn, back, random, request, or `PORTAL` when they stepped into a portal); fired after the cooldown and region checks, before the warm-up; `player()`, `destination()`, `kind()` | the teleport is refused; `setReason(text)` tells the player why. Forced API moves do not fire it. |
 
 ## Region Guard
 

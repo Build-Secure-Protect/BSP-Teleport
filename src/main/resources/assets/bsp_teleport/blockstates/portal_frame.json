@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "bsp_teleport:block/portal_frame"
+    }
+  }
+}

@@ -3,7 +3,9 @@ package com.mrgregles.bsp_teleport.storage;
 import com.mrgregles.bsp_teleport.api.Destination;
 import com.mrgregles.bsp_teleport.data.Home;
 import com.mrgregles.bsp_teleport.data.Position;
+import com.mrgregles.bsp_teleport.data.PortalRow;
 import com.mrgregles.bsp_teleport.data.Warp;
+import com.mrgregles.bsp_teleport.portal.PortalDestination;
 
 import javax.annotation.Nullable;
 import java.sql.Connection;
@@ -106,9 +108,28 @@ final class MySqlStore implements AutoCloseable {
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("homes") + " (owner CHAR(36) NOT NULL, name VARCHAR(16) NOT NULL, position VARCHAR(255) NOT NULL, "
                     + "created_ms BIGINT NOT NULL, description VARCHAR(255) NOT NULL DEFAULT '', public BOOLEAN NOT NULL DEFAULT FALSE, icon VARCHAR(96) NOT NULL DEFAULT '', PRIMARY KEY (owner, name), INDEX (public))");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("warps") + " (name VARCHAR(16) NOT NULL PRIMARY KEY, position VARCHAR(255) NOT NULL, "
-                    + "cost INT NOT NULL DEFAULT 0, restricted BOOLEAN NOT NULL DEFAULT FALSE, icon VARCHAR(96) NOT NULL DEFAULT '')");
+                    + "cost INT NOT NULL DEFAULT 0, restricted BOOLEAN NOT NULL DEFAULT FALSE, icon VARCHAR(96) NOT NULL DEFAULT '', portal BOOLEAN NOT NULL DEFAULT FALSE)");
+            addColumn(st, "warps", "portal", "BOOLEAN NOT NULL DEFAULT FALSE");
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("portals") + " (id VARCHAR(190) NOT NULL PRIMARY KEY, server VARCHAR(64) NOT NULL, world VARCHAR(128) NOT NULL, "
+                    + "x INT NOT NULL, y INT NOT NULL, z INT NOT NULL, name VARCHAR(32) NOT NULL DEFAULT '', destination VARCHAR(512) NOT NULL DEFAULT '', "
+                    + "arrive_only BOOLEAN NOT NULL DEFAULT FALSE, exit_to VARCHAR(512) NOT NULL DEFAULT '', frame_ok BOOLEAN NOT NULL DEFAULT FALSE, "
+                    + "colour VARCHAR(16) NOT NULL DEFAULT '', status VARCHAR(24) NOT NULL DEFAULT '', doors VARCHAR(16) NOT NULL DEFAULT '', created_ms BIGINT NOT NULL DEFAULT 0, INDEX (server))");
+            addColumn(st, "portals", "doors", "VARCHAR(16) NOT NULL DEFAULT ''");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("spawns") + " (server VARCHAR(64) NOT NULL PRIMARY KEY, position VARCHAR(255) NOT NULL)");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("pending") + " (uuid CHAR(36) NOT NULL PRIMARY KEY, destination VARCHAR(512) NOT NULL, created_ms BIGINT NOT NULL)");
+        }
+    }
+
+    /** Adds a column to a table made by an older version; MariaDB knows IF NOT EXISTS, MySQL answers "duplicate column", which is fine. */
+    private void addColumn(Statement st, String table, String column, String definition) {
+        try {
+            st.executeUpdate("ALTER TABLE " + t(table) + " ADD COLUMN IF NOT EXISTS " + column + " " + definition);
+        } catch (SQLException e) {
+            try {
+                st.executeUpdate("ALTER TABLE " + t(table) + " ADD COLUMN " + column + " " + definition);
+            } catch (SQLException ignored) {
+                // already there
+            }
         }
     }
 
@@ -262,22 +283,68 @@ final class MySqlStore implements AutoCloseable {
 
     List<Warp> loadWarps() throws SQLException {
         List<Warp> warps = new ArrayList<>();
-        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT name, position, cost, restricted, icon FROM " + t("warps") + " ORDER BY name")) {
+        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT name, position, cost, restricted, icon, portal FROM " + t("warps") + " ORDER BY name")) {
             while (rs.next()) {
-                warps.add(new Warp(rs.getString(1), Position.parse(rs.getString(2)), rs.getInt(3), rs.getBoolean(4), rs.getString(5)));
+                warps.add(new Warp(rs.getString(1), Position.parse(rs.getString(2)), rs.getInt(3), rs.getBoolean(4), rs.getString(5), rs.getBoolean(6)));
             }
         }
         return warps;
     }
 
     void saveWarp(Warp warp) throws SQLException {
-        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("warps") + " (name, position, cost, restricted, icon) VALUES (?, ?, ?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE position = VALUES(position), cost = VALUES(cost), restricted = VALUES(restricted), icon = VALUES(icon)")) {
+        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("warps") + " (name, position, cost, restricted, icon, portal) VALUES (?, ?, ?, ?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE position = VALUES(position), cost = VALUES(cost), restricted = VALUES(restricted), icon = VALUES(icon), portal = VALUES(portal)")) {
             ps.setString(1, warp.name());
             ps.setString(2, warp.position().serialize());
             ps.setInt(3, warp.cost());
             ps.setBoolean(4, warp.restricted());
             ps.setString(5, warp.icon());
+            ps.setBoolean(6, warp.portal());
+            ps.executeUpdate();
+        }
+    }
+
+    // Portals
+
+    List<PortalRow> loadPortals() throws SQLException {
+        List<PortalRow> rows = new ArrayList<>();
+        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT id, server, world, x, y, z, name, destination, arrive_only, exit_to, frame_ok, colour, status, doors, created_ms FROM " + t("portals") + " ORDER BY created_ms")) {
+            while (rs.next()) {
+                String exit = rs.getString(10);
+                rows.add(new PortalRow(rs.getString(1), rs.getString(2), rs.getString(3), rs.getInt(4), rs.getInt(5), rs.getInt(6), rs.getString(7),
+                        PortalDestination.parse(rs.getString(8)), rs.getBoolean(9), exit.isEmpty() ? null : Destination.parse(exit), rs.getBoolean(11),
+                        rs.getString(12), rs.getString(13), rs.getString(14), rs.getLong(15)));
+            }
+        }
+        return rows;
+    }
+
+    void savePortal(PortalRow row) throws SQLException {
+        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("portals") + " (id, server, world, x, y, z, name, destination, arrive_only, exit_to, frame_ok, colour, status, doors, created_ms) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name = VALUES(name), destination = VALUES(destination), arrive_only = VALUES(arrive_only), "
+                + "exit_to = VALUES(exit_to), frame_ok = VALUES(frame_ok), colour = VALUES(colour), status = VALUES(status), doors = VALUES(doors)")) {
+            ps.setString(1, row.id());
+            ps.setString(2, row.server());
+            ps.setString(3, row.world());
+            ps.setInt(4, row.x());
+            ps.setInt(5, row.y());
+            ps.setInt(6, row.z());
+            ps.setString(7, row.name());
+            ps.setString(8, row.destination().serialize());
+            ps.setBoolean(9, row.arriveOnly());
+            ps.setString(10, row.exit() == null ? "" : row.exit().serialize());
+            ps.setBoolean(11, row.frameOk());
+            ps.setString(12, row.colour());
+            ps.setString(13, row.status());
+            ps.setString(14, row.doors());
+            ps.setLong(15, row.createdMs());
+            ps.executeUpdate();
+        }
+    }
+
+    void deletePortal(String id) throws SQLException {
+        try (PreparedStatement ps = conn().prepareStatement("DELETE FROM " + t("portals") + " WHERE id = ?")) {
+            ps.setString(1, id);
             ps.executeUpdate();
         }
     }

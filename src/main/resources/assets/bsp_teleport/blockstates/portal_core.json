@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "bsp_teleport:block/portal_core"
+    },
+    "facing=east": {
+      "model": "bsp_teleport:block/portal_core",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "bsp_teleport:block/portal_core",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bsp_teleport:block/portal_core",
+      "y": 270
+    }
+  }
+}

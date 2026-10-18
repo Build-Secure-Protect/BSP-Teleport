@@ -6,7 +6,9 @@ import com.mrgregles.bsp_teleport.api.Destination;
 import com.mrgregles.bsp_teleport.data.Home;
 import com.mrgregles.bsp_teleport.data.Position;
 import com.mrgregles.bsp_teleport.data.TeleportData;
+import com.mrgregles.bsp_teleport.data.PortalRow;
 import com.mrgregles.bsp_teleport.data.Warp;
+import com.mrgregles.bsp_teleport.portal.Portals;
 import com.mrgregles.bsp_teleport.network.Messenger;
 import com.mrgregles.bsp_teleport.teleport.Teleports;
 import net.minecraft.server.MinecraftServer;
@@ -61,6 +63,7 @@ public final class Storage {
     public static void onServerTick(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
         if (event.phase == net.minecraftforge.event.TickEvent.Phase.END && store != null && event.getServer().getTickCount() % 6000 == 0) {
             reloadWarps(event.getServer());
+            reloadPortals(event.getServer());
         }
     }
 
@@ -84,19 +87,20 @@ public final class Storage {
         run(() -> {
             s.init();
             s.deleteOldPending(TeleportConfig.getOr(TeleportConfig.LANDING_SECONDS, 120) * 1000L);
-            return new Loaded(s.loadWarps(), s.loadSpawn(TeleportConfig.serverName()));
+            return new Loaded(s.loadWarps(), s.loadSpawn(TeleportConfig.serverName()), s.loadPortals());
         }, loaded -> {
             TeleportData data = TeleportData.get(server);
             data.replaceWarps(loaded.warps());
             if (loaded.spawn() != null) {
                 data.setSpawn(loaded.spawn());
             }
+            Portals.replaceRows(loaded.portals());
             status = "mysql: connected to " + s.describe();
             BSPTeleport.LOGGER.info("Storage ready: {}, {} warps", status, loaded.warps().size());
         }, e -> status = "mysql: FAILED, " + e.getMessage());
     }
 
-    private record Loaded(List<Warp> warps, @Nullable Position spawn) {
+    private record Loaded(List<Warp> warps, @Nullable Position spawn, List<PortalRow> portals) {
     }
 
     public static void onServerStopping(ServerStoppingEvent event) {
@@ -219,6 +223,22 @@ public final class Storage {
 
     public static void homeDeleted(UUID owner, String name) {
         submit(s -> s.deleteHome(owner, name), () -> Messenger.homesChanged(owner));
+    }
+
+    public static void reloadPortals(MinecraftServer server) {
+        MySqlStore s = store;
+        if (s == null) {
+            return;
+        }
+        run(s::loadPortals, Portals::replaceRows, null);
+    }
+
+    public static void portalSaved(PortalRow row) {
+        submit(s -> s.savePortal(row), Messenger::portalsChanged);
+    }
+
+    public static void portalDeleted(String id) {
+        submit(s -> s.deletePortal(id), Messenger::portalsChanged);
     }
 
     public static void warpSaved(Warp warp) {

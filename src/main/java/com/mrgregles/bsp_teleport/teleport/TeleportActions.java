@@ -116,6 +116,7 @@ public final class TeleportActions {
     /** The warps this player may use. */
     public static List<Warp> usableWarps(ServerPlayer player) {
         return TeleportData.get(player.server).warps().stream()
+                .filter(w -> !w.portal())
                 .filter(w -> !w.restricted() || Permissions.has(player, Permissions.warpNode(w.name())))
                 .collect(Collectors.toList());
     }
@@ -131,7 +132,7 @@ public final class TeleportActions {
 
     public static boolean warp(ServerPlayer player, String name) {
         Warp warp = TeleportData.get(player.server).warp(name);
-        if (warp == null) {
+        if (warp == null || (warp.portal() && !Permissions.isAdmin(player))) {
             return fail(player, "warp.unknown", name);
         }
         if (warp.restricted() && !Permissions.has(player, Permissions.warpNode(warp.name()))) {

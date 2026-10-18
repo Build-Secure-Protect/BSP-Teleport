@@ -4,6 +4,8 @@ import com.mrgregles.bsp_teleport.BSPTeleport;
 import com.mrgregles.bsp_teleport.admin.AdminAction;
 import com.mrgregles.bsp_teleport.band.BandAction;
 import com.mrgregles.bsp_teleport.network.BandPackets;
+import com.mrgregles.bsp_teleport.portal.PortalScreenAction;
+import net.minecraft.core.BlockPos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.Connection;
@@ -34,6 +36,14 @@ public final class ClientNet {
             BandPackets.sendAction(action, arg);
         } else {
             BSPTeleport.LOGGER.debug("Dropped band action {} while the connection was changing", action);
+        }
+    }
+
+    public static void sendPortal(BlockPos pos, PortalScreenAction action, String arg) {
+        if (ready()) {
+            BandPackets.sendPortalAction(pos, action, arg);
+        } else {
+            BSPTeleport.LOGGER.debug("Dropped portal action {} while the connection was changing", action);
         }
     }
 
