@@ -38,3 +38,18 @@ Needs the owner, one server first, then two behind Velocity with Redis:
 - [ ] Two servers with Redis: a teammate on the other server shows "on <server>" in violet with a violet GO key. Press GO: "Finding <name> on <server>...", then the warm-up, then the switch; you land at the teammate's position; the teammate saw "<you> is teleporting to you." With `/bsptp status` showing Redis off on your server the key is greyed FAR and the Team screen's key answers "<name> is on <server> and this server cannot reach them."
 - [ ] Two servers, access on: a teammate on a server you have no access to is refused with the access denial (and the popup), as any teleport would be.
 - [ ] Admin band: six tabs; the title reads BAND; every tab still opens.
+
+## Home Servers board on BSP-Core's Score Screens (R8, 2026-10-18)
+
+Needs BSP-Core 1.3.0 with the boards line (built 2026-10-18 or later) on the client and on every backend; the servers must run the 1.3.0 jar (slim on Mohist). Nothing to configure here: the board registers itself at client setup from the counts the access sync already sends.
+
+Headless, already passing: the build against `BspBoards`. Nothing in game yet.
+
+Needs the owner, one server with `access.enabled = true` and at least one restricted server:
+
+- [ ] Place a BSP-Core Score Screen and open its settings as an admin: under Show, pick Board; the board picker lists "HOME SERVERS" from `bsp_teleport:home_servers`. The screen shows one row per restricted server: its Access Token as the icon (no icon while no token is assigned to it), the server's name, and "N home · F full · R renting" at the right.
+- [ ] `/mainserver <server>` as another player: the home count on the screen rises within a minute (the counts refresh every minute, at once after a grant on the server where it was made). Rent and full grants move the other two numbers.
+- [ ] Try the three looks in the screen's settings (Ledger rows, Tiles, Side column): the icon, the name and the value sit where BSP-Core's look puts them.
+- [ ] Rotate: with the board among the pages, the screen cycles leaderboard and board at the chosen interval.
+- [ ] With `access.enabled = false`, or before the first sync (a freshly logged-in client), the screen says "Nothing on this board yet" and no lines are drawn.
+- [ ] A client that joins with the board picked on a screen but without BSP-Teleport installed sees BSP-Core's "not installed here" line once and the rotation skips it (BSP-Core's side; no change expected here).

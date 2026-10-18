@@ -1,6 +1,7 @@
 package com.mrgregles.bsp_teleport.compat;
 
 import com.mrgregles.bsp_core.BSPConfig;
+import com.mrgregles.bsp_core.api.BspBoards;
 import com.mrgregles.bsp_core.api.BspPlayers;
 import com.mrgregles.bsp_core.api.BspTeams;
 import com.mrgregles.bsp_core.api.BspTotems;
@@ -19,9 +20,12 @@ import com.mrgregles.bsp_teleport.network.Messenger;
 import com.mrgregles.bsp_teleport.storage.Storage;
 import com.mrgregles.bsp_teleport.team.TeamTeleports;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.MinecraftForge;
 
 import javax.annotation.Nullable;
@@ -32,9 +36,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
- * The only class that touches BSP-Core, through its {@code api} package (BSP-Core 1.0.1 with requests R1 to R5 built).
+ * The only class that touches BSP-Core, through its {@code api} package (BSP-Core 1.3.0 with requests R1 to R8 built).
  *
  * <p>Besides the lookups, this is where BSP-Core's events are answered: a full season reset wipes homes (D13), a
  * successful steal starts the thief's no-teleport window (D18), a cross-server Recall is carried out (R3), and a
@@ -60,6 +65,27 @@ public final class BspCore {
         MinecraftForge.EVENT_BUS.addListener(BspCore::onTeamDisbanded);
         // T-3: from now on BSP-Core's Team screen draws a TELEPORT key on every online teammate's row.
         BspTeams.teleportsHandledBy(BSPTeleport.MODID);
+    }
+
+    // Boards on the Score Screen (R8, D85)
+
+    /** One line of a board this mod shows on BSP-Core's Score Screens: text at the left, value at the right, an icon before the text. */
+    public record BoardEntry(Component text, @Nullable Component value, ItemStack icon) {
+    }
+
+    /**
+     * Registers (or replaces) a board on the client. BSP-Core reads the supplier on the render thread about once a
+     * second per screen that shows the board, so it must be cheap and never block; an empty list is "nothing yet".
+     */
+    public static void registerBoard(ResourceLocation id, Component title, Supplier<List<BoardEntry>> lines) {
+        BspBoards.register(id, title, () -> {
+            List<BoardEntry> entries = lines.get();
+            List<BspBoards.BoardLine> out = new ArrayList<>(entries.size());
+            for (BoardEntry e : entries) {
+                out.add(BspBoards.BoardLine.of(e.text(), e.value(), e.icon()));
+            }
+            return out;
+        });
     }
 
     // Players

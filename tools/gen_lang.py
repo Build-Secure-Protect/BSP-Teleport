@@ -496,6 +496,9 @@ OTHER = {
     "screen.bsp_teleport.board.done": "Done",
     "screen.bsp_teleport.board.empty": "No server needs access yet.",
     "screen.bsp_teleport.board.sub": "%s full, %s renting",
+    # Home Servers board on BSP-Core's Score Screens (R8)
+    "screen.bsp_teleport.board.home_servers": "HOME SERVERS",
+    "screen.bsp_teleport.board.line": "%s home \u00b7 %s full \u00b7 %s renting",
 }
 
 

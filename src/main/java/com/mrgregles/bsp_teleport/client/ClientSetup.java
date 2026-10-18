@@ -25,6 +25,7 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void onSetup(FMLClientSetupEvent event) {
         BandClient.onClientSetup(event);
+        HomeServersBoard.register();
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(AccessHud::onOverlay);
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut e) -> ClientAccess.clear());
     }
