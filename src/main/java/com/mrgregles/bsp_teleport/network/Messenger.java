@@ -66,7 +66,7 @@ public final class Messenger {
                 TeleportConfig.REDIS_SSL.get(), TeleportConfig.REDIS_DB.get(), channel, Messenger::onRaw);
         link = l;
         l.start();
-        BSPTeleport.LOGGER.info("Redis messaging on: {}", l.describe());
+        BSPTeleport.LOGGER.info("Redis messaging on: {}:{} channel {}; the subscriber reports when it connects", TeleportConfig.REDIS_HOST.get(), TeleportConfig.REDIS_PORT.get(), channel);
         send(new Message(Message.Type.PLAYER_LIST_REQUEST, Message.To.ALL, Message.ALL));
     }
 

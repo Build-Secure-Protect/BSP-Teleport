@@ -215,7 +215,9 @@ public final class RedisLink implements AutoCloseable {
                 InputStream in = new BufferedInputStream(s.getInputStream());
                 listening = true;
                 lastError = "";
-                if (!first) {
+                if (first) {
+                    BSPTeleport.LOGGER.info("Redis listening on {}:{} channel {}", host, port, channel);
+                } else {
                     BSPTeleport.LOGGER.info("Redis connection is back");
                 }
                 first = false;
@@ -232,7 +234,9 @@ public final class RedisLink implements AutoCloseable {
             } catch (IOException e) {
                 listening = false;
                 lastError = e.getMessage() == null ? e.toString() : e.getMessage();
-                if (running) {
+                if (running && first) {
+                    BSPTeleport.LOGGER.warn("Redis not reachable at {}:{} ({}); retrying every {} s", host, port, lastError, RECONNECT_MS / 1000);
+                } else if (running) {
                     BSPTeleport.LOGGER.warn("Redis subscription lost ({}); retrying in {} s", lastError, RECONNECT_MS / 1000);
                 }
             } finally {
