@@ -2,11 +2,13 @@ package com.mrgregles.bsp_teleport.compat;
 
 import com.mrgregles.bsp_core.BSPConfig;
 import com.mrgregles.bsp_core.api.BspPlayers;
+import com.mrgregles.bsp_core.api.BspTeams;
 import com.mrgregles.bsp_core.api.BspTotems;
 import com.mrgregles.bsp_core.api.BspTransfer;
 import com.mrgregles.bsp_core.api.BspZones;
 import com.mrgregles.bsp_core.api.event.RecallEvent;
 import com.mrgregles.bsp_core.api.event.SeasonEvent;
+import com.mrgregles.bsp_core.api.event.TeamEvent;
 import com.mrgregles.bsp_core.api.event.TotemEvent;
 import com.mrgregles.bsp_core.totem.TotemUpgrades;
 import com.mrgregles.bsp_teleport.BSPTeleport;
@@ -15,6 +17,7 @@ import com.mrgregles.bsp_teleport.api.BspTeleportApi;
 import com.mrgregles.bsp_teleport.data.TeleportData;
 import com.mrgregles.bsp_teleport.network.Messenger;
 import com.mrgregles.bsp_teleport.storage.Storage;
+import com.mrgregles.bsp_teleport.team.TeamTeleports;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,6 +25,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.MinecraftForge;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,7 +37,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * The only class that touches BSP-Core, through its {@code api} package (BSP-Core 1.0.1 with requests R1 to R5 built).
  *
  * <p>Besides the lookups, this is where BSP-Core's events are answered: a full season reset wipes homes (D13), a
- * successful steal starts the thief's no-teleport window (D18), and a cross-server Recall is carried out (R3).
+ * successful steal starts the thief's no-teleport window (D18), a cross-server Recall is carried out (R3), and a
+ * team teleport asked for on BSP-Core's Team screen is run (T-1, D91). Team lookups for the band's TEAM tab are here
+ * too, with BSP-Core's server ids turned into proxy names.
  */
 public final class BspCore {
     /** Thieves who just took a totem, and when their invincibility (and teleport block) ends. */
@@ -45,6 +52,14 @@ public final class BspCore {
         MinecraftForge.EVENT_BUS.addListener(BspCore::onSeasonEnded);
         MinecraftForge.EVENT_BUS.addListener(BspCore::onStealEnded);
         MinecraftForge.EVENT_BUS.addListener(BspCore::onRecall);
+        MinecraftForge.EVENT_BUS.addListener(BspCore::onTeamTeleport);
+        MinecraftForge.EVENT_BUS.addListener(BspCore::onTeamCreated);
+        MinecraftForge.EVENT_BUS.addListener(BspCore::onTeamJoined);
+        MinecraftForge.EVENT_BUS.addListener(BspCore::onTeamLeft);
+        MinecraftForge.EVENT_BUS.addListener(BspCore::onTeamLeaderChanged);
+        MinecraftForge.EVENT_BUS.addListener(BspCore::onTeamDisbanded);
+        // T-3: from now on BSP-Core's Team screen draws a TELEPORT key on every online teammate's row.
+        BspTeams.teleportsHandledBy(BSPTeleport.MODID);
     }
 
     // Players
@@ -132,6 +147,25 @@ public final class BspCore {
         return nearRaid(player.server, player.getUUID(), "", level.dimension().location().toString(), x, z, distance);
     }
 
+    /**
+     * Whether a spot is within {@code distance} blocks, horizontally, of <em>any</em> totem being stolen right now,
+     * whoever owns it (D91: team teleports must not land behind a thief). Same server naming and cache lag as above.
+     */
+    public static boolean nearAnySteal(net.minecraft.server.MinecraftServer server, String targetServer, String dimensionId, double x, double z, int distance) {
+        String target = targetServer.isEmpty() ? TeleportConfig.serverName() : targetServer;
+        for (BspTotems.StealAnywhere steal : BspTotems.stealsAnywhere(server)) {
+            if (!proxyNameFor(steal.serverId()).equals(target) || !steal.dimension().location().toString().equals(dimensionId)) {
+                continue;
+            }
+            BlockPos t = steal.pos();
+            double dx = t.getX() + 0.5 - x, dz = t.getZ() + 0.5 - z;
+            if (dx * dx + dz * dz < (double) distance * distance) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Seconds left of the no-teleport window after the player stole a totem; 0 when none. */
     public static long thiefBlockLeft(ServerPlayer player) {
         Long until = THIEF_UNTIL.get(player.getUUID());
@@ -189,6 +223,71 @@ public final class BspCore {
         if (BspTeleportApi.get().sendToServer(owner, target)) {
             event.setHandled();
         }
+    }
+
+    // Teams (T-1 to T-3, D91 and D92)
+
+    /** A team as the band shows it: {@code colour} is the RGB of its chat colour, {@code members} in joining order. */
+    public record TeamInfo(UUID id, String name, int colour, UUID leader, List<UUID> members) {
+    }
+
+    private static final int DEFAULT_TEAM_COLOUR = 0x19D3B0;
+
+    public static Optional<TeamInfo> teamOf(net.minecraft.server.MinecraftServer server, UUID player) {
+        return BspTeams.teamOf(server, player).map(t -> {
+            Integer rgb = t.colour() == null ? null : t.colour().getColor();
+            return new TeamInfo(t.id(), t.name(), rgb == null ? DEFAULT_TEAM_COLOUR : rgb, t.leader(), t.members());
+        });
+    }
+
+    /** The members of a team with where they are, in joining order; servers as proxy names; empty when the team is gone. */
+    public static List<TeamTeleports.Mate> teamMembers(net.minecraft.server.MinecraftServer server, UUID teamId) {
+        List<TeamTeleports.Mate> out = new ArrayList<>();
+        for (BspTeams.Member m : BspTeams.members(server, teamId)) {
+            String where = m.onlineHere() ? TeleportConfig.serverName() : m.server().isEmpty() ? "" : proxyNameFor(m.server());
+            out.add(new TeamTeleports.Mate(m.uuid(), m.name(), m.leader(), m.onlineHere(), where, m.seenMs()));
+        }
+        return out;
+    }
+
+    /** BSP-Core's Team screen: a member pressed TELEPORT on a teammate's row. Moved or refused with a reason, it is handled. */
+    private static void onTeamTeleport(TeamEvent.TeleportRequest event) {
+        ServerPlayer player = event.getPlayer();
+        if (player == null || event.getTarget() == null) {
+            return;
+        }
+        event.setHandled();
+        TeamTeleports.go(player, event.getTarget());
+    }
+
+    private static void onTeamCreated(TeamEvent.Created event) {
+        teamChanged(event, event.getLeader());
+    }
+
+    private static void onTeamJoined(TeamEvent.Joined event) {
+        teamChanged(event, event.getPlayer());
+    }
+
+    private static void onTeamLeft(TeamEvent.Left event) {
+        teamChanged(event, event.getPlayer());
+    }
+
+    private static void onTeamLeaderChanged(TeamEvent.LeaderChanged event) {
+        teamChanged(event, null);
+    }
+
+    private static void onTeamDisbanded(TeamEvent.Disbanded event) {
+        teamChanged(event, null);
+    }
+
+    /** Refreshes the band's TEAM tab for every member online here, plus the player the change was about (D92). */
+    private static void teamChanged(TeamEvent event, @Nullable UUID also) {
+        LinkedHashSet<UUID> who = new LinkedHashSet<>();
+        if (also != null) {
+            who.add(also);
+        }
+        BspTeams.team(event.getServer(), event.getTeamId()).ifPresent(t -> who.addAll(t.members()));
+        com.mrgregles.bsp_teleport.band.BandService.refreshTeam(event.getServer(), who);
     }
 
     /**

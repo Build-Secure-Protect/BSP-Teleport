@@ -250,6 +250,10 @@ public final class Messenger {
                     .put("player", player.getGameProfile().getName()).put("position", Position.of(player).serialize()).put("purpose", m.get("purpose")));
             case POSITION_RESULT -> {
                 Position where = Position.parse(m.get("position"));
+                if ("team".equals(m.get("purpose"))) {
+                    com.mrgregles.bsp_teleport.team.TeamTeleports.onPosition(player, m.get("player"), where);
+                    return;
+                }
                 if ("here".equals(m.get("purpose"))) {
                     // The asker wanted the other player brought to them; the position answer is not needed for that.
                     return;
@@ -345,7 +349,12 @@ public final class Messenger {
 
     /** Asks where a player on another server is; the answer moves the asker there. */
     public static boolean askPosition(ServerPlayer asker, String playerName) {
+        return askPosition(asker, playerName, "to");
+    }
+
+    /** As above with a purpose: "to" moves the asker there, forced; "team" runs the team teleport rules first. */
+    public static boolean askPosition(ServerPlayer asker, String playerName, String purpose) {
         return send(new Message(Message.Type.POSITION_REQUEST, Message.To.PLAYER, playerName)
-                .put("asker", asker.getGameProfile().getName()).put("purpose", "to"));
+                .put("asker", asker.getGameProfile().getName()).put("purpose", purpose));
     }
 }

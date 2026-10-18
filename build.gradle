@@ -35,10 +35,17 @@ minecraft {
         }
 
         client {
+            property 'forge.enabledGameTestNamespaces', mod_id
         }
 
         server {
+            property 'forge.enabledGameTestNamespaces', mod_id
             args '--nogui'
+        }
+
+        // ./gradlew runGameTestServer: runs every GameTest in the gametest package headlessly and exits.
+        gameTestServer {
+            property 'forge.enabledGameTestNamespaces', mod_id
         }
     }
 }

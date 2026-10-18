@@ -10,7 +10,14 @@ import java.util.List;
 public record BandData(String server, int slots, int used, int extraHomesLevel, int swiftLevel, int cooldownLeft, int raidDistance,
                        boolean raid, boolean ignoring, boolean hasSpawn, boolean hasBack, int skipCoins, int coins,
                        List<HomeEntry> homes, List<WarpEntry> warps, List<PlayerEntry> players, List<String> rtpServers,
-                       @Nullable RequestEntry request, boolean admin, boolean accessOn, List<AccessEntry> access) {
+                       @Nullable RequestEntry request, boolean admin, boolean accessOn, List<AccessEntry> access,
+                       boolean refreshOnly, @Nullable TeamEntry team) {
+
+    /** A refresh for a screen that is already open; the client ignores it when the screen is closed (D92). */
+    public BandData asRefresh() {
+        return new BandData(server, slots, used, extraHomesLevel, swiftLevel, cooldownLeft, raidDistance, raid, ignoring, hasSpawn, hasBack,
+                skipCoins, coins, homes, warps, players, rtpServers, request, admin, accessOn, access, true, team);
+    }
 
     public record HomeEntry(String name, String server, String world, int x, int y, int z, boolean locked, boolean nearRaid, String icon) {
     }
@@ -22,6 +29,17 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
     }
 
     public record RequestEntry(String from, String server, boolean here, int secondsLeft) {
+    }
+
+    /** The player's team for the TEAM tab (D92): colour is the team's chat colour as RGB; mates in joining order. */
+    public record TeamEntry(String name, int colour, String leader, List<MateEntry> mates) {
+    }
+
+    /**
+     * One teammate: state is here, far (online on {@code server}) or off (seen says when); reachable is false when
+     * the teammate is on a server this one cannot reach; nearRaid when a steal runs within the raid distance of them.
+     */
+    public record MateEntry(String uuid, String name, boolean leader, String state, String server, String seen, boolean reachable, boolean nearRaid) {
     }
 
     /** One restricted server on the MORE tab (D80): state is main, full, rent or none; token is the server's symbol (0 for none). */
@@ -79,6 +97,19 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
             buf.writeUtf(a.server()).writeUtf(a.state()).writeUtf(a.left());
             buf.writeVarInt(a.token());
         }
+        buf.writeBoolean(refreshOnly);
+        buf.writeBoolean(team != null);
+        if (team != null) {
+            buf.writeUtf(team.name()).writeUtf(team.leader());
+            buf.writeInt(team.colour());
+            buf.writeVarInt(team.mates().size());
+            for (MateEntry m : team.mates()) {
+                buf.writeUtf(m.uuid()).writeUtf(m.name()).writeUtf(m.state()).writeUtf(m.server()).writeUtf(m.seen());
+                buf.writeBoolean(m.leader());
+                buf.writeBoolean(m.reachable());
+                buf.writeBoolean(m.nearRaid());
+            }
+        }
     }
 
     public static BandData decode(FriendlyByteBuf buf) {
@@ -117,6 +148,19 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
             String as = buf.readUtf(), st = buf.readUtf(), lf = buf.readUtf();
             access.add(new AccessEntry(as, st, lf, buf.readVarInt()));
         }
-        return new BandData(server, slots, used, extra, swift, cooldown, raidDistance, raid, ignoring, hasSpawn, hasBack, skipCoins, coins, homes, warps, players, rtp, request, admin, accessOn, access);
+        boolean refreshOnly = buf.readBoolean();
+        TeamEntry team = null;
+        if (buf.readBoolean()) {
+            String tn = buf.readUtf(), tl = buf.readUtf();
+            int colour = buf.readInt();
+            n = buf.readVarInt();
+            List<MateEntry> mates = new ArrayList<>(n);
+            for (int i = 0; i < n; i++) {
+                String mu = buf.readUtf(), mn = buf.readUtf(), ms = buf.readUtf(), msv = buf.readUtf(), mseen = buf.readUtf();
+                mates.add(new MateEntry(mu, mn, buf.readBoolean(), ms, msv, mseen, buf.readBoolean(), buf.readBoolean()));
+            }
+            team = new TeamEntry(tn, colour, tl, mates);
+        }
+        return new BandData(server, slots, used, extra, swift, cooldown, raidDistance, raid, ignoring, hasSpawn, hasBack, skipCoins, coins, homes, warps, players, rtp, request, admin, accessOn, access, refreshOnly, team);
     }
 }

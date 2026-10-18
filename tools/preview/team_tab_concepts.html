@@ -1,0 +1,131 @@
+<title>Team Tab Concepts</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: dark board like the other BSP-Teleport concept pages. One section with three working mocks of the band's
+   new TEAM tab, drawn in the Holo HUD colours, with state toggles, then the shared rules and the pick to make. */
+:root{ --bg:#0f1115; --panel:#171a21; --line:#2a2f3a; --fg:#e8eaf0; --muted:#9aa3b5; --tq:#19d3b0; --on:#0b0d11;
+  --h-bg:#10151c; --h-fg:#e6eaf2; --h-muted:#9aa3b5; --h-slot:#0c0e12; --h-dim:#2a2f3a; --h-tq:#19d3b0; --h-vio:#b58cff; --h-gold:#ffd23a; --h-bad:#ff6b5c; --h-ok:#8fe04a; --h-team:#5bc8ff;
+  --display:"Silkscreen","Courier New",monospace; --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; color-scheme:dark; }
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){ --bg:#f3f1ea; --panel:#fff; --line:#d9d4c7; --fg:#1a1b20; --muted:#5f6472; --tq:#0c8f78; --on:#fff; color-scheme:light; } }
+:root[data-theme="light"]{ --bg:#f3f1ea; --panel:#fff; --line:#d9d4c7; --fg:#1a1b20; --muted:#5f6472; --tq:#0c8f78; --on:#fff; color-scheme:light; }
+body{ background:var(--bg); color:var(--fg); font-family:var(--body); margin:0; font-size:14px; line-height:1.5; }
+.wrap{ max-width:1100px; margin:0 auto; padding-block:28px 56px; padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); display:flex; flex-direction:column; gap:30px; }
+h1{ font-family:var(--display); font-size:clamp(20px,3vw,28px); margin:0 0 6px; color:var(--tq); text-wrap:balance; }
+h2{ font-family:var(--display); font-size:15px; margin:0 0 10px; letter-spacing:.04em; text-transform:uppercase; }
+h3{ font-size:14px; margin:0 0 4px; }
+p{ margin:0; max-width:70ch; } .lede{ color:var(--muted); }
+.card{ background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:14px 16px; }
+.card ol{ margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px; }
+.ctl{ display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; } .key{ color:var(--muted); font-size:12.5px; }
+.grid3{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; }
+.opt{ display:flex; flex-direction:column; gap:10px; min-width:0; }
+.opt .cap{ color:var(--muted); font-size:12.5px; }
+.opt .name{ font-family:var(--display); font-size:13px; color:var(--tq); }
+.note{ color:var(--muted); font-size:12.5px; }
+code{ font-size:12px; }
+/* Holo HUD mocks: a 2x copy of the 248 x 196 band panel */
+.hud{ background:var(--h-bg); color:var(--h-fg); border:2px solid var(--h-tq); font-family:var(--display); font-size:11px; line-height:1.25; width:100%; max-width:520px; box-sizing:border-box; padding:10px 10px 12px; position:relative; min-height:330px; }
+.hud .ttl{ text-transform:uppercase; letter-spacing:.06em; font-size:12px; font-weight:700; display:flex; justify-content:space-between; gap:8px; align-items:center; flex-wrap:wrap; }
+.hud .help{ font-size:8.5px; color:var(--h-muted); margin-top:2px; }
+.hud .tabs{ display:flex; gap:3px; flex-wrap:wrap; }
+.hud .tab{ background:var(--h-slot); border:1px solid var(--h-dim); padding:2px 6px; font-size:8.5px; text-transform:uppercase; color:var(--h-muted); }
+.hud .tab.on{ border-color:var(--h-tq); color:var(--h-tq); } .hud .tab.adm{ border-color:var(--h-vio); color:var(--h-vio); }
+.hud .list{ display:flex; flex-direction:column; gap:4px; margin-top:8px; }
+.hud .row{ display:grid; grid-template-columns:1fr auto; gap:6px; align-items:center; background:var(--h-slot); border:1px solid var(--h-dim); padding:4px 6px; min-width:0; }
+.hud .row.off{ opacity:.55; }
+.hud .row .n{ font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hud .row .n i{ font-style:normal; color:var(--h-gold); font-weight:400; font-size:8.5px; margin-left:4px; }
+.hud .row .s{ font-size:8.5px; color:var(--h-muted); } .hud .s b{ color:var(--h-vio); font-weight:400; } .hud .s em{ color:var(--h-bad); font-style:normal; } .hud .s u{ color:var(--h-ok); text-decoration:none; }
+.hud .acts{ display:flex; gap:4px; }
+.hud .b{ background:var(--h-slot); border:1px solid var(--h-tq); color:var(--h-tq); padding:2px 6px; font-size:9px; text-transform:uppercase; }
+.hud .b.dim{ border-color:var(--h-dim); color:var(--h-muted); } .hud .b.bad{ border-color:var(--h-bad); color:var(--h-bad); } .hud .b.vio{ border-color:var(--h-vio); color:var(--h-vio); }
+.hud .foot{ position:absolute; left:10px; right:10px; bottom:8px; display:flex; justify-content:space-between; gap:8px; font-size:8.5px; color:var(--h-muted); align-items:center; }
+.hud .cd{ height:4px; background:var(--h-dim); flex:1; max-width:120px; } .hud .cd i{ display:block; height:100%; background:var(--h-tq); } .hud .cd.hot i{ background:var(--h-bad); }
+.hud .warn{ color:var(--h-bad); font-size:8.5px; margin-top:6px; }
+.hud .empty{ margin-top:10px; color:var(--h-muted); font-size:9px; line-height:1.6; }
+/* team banner shared by the three */
+.hud .team{ margin-top:8px; border:1px solid var(--h-team); background:var(--h-slot); padding:4px 6px; display:flex; justify-content:space-between; gap:6px; align-items:center; }
+.hud .team .tn{ color:var(--h-team); font-weight:700; } .hud .team .ts{ font-size:8.5px; color:var(--h-muted); }
+/* B: groups */
+.hud .grp{ font-size:8px; text-transform:uppercase; letter-spacing:.06em; color:var(--h-muted); margin-top:7px; display:flex; gap:6px; align-items:center; }
+.hud .grp:after{ content:""; flex:1; height:1px; background:var(--h-dim); }
+.hud .line{ display:flex; justify-content:space-between; gap:6px; align-items:center; font-size:9px; padding:2px 6px; background:var(--h-slot); border:1px solid var(--h-dim); margin-top:3px; }
+.hud .line.off{ opacity:.55; }
+/* C: cards */
+.hud .cards{ display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:8px; }
+.hud .cd2{ background:var(--h-slot); border:1px solid var(--h-dim); padding:5px 6px; display:flex; flex-direction:column; gap:3px; min-width:0; }
+.hud .cd2.off{ opacity:.55; }
+.hud .cd2 .top{ display:flex; gap:5px; align-items:center; }
+.hud .dot{ width:6px; height:6px; flex:none; background:var(--h-dim); } .hud .dot.here{ background:var(--h-ok); } .hud .dot.far{ background:var(--h-vio); }
+.hud .cd2 .n{ font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+.hud .cd2 .s{ font-size:8.5px; color:var(--h-muted); }
+.hud .cd2 .acts{ justify-content:flex-end; }
+@media (max-width:420px){ .hud .cards{ grid-template-columns:1fr; } }
+@media (prefers-reduced-motion: no-preference){ .hud .cd i{ transition:width .3s; } }
+</style>
+<div class="wrap">
+<section><h1>Team Tab Concepts</h1>
+<p class="lede">BSP-Core's Teams line asks for a TEAM tab on the Teleport Band: the player's teammates, where each one is, and a GO key for every online one that runs the same teleport as a bracelet teleport (cooldown, warm-up, zones, access, the raid rule). Three layouts of the same content below, in the Holo HUD style. Pick one.</p>
+<div class="card"><div class="ctl"><span class="key"><b>State:</b></span>
+<label><input type="checkbox" id="noteam"> Not in a team</label>
+<label><input type="checkbox" id="noredis"> No Redis (other servers unreachable)</label>
+<label><input type="checkbox" id="raid" checked> A steal is running near Kai</label>
+<label><input type="checkbox" id="cool" checked> On cooldown</label>
+<label><input type="checkbox" id="admin"> Admin (six tabs)</label></div></div></section>
+
+<section><h2>The TEAM tab</h2>
+<div class="grid3" id="screens"></div>
+<div class="card" style="margin-top:4px"><h3>What all three share</h3><ol>
+<li>The tab sits between PLAYERS and MORE and is always there. In no team it says so and points at BSP-Core's Team screen (the Team key on the inventory).</li>
+<li>The team banner names the team in its colour, the leader and the member count. Members are in joining order with a small <span style="color:var(--h-gold)">leader</span> mark.</li>
+<li>Three states per teammate: <span style="color:var(--h-ok)">here</span>, on another server (the server name in <span style="color:var(--h-vio)">violet</span>), or offline with "seen 2 h ago", greyed.</li>
+<li>GO is drawn only for online teammates. On another server without Redis it is greyed as FAR. Within 150 blocks of a running steal it is red as RAID and refused.</li>
+<li>GO runs the same server method as BSP-Core's TELEPORT key: cooldown, warm-up (the screen closes, the countdown shows on the action bar), access, zones, the raid rule; the teammate gets one line "X is teleporting to you."</li>
+<li>The tab re-reads every 5 s while open and at once when someone joins, leaves, is kicked, the lead changes or the team disbands.</li>
+<li>With six tabs (admins) the keys narrow to 36 px and the title shortens to BAND so nothing overlaps.</li></ol></div>
+<p class="note">The real screen is 248 x 196 at the band's scale; the mocks are drawn twice that size. Everything else on the band (the footer, the help line, the raid warning) is unchanged.</p></section>
+
+<section><h2>Pick to make</h2><div class="card"><ol>
+<li><b>Layout:</b> A Roster, B Groups or C Cards. Default: A Roster (the same row shape as the PLAYERS tab, so the band stays one piece).</li></ol></div></section>
+</div>
+<script>
+(function(){
+  var S={ noteam:false, noredis:false, raid:true, cool:true, admin:false };
+  var ME='survival-1';
+  var M=[ {n:'Alex', leader:true, where:'here'},
+          {n:'Sam', where:'hub'},
+          {n:'Kai', where:'here', raid:true},
+          {n:'Jo', where:'survival-2'},
+          {n:'Riley', where:'', seen:'2 h ago'},
+          {n:'Max', where:'', seen:'3 d ago'} ];
+  function esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function stateOf(m){ if(!m.where){ return {k:'off', txt:'offline, seen '+m.seen}; } if(m.where==='here'){ return {k:'here', txt:'<u>here</u>'}; } return {k:'far', txt:'on <b>'+esc(m.where)+'</b>'}; }
+  function goKey(m){ var st=stateOf(m); if(st.k==='off'){ return ''; } if(m.raid&&S.raid){ return '<span class="b bad">raid</span>'; } if(st.k==='far'&&S.noredis){ return '<span class="b dim">far</span>'; } return '<span class="b'+(st.k==='far'?' vio':'')+'">go</span>'; }
+  function raidNote(m){ return (m.raid&&S.raid)?'  <em>a steal within 150</em>':''; }
+  function tabs(){ var t='<span class="tab">homes</span><span class="tab">warps</span><span class="tab">players</span><span class="tab on">team</span><span class="tab">more</span>'+(S.admin?'<span class="tab adm">admin</span>':''); return '<div class="ttl"><span>'+(S.admin?'Band':'Teleport Band')+'</span><div class="tabs">'+t+'</div></div><div class="help">Pick a teammate. Stand still while it counts down.</div>'; }
+  function banner(){ return '<div class="team"><div><div class="tn">Night Watch</div><div class="ts">leader Alex  6 members  4 online</div></div><span class="b dim">team screen</span></div>'; }
+  function foot(){ return '<div class="foot"><span>'+(S.cool?'cooldown 42 s':'ready')+'</span><div class="cd'+(S.cool?' hot':'')+'"><i style="width:'+(S.cool?'30%':'100%')+'"></i></div><span>slots 3/3  swift II</span></div>'; }
+  function empty(){ return '<div class="empty">You are not in a team.<br>Open the Team screen from your inventory to make one or accept an invite.<br>Teammates appear here with a GO key.</div>'; }
+  function wrap(inner){ return '<div class="hud">'+tabs()+(S.noteam?empty():inner)+foot()+'</div>'; }
+
+  // A. Roster: one row per member, the PLAYERS tab's row shape
+  function roster(){ var rows=M.map(function(m){ var st=stateOf(m); return '<div class="row'+(st.k==='off'?' off':'')+'"><div><div class="n">'+m.n+(m.leader?'<i>leader</i>':'')+'</div><div class="s">'+st.txt+raidNote(m)+'</div></div><div class="acts">'+goKey(m)+'</div></div>'; }).join(''); return wrap(banner()+'<div class="list">'+rows+'</div>'); }
+
+  // B. Groups: HERE, ELSEWHERE, OFFLINE with one-line entries
+  function groups(){
+    function sec(title, list){ if(!list.length){ return ''; } return '<div class="grp">'+title+'</div>'+list.map(function(m){ var st=stateOf(m); var left='<span><b style="color:var(--h-fg)">'+m.n+'</b>'+(m.leader?' <span style="color:var(--h-gold)">leader</span>':'')+(st.k==='far'?'  <span style="color:var(--h-vio)">'+esc(m.where)+'</span>':'')+(st.k==='off'?'  seen '+m.seen:'')+(m.raid&&S.raid?'  <span style="color:var(--h-bad)">steal within 150</span>':'')+'</span>'; return '<div class="line'+(st.k==='off'?' off':'')+'">'+left+'<span class="acts">'+goKey(m)+'</span></div>'; }).join(''); }
+    var here=M.filter(function(m){ return m.where==='here'; }), far=M.filter(function(m){ return m.where&&m.where!=='here'; }), off=M.filter(function(m){ return !m.where; });
+    return wrap(banner()+sec('here on '+ME, here)+sec('on other servers', far)+sec('offline', off)); }
+
+  // C. Cards: two columns, a status dot, GO under the name
+  function cards(){ var cs=M.map(function(m){ var st=stateOf(m); var sub=st.k==='here'?'here':st.k==='far'?'<b>'+esc(m.where)+'</b>':'seen '+m.seen; if(m.raid&&S.raid){ sub+='<br><em>steal within 150</em>'; } return '<div class="cd2'+(st.k==='off'?' off':'')+'"><div class="top"><span class="dot '+st.k+'"></span><span class="n">'+m.n+'</span>'+(m.leader?'<span style="color:var(--h-gold);font-size:8px">leader</span>':'')+'</div><div class="s">'+sub+'</div><div class="acts">'+goKey(m)+'</div></div>'; }).join(''); return wrap(banner()+'<div class="cards">'+cs+'</div>'); }
+
+  var OPTS=[ {name:'A. Roster', cap:'One row per teammate in joining order, the same row shape as the PLAYERS tab: name and leader mark, the state under it, GO on the right. Six rows fit; more scroll.', draw:roster},
+             {name:'B. Groups', cap:'Three groups with a thin header each: here, on other servers, offline. One line per teammate, so ten fit without scrolling and the eye finds the reachable ones first.', draw:groups},
+             {name:'C. Cards', cap:'Two columns of small cards with a status dot (green here, violet elsewhere, grey offline) and GO under the name. The most glanceable, fits eight before scrolling.', draw:cards} ];
+  var screens=document.getElementById('screens');
+  function render(){ screens.innerHTML=''; OPTS.forEach(function(o){ var d=document.createElement('div'); d.className='opt'; d.innerHTML='<div class="name">'+o.name+'</div>'+o.draw()+'<div class="cap">'+o.cap+'</div>'; screens.appendChild(d); }); }
+  ['noteam','noredis','raid','cool','admin'].forEach(function(id){ document.getElementById(id).addEventListener('change',function(e){ S[id]=e.target.checked; render(); }); });
+  render();
+})();
+</script>

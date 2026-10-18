@@ -11,6 +11,7 @@ public final class TeleportConfig {
     public static final ForgeConfigSpec.ConfigValue<String> SERVER_NAME;
     public static final ForgeConfigSpec.IntValue LANDING_SECONDS, SWITCH_GAP_SECONDS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SERVER_ALIASES;
+    public static final ForgeConfigSpec.BooleanValue SUPPRESS_JOIN_LEAVE;
 
     public static final ForgeConfigSpec.IntValue WARMUP_SECONDS, COOLDOWN_SECONDS, INVULNERABLE_SECONDS, SKIP_COOLDOWN_COINS;
     public static final ForgeConfigSpec.BooleanValue CANCEL_ON_DAMAGE, CANCEL_ON_MOVE;
@@ -55,6 +56,8 @@ public final class TeleportConfig {
                 .defineInRange("switchGapSeconds", 3, 0, 60);
         SERVER_ALIASES = b.comment("BSP-Core names servers by its storage.serverId. When that differs from the proxy name, map it here as \"bspCoreId=proxyName\".")
                 .defineListAllowEmpty("serverAliases", List.of(), o -> o instanceof String);
+        SUPPRESS_JOIN_LEAVE = b.comment("Hide this server's own \"X joined the game\" and \"X left the game\" lines for every login and logout. Turn on behind a proxy that announces network joins and leaves itself (BSP-Velocity Additions), so a server switch does not print a leave on one server and a join on the other. Off: vanilla behaviour.")
+                .define("suppressJoinLeaveMessages", false);
         b.pop();
 
         b.push("teleport");

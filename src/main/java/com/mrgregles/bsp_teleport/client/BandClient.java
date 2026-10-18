@@ -58,12 +58,12 @@ public final class BandClient {
         return w / 2 + 91 + 4 + (offhandRight && mc.player != null && !mc.player.getOffhandItem().isEmpty() ? 29 : 0);
     }
 
-    /** The server sent fresh data: open the screen, or refresh it if it is open. */
+    /** The server sent fresh data: open the screen, or refresh it if it is open. A refresh-only packet never opens it. */
     public static void show(BandData data) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen instanceof BandScreen screen) {
             screen.update(data);
-        } else {
+        } else if (!data.refreshOnly()) {
             mc.setScreen(new BandScreen(data));
         }
     }

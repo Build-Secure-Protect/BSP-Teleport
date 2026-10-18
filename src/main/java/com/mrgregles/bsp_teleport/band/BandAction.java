@@ -6,5 +6,9 @@ public enum BandAction {
     /** name: the home's icon becomes the item in the player's hand (an empty hand clears it) */
     HOME_ICON,
     /** open the choose-main-server popup (D82) */
-    ACCESS_CHOOSE
+    ACCESS_CHOOSE,
+    /** uuid: teleport to that teammate (D91) */
+    TEAM_GO,
+    /** the TEAM tab is open: send fresh data without opening the screen (D92) */
+    TEAM_REFRESH
 }

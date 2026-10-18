@@ -1,0 +1,40 @@
+# Testing BSP Teleport in game
+
+What to try after a build, newest at the bottom. Tick what works, note what does not. This list is the hand-off between a headless build and the owner's client.
+
+Headless checks already run before the hand-off: `./gradlew build` (JUnit: wire formats, border maths, portal shapes, access rules, the join/leave text rule) and `./gradlew runGameTestServer` (3 Forge GameTests in `src/main/java/com/mrgregles/bsp_teleport/gametest`, template `empty` from `tools/gen_gametest_structures.py`). The earlier features (phases 1 to 6, portals, access) have their owner checklists in the vault's `Teleport - Task Queue.md`.
+
+## Join and leave lines behind the proxy (VA-T1, 2026-10-18)
+
+Config: `[network] suppressJoinLeaveMessages` in `<world>/serverconfig/bsp_teleport-server.toml`, off by default. `/bsptp reload` re-reads it; a restart is never needed.
+
+Headless, already passing: with the switch on, a mock player's real login (`PlayerList.placeNewPlayer`) and logout (`onDisconnect`) send no "joined the game" or "left the game" line to another player, the player is still listed and the tab-list update still goes out; other lines during login pass; with the switch off both vanilla lines arrive.
+
+Needs the owner, one Mohist backend first, then two behind Velocity:
+
+- [ ] Switch off (default): log in and out; chat shows "X joined the game" and "X left the game" as before. Console shows the same two lines.
+- [ ] Set `suppressJoinLeaveMessages = true`, `/bsptp reload` (or restart). Log in: no join line in chat or console; the console still shows "X[/ip] logged in with entity id ...". Log out: no leave line; the console still shows "X lost connection".
+- [ ] With it on, the tab list still gains and loses the player, the player still lands where they should, `/back`, homes and the band work as before (nothing else about login changed).
+- [ ] With it on, kick a player (`/kick`): no leave line. Stop the server with players on it: no leave lines.
+- [ ] Any other mod's or plugin's message on login (BSP-Core's "Your Shatter Totem arrived with you", a plugin's welcome line) still appears.
+- [ ] Mohist specifically: Bukkit turns the vanilla line into plain text before it is sent; the switch must still hide it. If a join line slips through on Mohist, copy it exactly (the matcher compares plain text) and report.
+- [ ] Two backends behind Velocity with the switch on everywhere and BSP-Velocity Additions printing the network lines: a server switch (`/server`, a cross-server warp, a portal) prints nothing on either backend; a real join or leave prints exactly one line, the proxy's.
+- [ ] A backend run without the proxy and the switch off behaves like vanilla.
+
+## Team teleports (BSP-Core T-1 to T-3, 2026-10-18)
+
+Needs BSP-Core with the Teams line (1.2.0 built 2026-10-18 or later) on every backend. No config: team teleports are plain teleports with the team as the target list.
+
+Headless, already passing: the JUnit tests for the "seen" text and the member lookup (`TeamTeleportsTest`); the build against BSP-Core's `BspTeams` and `TeamEvent`. Nothing in game yet.
+
+Needs the owner, one server first, then two behind Velocity with Redis:
+
+- [ ] Make a team with two players on one server (BSP-Core's Team screen). Open the band: a TEAM tab sits between PLAYERS and MORE; the banner shows the team name in its colour, "leader X  2 members  2 online"; the teammate's row says "here" with a GO key. Press GO: the screen closes, the warm-up counts down, you land next to the teammate, "Teleported to <name>.", and the teammate sees "<you> is teleporting to you."
+- [ ] The same from BSP-Core's Team screen: a TELEPORT key is drawn on the online teammate's row (T-3); pressing it does the same teleport with the same lines.
+- [ ] Rules: on cooldown the teleport is refused with the cooldown line (and `/tpnow` works on it); move during the warm-up and it cancels; stand in a Region Guard `teleport-out` region or an Anti Totem no-teleport-out zone and it is refused; a teammate standing in a `teleport-in` region is refused with "You cannot teleport there."
+- [ ] Raid rule: start a steal on any totem (not the teleporting player's) and have the teammate stand within 150 blocks of it: the row shows "a steal within 150" and a red RAID key; the Team screen's TELEPORT key answers "A totem is being stolen near <name>...". Beyond 150 blocks it works.
+- [ ] Not in a team: the TEAM tab says "You are not in a team" with the hint. A player who is not a teammate cannot be reached (the band never lists them; the Team screen refuses).
+- [ ] Presence: with the TEAM tab open, have the teammate log out: within 5 s the row turns grey with "offline, seen just now" and loses its GO key; log back in: "here" again. Invite a third player: the row appears at once on the server where they accepted (the event), within 5 s elsewhere. Kick, leave, transfer the lead, disband: the tab follows.
+- [ ] Two servers with Redis: a teammate on the other server shows "on <server>" in violet with a violet GO key. Press GO: "Finding <name> on <server>...", then the warm-up, then the switch; you land at the teammate's position; the teammate saw "<you> is teleporting to you." With `/bsptp status` showing Redis off on your server the key is greyed FAR and the Team screen's key answers "<name> is on <server> and this server cannot reach them."
+- [ ] Two servers, access on: a teammate on a server you have no access to is refused with the access denial (and the popup), as any teleport would be.
+- [ ] Admin band: six tabs; the title reads BAND; every tab still opens.

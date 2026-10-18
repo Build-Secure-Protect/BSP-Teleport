@@ -13,18 +13,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The Teleport Band's screen, in the Holo HUD style: a tabbed list of homes, warps and players, a MORE tab for
- * spawn, back, random and the request switch, and a footer with the cooldown and the home slots.
+ * The Teleport Band's screen, in the Holo HUD style: a tabbed list of homes, warps, players and teammates, a MORE
+ * tab for spawn, back, random and the request switch, and a footer with the cooldown and the home slots.
  *
  * <p>The server decides everything: the screen only shows {@link BandData} and sends {@link BandAction}s. Starting a
  * teleport closes the screen; the warm-up counts down on the action bar.
  */
 public class BandScreen extends Screen {
-    private static final int W = 248, H = 196, TAB_W = 44, ROW_H = 20, LIST_TOP = 30, FOOT_H = 22;
+    private static final int W = 248, H = 196, ROW_H = 20, LIST_TOP = 30, FOOT_H = 22;
     private static final int TQ = BandClient.TQ, BG = BandClient.BG, SLOT = BandClient.SLOT, DIM = BandClient.DIM, MUTED = BandClient.MUTED,
             TEXT = BandClient.TEXT, VIO = BandClient.VIO, GOLD = BandClient.GOLD, BAD = BandClient.BAD, OK = BandClient.OK;
 
-    private enum Tab { HOMES, WARPS, PLAYERS, MORE, ADMIN }
+    private enum Tab { HOMES, WARPS, PLAYERS, TEAM, MORE, ADMIN }
+
+    /** Ticks between the TEAM tab's refreshes while it is open (D92: every 5 s). */
+    private static final int TEAM_POLL_TICKS = 100;
 
     /** A clickable box drawn this frame. */
     private record Hit(int x, int y, int w, int h, Runnable action) {
@@ -41,6 +44,7 @@ public class BandScreen extends Screen {
     private float scale = 1f;
     private final List<Hit> hits = new ArrayList<>();
     private EditBox nameBox;
+    private int teamTicks;
 
     public BandScreen(BandData data) {
         super(Component.translatable("screen.bsp_teleport.band.title"));
@@ -88,11 +92,17 @@ public class BandScreen extends Screen {
         hits.clear();
         g.fill(left - 1, top - 1, left + W + 1, top + H + 1, TQ);
         g.fill(left, top, left + W, top + H, BG);
-        g.drawString(font, title.getString().toUpperCase(), left + 10, top + 8, TQ, false);
-        small(g, Component.translatable("screen.bsp_teleport.band.help").getString(), left + 10, top + 19, MUTED);
+        Tab[] tabs = data.admin() ? Tab.values() : new Tab[] {Tab.HOMES, Tab.WARPS, Tab.PLAYERS, Tab.TEAM, Tab.MORE};
+        int tabW = data.admin() ? 36 : 40;
+        // The title gives way to the tab row: the short name when the long one would run under the first tab.
+        int firstTab = left + W - 10 - tabs.length * (tabW + 2);
+        String heading = title.getString().toUpperCase();
+        if (left + 10 + font.width(heading) > firstTab - 4) {
+            heading = Component.translatable("screen.bsp_teleport.band.title_short").getString().toUpperCase();
+        }
+        g.drawString(font, heading, left + 10, top + 8, TQ, false);
+        small(g, Component.translatable(tab == Tab.TEAM ? "screen.bsp_teleport.band.team_help" : "screen.bsp_teleport.band.help").getString(), left + 10, top + 19, MUTED);
 
-        Tab[] tabs = data.admin() ? Tab.values() : new Tab[] {Tab.HOMES, Tab.WARPS, Tab.PLAYERS, Tab.MORE};
-        int tabW = data.admin() ? 40 : TAB_W;
         for (int i = 0; i < tabs.length; i++) {
             int tx = left + W - 10 - (tabs.length - i) * (tabW + 2);
             boolean on = tabs[i] == tab;
@@ -109,6 +119,7 @@ public class BandScreen extends Screen {
                 }
                 tab = t;
                 scroll = 0;
+                teamTicks = 0;
                 nameBox.visible = tab == Tab.HOMES;
             }));
         }
@@ -122,6 +133,7 @@ public class BandScreen extends Screen {
             case HOMES -> drawHomes(g, y, listBottom);
             case WARPS -> drawWarps(g, y, listBottom);
             case PLAYERS -> drawPlayers(g, y, listBottom);
+            case TEAM -> drawTeam(g, y, listBottom);
             case MORE -> drawMore(g, y, listBottom);
             case ADMIN -> {
             }
@@ -222,6 +234,60 @@ public class BandScreen extends Screen {
             row(g, y, p.name(), p.server(), TEXT, p.server().equals(data.server()) ? MUTED : VIO);
             int bx = button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.here").getString(), DIM, MUTED, () -> send(BandAction.TPA_HERE, p.name()));
             button(g, bx - 2, y + 4, Component.translatable("screen.bsp_teleport.band.tpa").getString(), TQ, TQ, () -> send(BandAction.TPA, p.name()));
+            y += ROW_H + 2;
+        }
+    }
+
+    /** The TEAM tab (D92, Roster layout): the team banner, then one row per teammate with their state and a GO key. */
+    private void drawTeam(GuiGraphics g, int y, int bottom) {
+        BandData.TeamEntry team = data.team();
+        if (team == null) {
+            small(g, Component.translatable("screen.bsp_teleport.band.no_team").getString(), left + 10, y + 2, TEXT);
+            small(g, Component.translatable("screen.bsp_teleport.band.no_team_hint").getString(), left + 10, y + 12, MUTED);
+            return;
+        }
+        int colour = 0xFF000000 | team.colour();
+        long online = team.mates().stream().filter(m -> !"off".equals(m.state())).count() + 1;
+        g.fill(left + 10, y, left + W - 10, y + ROW_H, colour);
+        g.fill(left + 11, y + 1, left + W - 11, y + ROW_H - 1, SLOT);
+        g.drawString(font, team.name(), left + 14, y + 3, colour, false);
+        small(g, Component.translatable("screen.bsp_teleport.band.team_line", team.leader(), team.mates().size() + 1, online).getString(), left + 14, y + 12, MUTED);
+        y += ROW_H + 4;
+        int i = 0;
+        for (BandData.MateEntry m : team.mates()) {
+            if (i++ < scroll) {
+                continue;
+            }
+            if (y + ROW_H > bottom) {
+                break;
+            }
+            boolean off = "off".equals(m.state());
+            String state = switch (m.state()) {
+                case "here" -> Component.translatable("screen.bsp_teleport.band.mate_here").getString();
+                case "far" -> Component.translatable("screen.bsp_teleport.band.mate_on", m.server()).getString();
+                default -> m.seen().isEmpty() ? Component.translatable("screen.bsp_teleport.band.mate_offline").getString()
+                        : Component.translatable("screen.bsp_teleport.band.mate_seen", m.seen()).getString();
+            };
+            if (m.nearRaid()) {
+                state += "  " + Component.translatable("screen.bsp_teleport.band.steal_near", data.raidDistance()).getString();
+            }
+            int subColour = "far".equals(m.state()) ? VIO : "here".equals(m.state()) ? OK : MUTED;
+            row(g, y, m.name(), state, off ? MUTED : m.nearRaid() ? BAD : TEXT, m.nearRaid() ? BAD : subColour);
+            if (m.leader()) {
+                small(g, Component.translatable("screen.bsp_teleport.band.leader").getString(), left + 14 + font.width(m.name()) + 4, y + 4, GOLD);
+            }
+            if (off) {
+                y += ROW_H + 2;
+                continue;
+            }
+            if (m.nearRaid()) {
+                button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.raid_key").getString(), BAD, BAD, null);
+            } else if (!m.reachable()) {
+                button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.far").getString(), DIM, MUTED, null);
+            } else {
+                int keyColour = "far".equals(m.state()) ? VIO : TQ;
+                button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.go").getString(), keyColour, keyColour, () -> go(BandAction.TEAM_GO, m.uuid()));
+            }
             y += ROW_H + 2;
         }
     }
@@ -398,10 +464,21 @@ public class BandScreen extends Screen {
             case HOMES -> data.homes().size();
             case WARPS -> data.warps().size();
             case PLAYERS -> data.players().size();
+            case TEAM -> data.team() == null ? 0 : data.team().mates().size();
             case MORE, ADMIN -> 0;
         };
         scroll = Math.max(0, Math.min(Math.max(0, count - 1), scroll - (int) Math.signum(delta)));
         return true;
+    }
+
+    /** While the TEAM tab is open the server is asked for fresh data every few seconds (presence, who joined or left). */
+    @Override
+    public void tick() {
+        super.tick();
+        if (tab == Tab.TEAM && ++teamTicks >= TEAM_POLL_TICKS) {
+            teamTicks = 0;
+            send(BandAction.TEAM_REFRESH, "");
+        }
     }
 
     @Override

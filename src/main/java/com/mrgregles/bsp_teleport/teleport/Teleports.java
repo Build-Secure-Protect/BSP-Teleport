@@ -91,6 +91,15 @@ public final class Teleports {
                 return false;
             }
         }
+        // D91: a team teleport also stays clear of every running steal, whoever owns the totem, so a team cannot
+        // pour in behind a friend who started one.
+        if (kind == TeleportKind.TEAM) {
+            int distance = TeleportConfig.getOr(TeleportConfig.RAID_HOME_DISTANCE, 150);
+            if (BspCore.nearAnySteal(player.server, destination.server(), destination.world(), destination.x(), destination.z(), distance)) {
+                tell(player, "blocked_raid_team", label, distance);
+                return false;
+            }
+        }
         if (!Rules.canTeleportFrom(player.serverLevel(), player.blockPosition(), player)) {
             tell(player, "blocked_out");
             return false;

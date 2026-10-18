@@ -10,6 +10,7 @@ import com.mrgregles.bsp_teleport.data.Warp;
 import com.mrgregles.bsp_teleport.network.BandPackets;
 import com.mrgregles.bsp_teleport.network.PlayerDirectory;
 import com.mrgregles.bsp_teleport.request.TeleportRequests;
+import com.mrgregles.bsp_teleport.team.TeamTeleports;
 import com.mrgregles.bsp_teleport.teleport.TeleportActions;
 import com.mrgregles.bsp_teleport.teleport.TeleportService;
 import com.mrgregles.bsp_teleport.teleport.Teleports;
@@ -17,7 +18,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 /** The server side of the band screen: builds what it shows and carries out what it asks. */
 public final class BandService {
@@ -69,6 +72,26 @@ public final class BandService {
                 TeleportActions.setHomeIcon(player, arg, com.mrgregles.bsp_teleport.util.Icons.heldItemId(player));
                 open(player);
             }
+            case TEAM_GO -> {
+                UUID target;
+                try {
+                    target = UUID.fromString(arg);
+                } catch (IllegalArgumentException e) {
+                    return;
+                }
+                TeamTeleports.go(player, target);
+            }
+            case TEAM_REFRESH -> BandPackets.sendData(player, build(player).asRefresh());
+        }
+    }
+
+    /** A team changed on this server (D92): every listed player online here gets fresh data, refresh-only. */
+    public static void refreshTeam(net.minecraft.server.MinecraftServer server, Collection<UUID> players) {
+        for (UUID uuid : players) {
+            ServerPlayer p = server.getPlayerList().getPlayer(uuid);
+            if (p != null) {
+                BandPackets.sendData(p, build(p).asRefresh());
+            }
         }
     }
 
@@ -109,13 +132,45 @@ public final class BandService {
 
         BandData.RequestEntry request = TeleportRequests.peek(player).map(r ->
                 new BandData.RequestEntry(r.fromName(), r.fromServer(), r.here(), r.secondsLeft())).orElse(null);
+        BandData.TeamEntry team = team(player, raidDistance);
 
         return new BandData(TeleportConfig.serverName(), slots, mine.size(), BspCore.extraHomeSlots(player), BspCore.swiftTravelLevel(player),
                 (int) Teleports.cooldownLeft(player), raidDistance, raid, data.isIgnoring(player.getUUID()),
                 TeleportActions.spawnPosition(player) != null, Teleports.back(player) != null,
                 TeleportConfig.getOr(TeleportConfig.SKIP_COOLDOWN_COINS, 0), BspCore.coins(player),
                 homes, warps, players, rtpServers, request, com.mrgregles.bsp_teleport.admin.AdminService.mayOpen(player),
-                com.mrgregles.bsp_teleport.access.AccessService.enabled(), com.mrgregles.bsp_teleport.access.AccessService.bandEntries(player));
+                com.mrgregles.bsp_teleport.access.AccessService.enabled(), com.mrgregles.bsp_teleport.access.AccessService.bandEntries(player),
+                false, team);
+    }
+
+    /** The TEAM tab's data (D92): the player's team and each teammate's state, or null when they are in none. */
+    @javax.annotation.Nullable
+    private static BandData.TeamEntry team(ServerPlayer player, int raidDistance) {
+        var team = BspCore.teamOf(player.server, player.getUUID()).orElse(null);
+        if (team == null) {
+            return null;
+        }
+        long now = System.currentTimeMillis();
+        String leaderName = "";
+        List<BandData.MateEntry> mates = new ArrayList<>();
+        for (TeamTeleports.Mate m : BspCore.teamMembers(player.server, team.id())) {
+            if (m.leader()) {
+                leaderName = m.name();
+            }
+            if (m.uuid().equals(player.getUUID())) {
+                continue;
+            }
+            String state = m.onlineHere() ? "here" : m.online() ? "far" : "off";
+            boolean nearRaid = false;
+            if (m.onlineHere()) {
+                ServerPlayer there = player.server.getPlayerList().getPlayer(m.uuid());
+                nearRaid = there != null && BspCore.nearAnySteal(player.server, "", there.serverLevel().dimension().location().toString(), there.getX(), there.getZ(), raidDistance);
+            }
+            boolean reachable = m.onlineHere() || (m.online() && com.mrgregles.bsp_teleport.network.Messenger.enabled());
+            mates.add(new BandData.MateEntry(m.uuid().toString(), m.name(), m.leader(), state, m.server(),
+                    "off".equals(state) ? TeamTeleports.ago(m.seenMs(), now) : "", reachable, nearRaid));
+        }
+        return new BandData.TeamEntry(team.name(), team.colour(), leaderName, mates);
     }
 
     private static boolean nearRaid(ServerPlayer player, Position p, int distance) {

@@ -8,7 +8,11 @@
   "client": [
     "GuiHotbarMixin"
   ],
-  "server": [],
+  "server": [
+    "PlayerListAccessor",
+    "PlayerListMixin",
+    "ServerGamePacketListenerMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }
