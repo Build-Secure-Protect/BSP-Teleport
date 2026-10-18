@@ -26,3 +26,9 @@ forge*changelog.txt
 
 .DS_Store
 mcmodsrepo
+
+# server and client logs from a local run
+logs
+
+# per-machine tool files and conversation starters, kept local
+docs/*_START.md

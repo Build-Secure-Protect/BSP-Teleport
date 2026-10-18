@@ -8,7 +8,6 @@ import com.mrgregles.bsp_teleport.api.BspTeleportApi;
 import com.mrgregles.bsp_teleport.network.Messenger;
 import com.mrgregles.bsp_teleport.network.PlayerDirectory;
 import com.mrgregles.bsp_teleport.perm.Permissions;
-import com.mrgregles.bsp_teleport.spike.SpikeCommands;
 import com.mrgregles.bsp_teleport.storage.Storage;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -56,8 +55,7 @@ public final class AdminCommands {
                         .then(Commands.argument("player", EntityArgument.player())
                                 .then(Commands.argument("server", StringArgumentType.word())
                                         .suggests((ctx, b) -> SharedSuggestionProvider.suggest(PlayerDirectory.servers(), b))
-                                        .executes(AdminCommands::send))))
-                .then(SpikeCommands.tree()));
+                                        .executes(AdminCommands::send)))));
     }
 
     private static int status(CommandContext<CommandSourceStack> ctx) {
