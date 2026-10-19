@@ -10,12 +10,14 @@
 <text x="693.5" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">ADMIN</text>
 <rect x="604.2" y="52" width="52.8" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
 <text x="630.6" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">MORE</text>
-<rect x="520.8000000000001" y="52" width="77.39999999999999" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
-<text x="559.5000000000001" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">PLAYERS</text>
-<rect x="453.80000000000007" y="52" width="61.0" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
-<text x="484.30000000000007" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">WARPS</text>
-<rect x="386.80000000000007" y="52" width="61.0" height="24" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
-<text x="417.30000000000007" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">HOMES</text>
+<rect x="545.4000000000001" y="52" width="52.8" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="571.8000000000001" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">TEAM</text>
+<rect x="462.0000000000001" y="52" width="77.39999999999999" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="500.7000000000001" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">PLAYERS</text>
+<rect x="395.0000000000001" y="52" width="61.0" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="425.5000000000001" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">WARPS</text>
+<rect x="328.0000000000001" y="52" width="61.0" height="24" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="358.5000000000001" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">HOMES</text>
 <rect x="56" y="110" width="668" height="44" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
 <text x="66" y="131" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">base</text>
 <text x="66" y="145" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="start">BSP-Forest  overworld  120, 64, -40</text>
@@ -66,12 +68,15 @@
 <text x="780" y="290" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">everyone online on the network: ask to</text>
 <text x="780" y="308" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">teleport to them or bring them to you;</text>
 <text x="780" y="326" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">incoming requests shown</text>
-<text x="780" y="364" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#19D3B0" text-anchor="start" letter-spacing="1.5">MORE</text>
-<text x="780" y="384" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">spawn, back, random teleport here or on</text>
-<text x="780" y="402" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">another server, ignore requests, pay to skip</text>
-<text x="780" y="420" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">a cooldown, your server access</text>
-<text x="780" y="458" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#19D3B0" text-anchor="start" letter-spacing="1.5">ADMIN</text>
-<text x="780" y="478" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">opens the admin panel (admins and moderators</text>
-<text x="780" y="496" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">only)</text>
+<text x="780" y="364" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#19D3B0" text-anchor="start" letter-spacing="1.5">TEAM</text>
+<text x="780" y="384" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">your BSP-Core team: who is where, and GO to</text>
+<text x="780" y="402" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">a teammate on any server</text>
+<text x="780" y="440" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#19D3B0" text-anchor="start" letter-spacing="1.5">MORE</text>
+<text x="780" y="460" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">spawn, back, random teleport here or on</text>
+<text x="780" y="478" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">another server, ignore requests, pay to skip</text>
+<text x="780" y="496" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">a cooldown, your server access</text>
+<text x="780" y="534" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#19D3B0" text-anchor="start" letter-spacing="1.5">ADMIN</text>
+<text x="780" y="554" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">opens the admin panel (admins and moderators</text>
+<text x="780" y="572" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">only)</text>
 </g>
 </svg>

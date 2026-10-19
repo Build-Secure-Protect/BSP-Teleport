@@ -199,12 +199,12 @@ def banner():
     s.text(100, 150, "BSP-Teleport", 58, TEXT, "bold")
     s.text(100, 196, "Homes, warps, portals and server access across the Build Secure Protect network.", 24, MUTED)
     x = 100
-    for label, color in (("Teleport Band", ACCENT), ("Cross-server", VIOLET), ("Portals with doors", GOLD), ("Access Tokens", ACCENT)):
+    for label, color in (("Teleport Band", ACCENT), ("Cross-server", VIOLET), ("Portals with doors", GOLD), ("Access Tokens", ACCENT), ("Team teleports", VIOLET)):
         w = len(label) * 9.3 + 28
         s.rect(x, 232, w, 34, INSET, color, r=17)
         s.text(x + w / 2, 255, label, 15, color, "bold", "middle")
         x += w + 14
-    s.text(100, 312, "Minecraft 1.20.1  ·  Forge 47.4  ·  requires BSP-Core  ·  Region Guard and RankUp optional  ·  MIT", 16, MUTED, family=MONO)
+    s.text(100, 312, "0.2.0  ·  Minecraft 1.20.1  ·  Forge 47.4  ·  requires BSP-Core 1.3  ·  Region Guard and RankUp optional  ·  MIT", 16, MUTED, family=MONO)
     s.pixels(BAND_MAP, BAND_PAL, 1000, 100, 8)
     s.save("banner")
 
@@ -224,7 +224,7 @@ def band_slot():
 def band_screen():
     s = Svg(1200, 640)
     x, y, w, h = 40, 40, 700, 560
-    s.hud(x, y, w, h, "Teleport Band", ACCENT, "Pick a place. Stand still while it counts down.", ("Homes", "Warps", "Players", "More", "Admin"), 0)
+    s.hud(x, y, w, h, "Teleport Band", ACCENT, "Pick a place. Stand still while it counts down.", ("Homes", "Warps", "Players", "Team", "More", "Admin"), 0)
     ry = y + 70
     for name, sub, lock in (("base", "BSP-Forest  overworld  120, 64, -40", False), ("mine", "BSP-Forest  the_nether  -8, 30, 212", False), ("farm", "BSP-Caves  overworld  2040, 70, -16", False), ("old", "locked: more homes than slots", True)):
         s.row(x + 16, ry, w - 32, 44, name, sub, MUTED if lock else TEXT, BAD if lock else MUTED)
@@ -244,6 +244,7 @@ def band_screen():
     items = [("HOMES", "your homes with world and server, Set Home Here, delete; locked homes when your totem lost slots"),
              ("WARPS", "every admin warp you may use, with its coin cost and an icon"),
              ("PLAYERS", "everyone online on the network: ask to teleport to them or bring them to you; incoming requests shown"),
+             ("TEAM", "your BSP-Core team: who is where, and GO to a teammate on any server"),
              ("MORE", "spawn, back, random teleport here or on another server, ignore requests, pay to skip a cooldown, your server access"),
              ("ADMIN", "opens the admin panel (admins and moderators only)")]
     yy = 100
@@ -271,7 +272,7 @@ def wrap(text, width):
 def band_more():
     s = Svg(1200, 640)
     x, y, w, h = 40, 40, 700, 560
-    s.hud(x, y, w, h, "Teleport Band", ACCENT, "Spawn, back, random, requests, and your server access.", ("Homes", "Warps", "Players", "More", "Admin"), 3)
+    s.hud(x, y, w, h, "Teleport Band", ACCENT, "Spawn, back, random, requests, and your server access.", ("Homes", "Warps", "Players", "Team", "More", "Admin"), 4)
     ry = y + 70
     for label, color in (("Spawn", ACCENT), ("Back", ACCENT), ("Random on this server", ACCENT), ("Random on BSP-Wilds", VIOLET), ("Ignoring requests: off", LINE)):
         s.rect(x + 16, ry, w - 32, 30, INSET, color, r=0)
@@ -628,39 +629,119 @@ def admin_tokens():
 
 
 def compat():
-    s = Svg(1200, 620)
+    s = Svg(1200, 640)
     s.text(40, 48, "Works with the other BSP mods", 28, TEXT, "bold")
-    s.text(40, 78, "BSP-Core is required. Region Guard and RankUp are optional: with them installed, more of the mod switches on.", 16, MUTED)
-    cols = [("BSP-Core (required)", GOLD, ["Your Shatter Totem travels with you on every cross-server move and is never left behind",
-                                             "Recall from another server: click the offer and this mod brings you back to your totem",
-                                             "Nothing lands within 150 blocks of a totem being stolen, on any server; random teleports keep 200 away",
-                                             "Extra Homes and Swift Travel totem powers give more home slots and shorter cooldowns",
-                                             "Warps and portal rules charge Shatter Coins; Access Tokens sell in BSP-Core's shops",
-                                             "Anti Totem zones can forbid teleporting in, out, or setting a home"]),
-            ("BSP-Region Guard (optional)", ACCENT, ["Regions forbid teleporting in, out, or setting a home with their flags",
-                                                     "Region triggers and world-edge links move players to other servers through this mod",
+    s.text(40, 78, "BSP-Core is required. Region Guard, RankUp and the Velocity Additions proxy plugin are optional: with them, more of the mod switches on.", 16, MUTED)
+    cols = [("BSP-Core (required)", GOLD, ["Your Shatter Totem travels with you on every cross-server move",
+                                             "Recall from another server brings you back to your totem through this mod",
+                                             "Nothing lands within 150 blocks of a totem being stolen, on any server",
+                                             "Extra Homes and Swift Travel give more home slots and shorter cooldowns",
+                                             "Team teleports: GO to a teammate from the band or BSP-Core's Team screen",
+                                             "The Home Servers board on BSP-Core's Score Screens",
+                                             "Coins for warps and rules; Access Tokens in BSP-Core's shops"]),
+            ("BSP-Region Guard (optional)", ACCENT, ["Regions forbid teleporting in, out, or setting a home",
+                                                     "Region triggers and world-edge links move players to other servers",
                                                      "Random teleport stays inside the world border",
-                                                     "Buy access to an admin region with an Access Token: the region keeps everyone else out",
-                                                     "Shutdown triggers evacuate everyone to a holding server; /back brings them home"]),
+                                                     "Buy access to an admin region with an Access Token",
+                                                     "Shutdown triggers evacuate everyone; /back brings them home"]),
             ("BSP-RankUp (optional)", VIOLET, ["Rank rules on portals and warps: a LuckPerms group, this or better",
-                                               "RankUp ranks are LuckPerms groups, so a rung name is a rule name",
-                                               "A later update reads the ladder directly for display names and order"])]
+                                               "RankUp ranks are LuckPerms groups, so a rung name is a rule name"]),
+            ("BSP-Velocity Additions (proxy)", OK, ["One join and leave line for the whole network: switch this backend's own lines off",
+                                                     "Players sent back to their last server on login; landings wait for them"])]
     for i, (title, color, lines) in enumerate(cols):
-        cx = 40 + i * 380
-        s.rect(cx, 110, 360, 480, PANEL, color, r=10)
-        s.text(cx + 18, 142, title, 17, color, "bold")
-        s.line(cx + 18, 154, cx + 342, 154, LINE, 1)
-        yy = 178
+        cx = 40 + i * 285
+        s.rect(cx, 110, 270, 500, PANEL, color, r=10)
+        s.text(cx + 16, 140, title, 15, color, "bold")
+        s.line(cx + 16, 152, cx + 254, 152, LINE, 1)
+        yy = 176
         for item in lines:
-            s.circle(cx + 24, yy - 5, 4, color)
-            for k, chunk in enumerate(wrap(item, 40)):
-                s.text(cx + 38, yy + k * 17, chunk, 13, MUTED)
-            yy += 17 * len(wrap(item, 40)) + 14
+            s.circle(cx + 22, yy - 5, 4, color)
+            for k, chunk in enumerate(wrap(item, 30)):
+                s.text(cx + 34, yy + k * 17, chunk, 13, MUTED)
+            yy += 17 * len(wrap(item, 30)) + 14
     s.save("compat")
 
 
+def band_team():
+    s = Svg(1200, 640)
+    x, y, w, h = 40, 40, 700, 560
+    s.hud(x, y, w, h, "Teleport Band", ACCENT, "GO takes you to a teammate. Stand still while it counts down.", ("Homes", "Warps", "Players", "Team", "More", "Admin"), 3)
+    by = y + 66
+    s.rect(x + 16, by, w - 32, 46, INSET, GOLD, r=0)
+    s.text(x + 26, by + 19, "Night Owls", 16, GOLD, "bold")
+    s.text(x + 26, by + 36, "leader Alex      4 members      3 online", 12, MUTED)
+    ry = by + 56
+    mates = (("Alex", "leader", "here", OK, "go", ACCENT, False), ("Sam", "", "on BSP-Wilds", VIOLET, "go", VIOLET, False),
+             ("Kai", "", "here   a steal within 150", BAD, "raid", BAD, True), ("Robin", "", "offline, seen 2 h ago", MUTED, "", None, False))
+    for name, mark, state, color, key, kc, dim in mates:
+        s.rect(x + 16, ry, w - 32, 44, INSET, LINE, r=0)
+        s.text(x + 26, ry + 19, name, 15, TEXT if key else MUTED, "bold")
+        if mark:
+            s.text(x + 26 + len(name) * 9 + 8, ry + 19, mark.upper(), 10, GOLD, "bold", spacing=1.5)
+        s.text(x + 26, ry + 36, state, 12, color)
+        if key:
+            s.button(x + w - 26, ry + 11, key, kc, dim)
+        ry += 50
+    s.footer(x, y + h - 60, w, "Ready.      refreshes every 5 s while open", "", OK)
+    rx = 780
+    s.text(rx, 70, "The TEAM tab", 22, TEXT, "bold")
+    for k, line in enumerate(wrap("Your BSP-Core team as a roster: the banner in the team's colour, then every teammate in joining order with where they are. GO is drawn for teammates who are online, violet when they are on another server.", 44)):
+        s.text(rx, 100 + k * 18, line, 14, MUTED)
+    for k, line in enumerate(wrap("A team teleport is a plain teleport with your team as the target list: no cost, no request to answer, and the teammate is told you are coming. Cooldown, warm-up, region flags and server access all apply.", 44)):
+        s.text(rx, 220 + k * 18, line, 14, MUTED)
+    for k, line in enumerate(wrap("One extra rule: nothing lands within 150 blocks of any running steal on the network, so a team cannot pour in behind a friend who started a raid. The row says so and the key turns red.", 44)):
+        s.text(rx, 340 + k * 18, line, 14, MUTED)
+    for k, line in enumerate(wrap("The same GO sits on BSP-Core's Team screen as a TELEPORT key.", 44)):
+        s.text(rx, 460 + k * 18, line, 14, MUTED)
+    s.save("band-team")
+
+
+def score_board():
+    s = Svg(1200, 520)
+    s.text(40, 48, "The Home Servers board on BSP-Core's Score Screens", 28, TEXT, "bold")
+    s.text(40, 78, "The same numbers as the Access Board, shown by BSP-Core's own screens: alone, or in rotation with the leaderboard, in the Ledger, Tiles or Side column look.", 16, MUTED)
+    bx, by, bw, bh = 40, 110, 720, 370
+    s.rect(bx - 6, by - 6, bw + 12, bh + 12, "#3b434c", r=0)
+    s.rect(bx, by, bw, bh, "#07090d", r=0)
+    s.text(bx + bw / 2, by + 40, "HOME SERVERS", 26, GOLD, "bold", "middle", spacing=3)
+    for i in range(3):
+        s.circle(bx + bw / 2 - 16 + i * 16, by + 56, 4, GOLD if i == 1 else "#3b434c")
+    servers = (("BSP-Forest", 6, "12 home \u00b7 4 full \u00b7 7 renting"), ("BSP-Wilds", 8, "9 home \u00b7 6 full \u00b7 11 renting"), ("BSP-Caves", 13, "7 home \u00b7 2 full \u00b7 5 renting"), ("BSP-Isles", 15, "4 home \u00b7 1 full \u00b7 3 renting"))
+    ry = by + 84
+    for name, tok, value in servers:
+        s.rect(bx + 20, ry, bw - 40, 56, "#0d1117", "#1c2230", r=0)
+        s.pixels(KEYCARD, token_pal(tok), bx + 32, ry + 12, 2)
+        s.text(bx + 80, ry + 35, name, 20, TEXT, "bold")
+        s.text(bx + bw - 36, ry + 35, value, 18, GOLD, anchor="end")
+        ry += 66
+    rx = 800
+    s.text(rx, 130, "How an admin shows it", 22, TEXT, "bold")
+    for k, line in enumerate(wrap("Open a Score Screen's settings and set Show to Board, then pick HOME SERVERS; or set Show to Rotate and leave the board among the pages, and the screen turns through the leaderboard and the board at the interval you choose, with dots under the title.", 36)):
+        s.text(rx, 160 + k * 18, line, 14, MUTED)
+    for k, line in enumerate(wrap("The lines come from the access counts every client already has, so nothing extra is synced. Needs the BSP-Core release after 1.3.0.", 36)):
+        s.text(rx, 330 + k * 18, line, 14, MUTED)
+    s.save("score-board")
+
+
+def join_leave():
+    s = Svg(1200, 400)
+    s.text(40, 48, "One join line for the whole network", 28, TEXT, "bold")
+    s.text(40, 78, "Behind a proxy every server switch looks like a leave and a join. Switch this backend's own lines off and let the proxy announce real joins and leaves once.", 16, MUTED)
+    for col, (title, color, lines) in enumerate((("Switch off: every backend speaks", BAD, [("Alex left the game", "#ffff55"), ("Alex joined the game", "#ffff55"), ("Alex left the game", "#ffff55"), ("Alex joined the game", "#ffff55"), ("Sam left the game", "#ffff55")]),
+                                                  ("Switch on: the proxy speaks once", OK, [("Alex joined the network", "#55ffff"), ("[BSP-Wilds] Alex: anyone at the arena?", "#ffffff"), ("[BSP-Spawn] Sam: coming", "#ffffff"), ("Sam left the network", "#55ffff")]))):
+        cx = 40 + col * 580
+        s.text(cx, 128, title, 16, color, "bold")
+        s.rect(cx, 140, 540, 180, "rgba(0,0,0,0.6)", r=0)
+        yy = 166
+        for text, c in lines:
+            s.text(cx + 12, yy, text, 15, c, family=MONO)
+            yy += 26
+    s.text(40, 360, "Config: network.suppressJoinLeaveMessages = true on every backend. Made for BSP-Velocity Additions, which prints the network lines.", 14, MUTED, family=MONO)
+    s.save("join-leave")
+
+
 def main():
-    for fn in (banner, band_slot, band_screen, band_more, admin_network, admin_portals, blocks_and_items, portal_views, core_screen, core_doors, access_hud, access_popups, access_board_img, admin_tokens, compat):
+    for fn in (banner, band_slot, band_screen, band_team, band_more, admin_network, admin_portals, blocks_and_items, portal_views, core_screen, core_doors, access_hud, access_popups, access_board_img, score_board, admin_tokens, join_leave, compat):
         fn()
 
 

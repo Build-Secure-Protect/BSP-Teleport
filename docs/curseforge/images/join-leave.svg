@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+<rect width="1200" height="1200" fill="#0B0F14"/>
+<g transform="translate(0, 400)">
+<rect width="1200" height="400" fill="#0B0F14"/>
+<text x="40" y="48" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="28" font-weight="bold" fill="#E6EAF2" text-anchor="start">One join line for the whole network</text>
+<text x="40" y="78" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="16" font-weight="normal" fill="#9AA3B5" text-anchor="start">Behind a proxy every server switch looks like a leave and a join. Switch this backend's own lines off and let the proxy announce real joins and leaves once.</text>
+<text x="40" y="128" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="16" font-weight="bold" fill="#FF6B5C" text-anchor="start">Switch off: every backend speaks</text>
+<rect x="40" y="140" width="540" height="180" rx="0" fill="rgba(0,0,0,0.6)" opacity="1"/>
+<text x="52" y="166" font-family="Menlo, Monaco, monospace" font-size="15" font-weight="normal" fill="#ffff55" text-anchor="start">Alex left the game</text>
+<text x="52" y="192" font-family="Menlo, Monaco, monospace" font-size="15" font-weight="normal" fill="#ffff55" text-anchor="start">Alex joined the game</text>
+<text x="52" y="218" font-family="Menlo, Monaco, monospace" font-size="15" font-weight="normal" fill="#ffff55" text-anchor="start">Alex left the game</text>
+<text x="52" y="244" font-family="Menlo, Monaco, monospace" font-size="15" font-weight="normal" fill="#ffff55" text-anchor="start">Alex joined the game</text>
+<text x="52" y="270" font-family="Menlo, Monaco, monospace" font-size="15" font-weight="normal" fill="#ffff55" text-anchor="start">Sam left the game</text>
+<text x="620" y="128" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="16" font-weight="bold" fill="#8FE04A" text-anchor="start">Switch on: the proxy speaks once</text>
+<rect x="620" y="140" width="540" height="180" rx="0" fill="rgba(0,0,0,0.6)" opacity="1"/>
+<text x="632" y="166" font-family="Menlo, Monaco, monospace" font-size="15" font-weight="normal" fill="#55ffff" text-anchor="start">Alex joined the network</text>
+<text x="632" y="192" font-family="Menlo, Monaco, monospace" font-size="15" font-weight="normal" fill="#ffffff" text-anchor="start">[BSP-Wilds] Alex: anyone at the arena?</text>
+<text x="632" y="218" font-family="Menlo, Monaco, monospace" font-size="15" font-weight="normal" fill="#ffffff" text-anchor="start">[BSP-Spawn] Sam: coming</text>
+<text x="632" y="244" font-family="Menlo, Monaco, monospace" font-size="15" font-weight="normal" fill="#55ffff" text-anchor="start">Sam left the network</text>
+<text x="40" y="360" font-family="Menlo, Monaco, monospace" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">Config: network.suppressJoinLeaveMessages = true on every backend. Made for BSP-Velocity Additions, which prints the network lines.</text>
+</g>
+</svg>

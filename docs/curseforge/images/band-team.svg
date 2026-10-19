@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+<rect width="1200" height="1200" fill="#0B0F14"/>
+<g transform="translate(0, 280)">
+<rect width="1200" height="640" fill="#0B0F14"/>
+<rect x="38" y="38" width="704" height="564" rx="0" fill="#19D3B0" opacity="1"/>
+<rect x="40" y="40" width="700" height="560" rx="0" fill="#10151C" opacity="1"/>
+<text x="56" y="70" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#19D3B0" text-anchor="start" letter-spacing="2">TELEPORT BAND</text>
+<text x="56" y="90" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">GO takes you to a teammate. Stand still while it counts down.</text>
+<rect x="663.0" y="52" width="61.0" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="693.5" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">ADMIN</text>
+<rect x="604.2" y="52" width="52.8" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="630.6" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">MORE</text>
+<rect x="545.4000000000001" y="52" width="52.8" height="24" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="571.8000000000001" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">TEAM</text>
+<rect x="462.0000000000001" y="52" width="77.39999999999999" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="500.7000000000001" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">PLAYERS</text>
+<rect x="395.0000000000001" y="52" width="61.0" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="425.5000000000001" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">WARPS</text>
+<rect x="328.0000000000001" y="52" width="61.0" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="358.5000000000001" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">HOMES</text>
+<rect x="56" y="106" width="668" height="46" rx="0" fill="#0C0E12" stroke="#FFD23A" stroke-width="1.5" opacity="1"/>
+<text x="66" y="125" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="16" font-weight="bold" fill="#FFD23A" text-anchor="start">Night Owls</text>
+<text x="66" y="142" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="start">leader Alex      4 members      3 online</text>
+<rect x="56" y="162" width="668" height="44" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="66" y="181" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Alex</text>
+<text x="110" y="181" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#FFD23A" text-anchor="start" letter-spacing="1.5">LEADER</text>
+<text x="66" y="198" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#8FE04A" text-anchor="start">here</text>
+<rect x="680.8" y="173" width="33.2" height="22" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="697.4" y="188" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">GO</text>
+<rect x="56" y="212" width="668" height="44" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="66" y="231" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Sam</text>
+<text x="66" y="248" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#B58CFF" text-anchor="start">on BSP-Wilds</text>
+<rect x="680.8" y="223" width="33.2" height="22" rx="0" fill="#0C0E12" stroke="#B58CFF" stroke-width="1.5" opacity="1"/>
+<text x="697.4" y="238" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#B58CFF" text-anchor="middle" letter-spacing="1">GO</text>
+<rect x="56" y="262" width="668" height="44" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="66" y="281" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Kai</text>
+<text x="66" y="298" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#FF6B5C" text-anchor="start">here   a steal within 150</text>
+<rect x="665.6" y="273" width="48.4" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="689.8000000000001" y="288" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">RAID</text>
+<rect x="56" y="312" width="668" height="44" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="66" y="331" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#9AA3B5" text-anchor="start">Robin</text>
+<text x="66" y="348" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="start">offline, seen 2 h ago</text>
+<line x1="56" y1="540" x2="724" y2="540" stroke="#2A2F3A" stroke-width="1" stroke-linecap="round"/>
+<text x="56" y="560" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#8FE04A" text-anchor="start">Ready.      refreshes every 5 s while open</text>
+<text x="780" y="70" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" fill="#E6EAF2" text-anchor="start">The TEAM tab</text>
+<text x="780" y="100" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">Your BSP-Core team as a roster: the banner</text>
+<text x="780" y="118" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">in the team's colour, then every teammate in</text>
+<text x="780" y="136" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">joining order with where they are. GO is</text>
+<text x="780" y="154" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">drawn for teammates who are online, violet</text>
+<text x="780" y="172" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">when they are on another server.</text>
+<text x="780" y="220" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">A team teleport is a plain teleport with</text>
+<text x="780" y="238" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">your team as the target list: no cost, no</text>
+<text x="780" y="256" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">request to answer, and the teammate is told</text>
+<text x="780" y="274" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">you are coming. Cooldown, warm-up, region</text>
+<text x="780" y="292" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">flags and server access all apply.</text>
+<text x="780" y="340" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">One extra rule: nothing lands within 150</text>
+<text x="780" y="358" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">blocks of any running steal on the network,</text>
+<text x="780" y="376" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">so a team cannot pour in behind a friend who</text>
+<text x="780" y="394" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">started a raid. The row says so and the key</text>
+<text x="780" y="412" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">turns red.</text>
+<text x="780" y="460" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">The same GO sits on BSP-Core's Team screen</text>
+<text x="780" y="478" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">as a TELEPORT key.</text>
+</g>
+</svg>

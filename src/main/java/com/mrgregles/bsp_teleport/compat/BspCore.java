@@ -78,14 +78,26 @@ public final class BspCore {
      * second per screen that shows the board, so it must be cheap and never block; an empty list is "nothing yet".
      */
     public static void registerBoard(ResourceLocation id, Component title, Supplier<List<BoardEntry>> lines) {
-        BspBoards.register(id, title, () -> {
-            List<BoardEntry> entries = lines.get();
-            List<BspBoards.BoardLine> out = new ArrayList<>(entries.size());
-            for (BoardEntry e : entries) {
-                out.add(BspBoards.BoardLine.of(e.text(), e.value(), e.icon()));
-            }
-            return out;
-        });
+        try {
+            Boards.register(id, title, lines);
+        } catch (LinkageError e) {
+            // A BSP-Core 1.3.0 jar from before R8 has no BspBoards: everything else works, the board is just not offered.
+            BSPTeleport.LOGGER.warn("This BSP-Core has no board API (needs the release after 1.3.0); the {} board is not registered", id);
+        }
+    }
+
+    /** The only code naming {@link BspBoards}, kept in its own class so an older BSP-Core fails to load just this. */
+    private static final class Boards {
+        static void register(ResourceLocation id, Component title, Supplier<List<BoardEntry>> lines) {
+            BspBoards.register(id, title, () -> {
+                List<BoardEntry> entries = lines.get();
+                List<BspBoards.BoardLine> out = new ArrayList<>(entries.size());
+                for (BoardEntry e : entries) {
+                    out.add(BspBoards.BoardLine.of(e.text(), e.value(), e.icon()));
+                }
+                return out;
+            });
+        }
     }
 
     // Players
