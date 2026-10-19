@@ -11,6 +11,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,12 +59,37 @@ public final class PendingLandings {
         com.mrgregles.bsp_teleport.data.TeleportData.get(player.server).rememberName(player.getUUID(), player.getGameProfile().getName());
         // A tick later: the client is not ready for a dimension change inside the login event itself.
         Scheduler.later(1, () -> landFromMemory(player));
-        Storage.takePending(player.getUUID(), destination -> {
-            if (destination != null && !player.hasDisconnected()) {
-                PENDING.remove(player.getUUID());
-                TeleportService.moveHere(player, raidChecked(player, destination));
-            }
-        });
+        Storage.peekPending(player.getUUID(), destination -> landFromRow(player, destination));
+    }
+
+    /**
+     * A landing read from the shared table (B7): applied only when it is for this server (any other server the player
+     * logs into meanwhile leaves the row alone), and the row is deleted only once the move has happened, so a kick
+     * during the switch keeps the landing for the next login until {@code landingSeconds} runs out.
+     */
+    private static void landFromRow(ServerPlayer player, @Nullable Destination destination) {
+        if (destination == null) {
+            return;
+        }
+        String name = player.getGameProfile().getName();
+        if (!forThisServer(destination, TeleportConfig.serverName())) {
+            BSPTeleport.LOGGER.info("Landing for {} is for {}, not this server; leaving it", name, destination.server());
+            return;
+        }
+        if (player.hasDisconnected()) {
+            BSPTeleport.LOGGER.info("{} left before landing; the landing waits for the next login", name);
+            return;
+        }
+        PENDING.remove(player.getUUID());
+        if (TeleportService.moveHere(player, raidChecked(player, destination))) {
+            Storage.deletePending(player.getUUID());
+        }
+    }
+
+    /** Whether a stored landing belongs to the server named {@code here}; a landing with no server named is taken as local. */
+    public static boolean forThisServer(Destination destination, String here) {
+        String server = destination.server();
+        return server == null || server.isEmpty() || server.equalsIgnoreCase(here);
     }
 
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {

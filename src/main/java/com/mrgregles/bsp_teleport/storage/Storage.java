@@ -346,13 +346,19 @@ public final class Storage {
     }
 
     /** Looks up and clears the player's landing row; {@code then} gets null when there is none. */
-    public static void takePending(UUID uuid, Consumer<Destination> then) {
+    /** Reads the player's pending landing, if any, leaving the row in place; {@code then} runs on the server thread. */
+    public static void peekPending(UUID uuid, Consumer<Destination> then) {
         MySqlStore s = store;
         if (s == null) {
             return;
         }
         long maxAge = TeleportConfig.getOr(TeleportConfig.LANDING_SECONDS, 120) * 1000L;
-        run(() -> s.takePending(uuid, maxAge), then, null);
+        run(() -> s.peekPending(uuid, maxAge), then, null);
+    }
+
+    /** Removes the player's pending landing once it has been applied. */
+    public static void deletePending(UUID uuid) {
+        submit(s -> s.deletePending(uuid));
     }
 
     // Worker plumbing

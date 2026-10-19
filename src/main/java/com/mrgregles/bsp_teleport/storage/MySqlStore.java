@@ -505,23 +505,29 @@ final class MySqlStore implements AutoCloseable {
         }
     }
 
-    /** Reads and removes the player's pending landing; null when there is none or it is older than {@code maxAgeMs}. */
+    /**
+     * Reads the player's pending landing without removing it; null when there is none or it is older than {@code maxAgeMs}.
+     * The row is deleted only once the landing has been applied ({@link #deletePending}), so a kick between the read and
+     * the landing leaves it for the next login (B7).
+     */
     @Nullable
-    Destination takePending(UUID uuid, long maxAgeMs) throws SQLException {
-        Destination destination = null;
+    Destination peekPending(UUID uuid, long maxAgeMs) throws SQLException {
         try (PreparedStatement ps = conn().prepareStatement("SELECT destination, created_ms FROM " + t("pending") + " WHERE uuid = ?")) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next() && System.currentTimeMillis() - rs.getLong(2) <= maxAgeMs) {
-                    destination = Destination.parse(rs.getString(1));
+                    return Destination.parse(rs.getString(1));
                 }
             }
         }
+        return null;
+    }
+
+    void deletePending(UUID uuid) throws SQLException {
         try (PreparedStatement ps = conn().prepareStatement("DELETE FROM " + t("pending") + " WHERE uuid = ?")) {
             ps.setString(1, uuid.toString());
             ps.executeUpdate();
         }
-        return destination;
     }
 
     void deleteOldPending(long maxAgeMs) throws SQLException {

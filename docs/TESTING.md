@@ -53,3 +53,16 @@ Needs the owner, one server with `access.enabled = true` and at least one restri
 - [ ] Rotate: with the board among the pages, the screen cycles leaderboard and board at the chosen interval.
 - [ ] With `access.enabled = false`, or before the first sync (a freshly logged-in client), the screen says "Nothing on this board yet" and no lines are drawn.
 - [ ] A client that joins with the board picked on a screen but without BSP-Teleport installed sees BSP-Core's "not installed here" line once and the rotation skips it (BSP-Core's side; no change expected here).
+
+## Landings after a kick during a server switch (B7, 2026-10-19)
+
+No config. A cross-server landing row now stays in the shared `pending` table until the landing has been applied, and only the server it names applies it.
+
+Headless, already passing: `PendingLandingsTest` (a row is for the server it names, case-insensitive; a row with no server is local).
+
+Needs the owner, two backends behind Velocity with Velocity Additions remembering the last server:
+
+- [ ] Walk through a portal to the other server as normal: you land at the exit as before, and the row is gone afterwards (`SELECT * FROM bsptp_pending` on the database is empty for your uuid).
+- [ ] Provoke a kick during a switch (the B5 pair of trips, or a portal trip right after logging in with `switchGapSeconds = 0`). Rejoin within two minutes. If the proxy puts you on the destination server you land at the portal's exit, not at your old spot there; the server log says the landing was applied, not "left before landing".
+- [ ] If the proxy puts you on the departure server (or the lobby) instead, you stay where that server has you; its log says "Landing for <you> is for <server>, not this server; leaving it". Then `/server <destination>` (or a warp there): you land at the exit, because the row waited.
+- [ ] Rejoin after more than two minutes: nothing is applied anywhere (the row expired) and the log says nothing about a landing.
