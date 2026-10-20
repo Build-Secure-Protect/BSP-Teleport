@@ -66,3 +66,21 @@ Needs the owner, two backends behind Velocity with Velocity Additions rememberin
 - [ ] Provoke a kick during a switch (the B5 pair of trips, or a portal trip right after logging in with `switchGapSeconds = 0`). Rejoin within two minutes. If the proxy puts you on the destination server you land at the portal's exit, not at your old spot there; the server log says the landing was applied, not "left before landing".
 - [ ] If the proxy puts you on the departure server (or the lobby) instead, you stay where that server has you; its log says "Landing for <you> is for <server>, not this server; leaving it". Then `/server <destination>` (or a warp there): you land at the exit, because the row waited.
 - [ ] Rejoin after more than two minutes: nothing is applied anywhere (the row expired) and the log says nothing about a landing.
+
+## Multi-destination portals (T69, D94 to D107, 2026-10-20)
+
+Config: `portals.maxDestinations` (8). A core now holds a list of destinations; one behaves exactly as before.
+
+Headless, already passing: `PortalWireTest` (the list's wire form with labels, old single rows, the summary text) and the GameTest `a_choosing_player_is_held_still_and_a_cancel_lets_them_go` (the hold puts a moved player back, an unknown answer is ignored, cancel ends it).
+
+Needs the owner, one server first, then two behind Velocity:
+
+- [ ] Right-click a core: DESTINATION shows pills WARP, PORTAL WARP, PORTAL, RANDOM, POSITION on the left (no LINK) and "DESTINATIONS 0 OF 8" on the right. Pick a warp, press ADD: it appears as row 1 with a red Del key; the status line says Ready. Add a second (a portal warp) and a third (another portal from the PORTAL picker, which lists every other portal on the network with its server). Up moves a row up; Del removes it; click a row's name, type a label, press SET: the row shows the label.
+- [ ] Walk in with one destination: straight through, as before. With two or more usable: the centred card opens with the portal's name, one row per destination (label on top, where it leads underneath) with GO, and Cancel. You cannot move, open the inventory or type while it shows. GO: "Through <portal>" and you arrive. Esc or Cancel: "You stepped back out of <portal>", you stay, and the field does not fire again until you walk two blocks off (then it does).
+- [ ] Hold: while the card shows, have someone push you or hit you. A push puts you back on the cell each tick; a hit closes the card with "You were hurt: <portal> let you go." Wait 30 s without answering: the card closes with "No choice made".
+- [ ] Down entries: delete one listed warp or stop the partner server. The card shows that row greyed with "Destination missing" or "Destination down" and a DOWN key that does nothing. With only one usable entry left you go straight through, no card. With none, "The portal is not answering."
+- [ ] Access (system on): a destination on a server you may not enter shows red with "needs access to <server> (Access Token N)" and a NO ACCESS key; pressing it does nothing. With one entry total you get the usual denied popup instead.
+- [ ] Portal destinations: on B make a portal listing only A's portal; on A list B's portal among three others. Walk into B: straight to A. Walk into A: the card lists B among the others. Old link pairs: a portal built before this version with a link id shows its entry as "portal <partner>" once both servers have read the rows (the server log says "converted its link").
+- [ ] The panel's PORTALS tab reads "3 destinations: Market, Arena, +1" on the row; MAP draws a violet line from a portal to each portal it leads to, with a dot near the far end; a two-way pair has dots at both ends.
+- [ ] Commands on the looked-at core: `/bsptp portal dest add warp market Market Square`, `dest add portalwarp arena`, `dest add portal "Hub East"`, `dest add random BSP-Wilds The Wilds`, `dest add here`, `dest list`, `dest label 2 Arena Door`, `dest del 2`, `dest clear`. `dest warp <name>` still works and replaces the whole list with that one entry.
+- [ ] Rules: a portal with a rank or coin rule and several destinations refuses before the card (the rule line on the action bar), and charges coins only when a destination is chosen and the move happens.

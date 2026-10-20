@@ -69,6 +69,15 @@ public final class PortalCommands {
         return core != null && action.run(player, core, ctx) ? 1 : 0;
     }
 
+    /** {@code dest add <kind> <target> [label]} for the kinds that take a name. */
+    private static LiteralArgumentBuilder<CommandSourceStack> destAdd(String kind, String arg, com.mojang.brigadier.arguments.ArgumentType<String> type, SuggestionProvider<CommandSourceStack> suggest) {
+        return Commands.literal(kind)
+                .then(Commands.argument(arg, type).suggests(suggest)
+                        .executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.addDestination(p, core, PortalActions.resolve(p, core, kind, StringArgumentType.getString(c, arg)), "")))
+                        .then(Commands.argument("label", StringArgumentType.greedyString())
+                                .executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.addDestination(p, core, PortalActions.resolve(p, core, kind, StringArgumentType.getString(c, arg)), StringArgumentType.getString(c, "label"))))));
+    }
+
     public static LiteralArgumentBuilder<CommandSourceStack> portal() {
         return Commands.literal("portal")
                 .then(Commands.literal("info").executes(ctx -> withCore(ctx, (p, core, c) -> {
@@ -86,9 +95,26 @@ public final class PortalCommands {
                                 .then(Commands.argument("server", StringArgumentType.word()).suggests(SERVERS)
                                         .executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.setRandom(p, core, StringArgumentType.getString(c, "server"))))))
                         .then(Commands.literal("here").executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.setHere(p, core))))
-                        .then(Commands.literal("link").then(Commands.argument("id", StringArgumentType.word())
-                                .executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.setLink(p, core, StringArgumentType.getString(c, "id"))))))
-                        .then(Commands.literal("none").executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.clearDestination(p, core)))))
+                        .then(Commands.literal("none").executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.clearDestination(p, core))))
+                        // The list (D94, D104): add keeps what is there; the forms above replace the list with one entry.
+                        .then(Commands.literal("add")
+                                .then(destAdd("warp", "name", StringArgumentType.word(), WARPS))
+                                .then(destAdd("portalwarp", "name", StringArgumentType.word(), PORTAL_WARPS))
+                                .then(destAdd("portal", "name", StringArgumentType.string(), PORTAL_NAMES))
+                                .then(Commands.literal("here").executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.addDestination(p, core, PortalActions.resolve(p, core, "POSITION", ""), "")))
+                                        .then(Commands.argument("label", StringArgumentType.greedyString())
+                                                .executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.addDestination(p, core, PortalActions.resolve(p, core, "POSITION", ""), StringArgumentType.getString(c, "label"))))))
+                                .then(Commands.literal("random").executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.addDestination(p, core, PortalActions.resolve(p, core, "RANDOM", ""), "")))
+                                        .then(Commands.argument("server", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(com.mrgregles.bsp_teleport.network.PlayerDirectory.servers(), b))
+                                                .executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.addDestination(p, core, PortalActions.resolve(p, core, "RANDOM", StringArgumentType.getString(c, "server")), "")))
+                                                .then(Commands.argument("label", StringArgumentType.greedyString())
+                                                        .executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.addDestination(p, core, PortalActions.resolve(p, core, "RANDOM", StringArgumentType.getString(c, "server")), StringArgumentType.getString(c, "label"))))))))
+                        .then(Commands.literal("del").then(Commands.argument("n", IntegerArgumentType.integer(1))
+                                .executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.removeDestination(p, core, IntegerArgumentType.getInteger(c, "n") - 1)))))
+                        .then(Commands.literal("label").then(Commands.argument("n", IntegerArgumentType.integer(1)).then(Commands.argument("text", StringArgumentType.greedyString())
+                                .executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.labelDestination(p, core, IntegerArgumentType.getInteger(c, "n") - 1, StringArgumentType.getString(c, "text")))))))
+                        .then(Commands.literal("clear").executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.clearDestinations(p, core))))
+                        .then(Commands.literal("list").executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.listDestinations(p, core)))))
                 .then(Commands.literal("name").then(Commands.argument("name", StringArgumentType.greedyString())
                         .executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.setName(p, core, StringArgumentType.getString(c, "name"))))))
                 .then(Commands.literal("colour").then(Commands.argument("colour", StringArgumentType.word()).suggests(COLOURS)

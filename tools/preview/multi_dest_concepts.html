@@ -1,0 +1,327 @@
+<title>Multi-destination Portals</title>
+<style>
+/* Layout: one column of concept sheets, each sheet a Holo HUD panel drawn at 1.5x GUI scale, with state toggles above the popups. */
+:root {
+  --bg: #0B0F14; --panel: #10151C; --inset: #0C0E12; --line: #2A2F3A;
+  --accent: #19D3B0; --violet: #B58CFF; --gold: #FFD23A; --bad: #FF6B5C; --ok: #8FE04A;
+  --text: #E6EAF2; --muted: #9AA3B5;
+  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif; --mono: Menlo, Monaco, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--sans); margin: 0; padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 28px; margin: 0 0 6px; }
+h2 { font-size: 20px; margin: 40px 0 6px; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; }
+h3 { font-size: 15px; margin: 18px 0 8px; color: var(--text); }
+p, li { color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 70ch; }
+.lead { max-width: 90ch; }
+.sheets { display: flex; flex-wrap: wrap; gap: 24px; }
+.sheet { flex: 1 1 360px; min-width: 0; }
+.hud { position: relative; background: var(--panel); border: 2px solid var(--accent); padding: 14px 16px 18px; font-size: 13px; }
+.hud.violet { border-color: var(--violet); }
+.hud.gold { border-color: var(--gold); }
+.hud.bad { border-color: var(--bad); }
+.title { font-weight: bold; letter-spacing: 2px; text-transform: uppercase; font-size: 16px; color: var(--violet); }
+.hud:not(.violet) .title { color: var(--accent); }
+.hud.gold .title { color: var(--gold); }
+.hud.bad .title { color: var(--bad); }
+.help { color: var(--muted); font-size: 11px; margin-top: 2px; }
+.tabs { position: absolute; right: 14px; top: 10px; display: flex; gap: 5px; }
+.tab { border: 1px solid var(--line); background: var(--inset); color: var(--muted); font-size: 10px; font-weight: bold; letter-spacing: 1px; padding: 5px 7px; text-transform: uppercase; }
+.tab.on { border-color: var(--violet); color: var(--violet); }
+.status { margin: 10px 0; border: 1px solid var(--ok); background: var(--inset); color: var(--ok); font-size: 10px; font-weight: bold; letter-spacing: 1px; padding: 5px 8px; text-transform: uppercase; }
+.cols { display: flex; gap: 12px; }
+.cols > div { flex: 1 1 0; min-width: 0; }
+.pills { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
+.pill { border: 1px solid var(--line); background: var(--inset); color: var(--muted); font-size: 10px; font-weight: bold; letter-spacing: 1px; padding: 4px 7px; text-transform: uppercase; }
+.pill.on { border-color: var(--violet); color: var(--violet); }
+.row { border: 1px solid var(--line); background: var(--inset); padding: 6px 8px; margin: 4px 0; display: flex; align-items: center; gap: 8px; min-height: 30px; }
+.row .name { font-weight: bold; color: var(--text); flex: 1 1 auto; min-width: 0; }
+.row .sub { color: var(--muted); font-size: 11px; }
+.row.sel { border-color: var(--violet); }
+.row.dim { opacity: .55; }
+.row.denied { border-color: var(--bad); }
+.key { border: 1px solid var(--accent); color: var(--accent); background: var(--inset); font-size: 10px; font-weight: bold; letter-spacing: 1px; padding: 3px 7px; text-transform: uppercase; white-space: nowrap; }
+.key.v { border-color: var(--violet); color: var(--violet); }
+.key.g { border-color: var(--gold); color: var(--gold); }
+.key.r { border-color: var(--bad); color: var(--bad); }
+.key.d { border-color: var(--line); color: var(--muted); }
+.key.ok { border-color: var(--ok); color: var(--ok); }
+.box { border: 1px solid var(--line); background: var(--inset); color: var(--text); font-family: var(--mono); font-size: 11px; padding: 4px 6px; min-width: 0; }
+.box.empty { color: var(--line); }
+.num { color: var(--gold); font-family: var(--mono); font-size: 11px; width: 14px; }
+.chip { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--violet); border: 1px solid var(--violet); padding: 1px 4px; }
+.chip.w { color: var(--accent); border-color: var(--accent); }
+.chip.pw { color: var(--gold); border-color: var(--gold); }
+.foot { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 6px; color: var(--ok); font-size: 11px; }
+.label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 8px 0 4px; }
+.arrowcol { flex: 0 0 24px !important; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 18px; }
+table.ledger { width: 100%; border-collapse: collapse; font-size: 11px; }
+table.ledger th { text-align: left; color: var(--muted); font-weight: normal; letter-spacing: 1px; text-transform: uppercase; font-size: 9px; padding: 3px 6px; border-bottom: 1px solid var(--line); }
+table.ledger td { padding: 5px 6px; border-bottom: 1px solid var(--line); background: var(--inset); color: var(--text); }
+.toggles { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 16px; }
+.toggle { border: 1px solid var(--line); background: var(--panel); color: var(--muted); font: inherit; font-size: 12px; padding: 6px 10px; cursor: pointer; }
+.toggle[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.toggle:focus-visible { outline: 2px solid var(--gold); }
+.screen { background: #2b3f55; padding: 18px; position: relative; min-height: 300px; }
+.banner { background: var(--panel); border: 2px solid var(--violet); padding: 12px 14px; }
+.card { background: var(--panel); border: 2px solid var(--violet); padding: 14px 16px; max-width: 420px; margin: 24px auto 0; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 8px; }
+.tile { border: 1px solid var(--line); background: var(--inset); padding: 10px 8px; text-align: center; min-height: 86px; display: flex; flex-direction: column; justify-content: space-between; gap: 4px; }
+.tile .name { font-weight: bold; color: var(--text); font-size: 13px; }
+.tile .sub { font-size: 10px; color: var(--muted); }
+.tile.sel { border-color: var(--accent); }
+.tile.dim { opacity: .55; }
+.tile.denied { border-color: var(--bad); }
+.icon { width: 26px; height: 16px; margin: 0 auto; background: linear-gradient(90deg, var(--accent), #0f6b5a); border: 1px solid #06302a; }
+.icon.v { background: linear-gradient(90deg, var(--violet), #5a3fa0); }
+.icon.g { background: linear-gradient(90deg, var(--gold), #9a7c12); }
+.hotbar { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; gap: 0; }
+.slot { width: 26px; height: 26px; border: 1px solid #6a6a6a; background: #1c1c1c; }
+.slot.band { margin-left: 8px; border-color: var(--accent); background: #0F2A28; }
+.straight { position: absolute; left: 18px; top: 18px; right: 18px; color: var(--text); font-size: 13px; background: rgba(0,0,0,.6); padding: 10px 12px; }
+.note { font-size: 11px; color: var(--muted); margin-top: 8px; }
+ol.rules li { margin-bottom: 4px; }
+.decisions { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.decisions div { border-left: 2px solid var(--line); padding: 2px 10px; font-size: 13px; color: var(--muted); }
+.decisions b { color: var(--text); }
+.pick { border: 1px solid var(--gold); color: var(--gold); display: inline-block; padding: 2px 8px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-left: 8px; }
+@media (max-width: 700px) { .cols { flex-direction: column; } .tabs { position: static; margin-top: 8px; } }
+</style>
+
+<h1>Multi-destination portals</h1>
+<p class="lead">Three options for the core screen's DESTINATION tab with the list on the right, and three for the popup a player sees when a portal leads to more than one place. Decisions D94 to D106 are at the foot. Colours and sizes are the Holo HUD look at 1.5x; the real screens draw with the same panel, tabs and keys as the portal screen built in T56.</p>
+
+<h2>1. The DESTINATION tab</h2>
+<p>Every option keeps the status line, the five kind pills and the Arrive-only and Close-when-down switches. The difference is how a pick becomes a list entry and how the list is edited. The list is the same data in all three: up to 8 entries, each a kind, a target and a label the admin may overwrite.</p>
+
+<div class="sheets">
+  <div class="sheet">
+    <h3>A. Split: pickers left, list right <span class="pick">default</span></h3>
+    <div class="hud violet">
+      <div class="title">Portal</div>
+      <div class="help">Hub East. Pick on the left, press ADD, edit the label on the right.</div>
+      <div class="tabs"><span class="tab on">Destination</span><span class="tab">Look</span><span class="tab">Open/close</span><span class="tab">Access</span></div>
+      <div class="status">Ready: 3 destinations, 2 up</div>
+      <div class="cols">
+        <div>
+          <div class="pills"><span class="pill">Warp</span><span class="pill on">Portal warp</span><span class="pill">Portal</span><span class="pill">Random</span><span class="pill">Position</span></div>
+          <div class="row sel"><span class="name">arena</span><span class="sub">BSP-SafeRoom</span></div>
+          <div class="row"><span class="name">mines</span><span class="sub">BSP-Caves</span></div>
+          <div class="row"><span class="name">vault</span><span class="sub">BSP-Spawn</span></div>
+          <div class="row" style="justify-content:flex-end"><span class="key">Add</span></div>
+        </div>
+        <div class="arrowcol">&gt;</div>
+        <div>
+          <div class="label">Destinations 3 of 8</div>
+          <div class="row"><span class="num">1</span><span class="chip w">warp</span><span class="box">Market</span><span class="key d">Up</span><span class="key r">Del</span></div>
+          <div class="row"><span class="num">2</span><span class="chip">portal</span><span class="box">Arena Door</span><span class="key d">Up</span><span class="key r">Del</span></div>
+          <div class="row dim"><span class="num">3</span><span class="chip pw">portal warp</span><span class="box">Old Mines</span><span class="key d">Up</span><span class="key r">Del</span></div>
+          <div class="note">Row 3 is greyed: its warp is gone. Click a label box to type a custom name; empty means the target's own name.</div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px"><span class="name">Arrive only</span><span class="key d">Off</span></div>
+      <div class="row"><span class="name">Close when every destination is down</span><span class="key ok">On</span></div>
+      <div class="foot">BSP-Spawn minecraft:overworld 120, 64, -40 &nbsp; frame 9x6, opening 28 cells</div>
+    </div>
+    <p>Closest to the screen as it is: the pills and the picker stay where admins know them, the list grows on the right. ADD puts the selected picker row at the end of the list; Up reorders; the label box is editable in place. One destination in the list behaves exactly like today's single destination.</p>
+  </div>
+
+  <div class="sheet">
+    <h3>B. Search: one picker over everything</h3>
+    <div class="hud violet">
+      <div class="title">Portal</div>
+      <div class="help">Hub East. Type to find a warp, portal warp or portal anywhere on the network.</div>
+      <div class="tabs"><span class="tab on">Destination</span><span class="tab">Look</span><span class="tab">Open/close</span><span class="tab">Access</span></div>
+      <div class="status">Ready: 3 destinations, 2 up</div>
+      <div class="cols">
+        <div>
+          <div class="box" style="margin:8px 0">ar|</div>
+          <div class="row"><span class="chip pw">portal warp</span><span class="name">arena</span><span class="sub">BSP-SafeRoom</span><span class="key">Add</span></div>
+          <div class="row"><span class="chip">portal</span><span class="name">Arena Door</span><span class="sub">BSP-SafeRoom</span><span class="key d">Added</span></div>
+          <div class="row"><span class="chip w">warp</span><span class="name">farm</span><span class="sub">BSP-Forest</span><span class="key">Add</span></div>
+          <div class="pills"><span class="pill">Random on...</span><span class="pill">Position here</span></div>
+        </div>
+        <div>
+          <div class="label">Destinations 3 of 8</div>
+          <div class="row"><span class="num">1</span><span class="name">Market<br><span class="sub">warp market, BSP-Spawn</span></span><span class="key g">Label</span><span class="key r">Del</span></div>
+          <div class="row"><span class="num">2</span><span class="name">Arena Door<br><span class="sub">portal, BSP-SafeRoom</span></span><span class="key g">Label</span><span class="key r">Del</span></div>
+          <div class="row dim"><span class="num">3</span><span class="name">Old Mines<br><span class="sub">portal warp mines: warp deleted</span></span><span class="key g">Label</span><span class="key r">Del</span></div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px"><span class="name">Arrive only</span><span class="key d">Off</span></div>
+      <div class="row"><span class="name">Close when every destination is down</span><span class="key ok">On</span></div>
+      <div class="foot">BSP-Spawn minecraft:overworld 120, 64, -40 &nbsp; frame 9x6, opening 28 cells</div>
+    </div>
+    <p>The kind pills become chips on the results: one search box finds warps, portal warps and portals by name across the network, and Random and Position sit under it as two buttons. The list rows carry the entry's own name on top and what it points at underneath, with a Label key that opens a text box. Good with many warps; the first row of every search is a guess.</p>
+  </div>
+
+  <div class="sheet">
+    <h3>C. Ledger: the list as a table</h3>
+    <div class="hud violet">
+      <div class="title">Portal</div>
+      <div class="help">Hub East. The table is the truth; the pickers below add a row.</div>
+      <div class="tabs"><span class="tab on">Destination</span><span class="tab">Look</span><span class="tab">Open/close</span><span class="tab">Access</span></div>
+      <div class="status">Ready: 3 destinations, 2 up</div>
+      <div style="overflow-x:auto">
+      <table class="ledger">
+        <tr><th>#</th><th>Kind</th><th>Target</th><th>Label</th><th>State</th><th></th></tr>
+        <tr><td>1</td><td>warp</td><td>market</td><td>Market</td><td style="color:var(--ok)">up</td><td><span class="key r">Del</span></td></tr>
+        <tr><td>2</td><td>portal</td><td>Arena Door, BSP-SafeRoom</td><td>Arena Door</td><td style="color:var(--ok)">up</td><td><span class="key r">Del</span></td></tr>
+        <tr><td>3</td><td>portal warp</td><td>mines</td><td>Old Mines</td><td style="color:var(--bad)">warp deleted</td><td><span class="key r">Del</span></td></tr>
+      </table>
+      </div>
+      <div class="pills" style="margin-top:10px"><span class="pill on">Warp</span><span class="pill">Portal warp</span><span class="pill">Portal</span><span class="pill">Random</span><span class="pill">Position</span></div>
+      <div class="cols">
+        <div><div class="row"><span class="name">farm</span><span class="sub">BSP-Forest</span></div><div class="row sel"><span class="name">vault</span><span class="sub">BSP-Spawn</span></div></div>
+        <div><div class="label">Label for the new row</div><div class="box empty">vault</div><div class="row" style="justify-content:flex-end;margin-top:6px"><span class="key">Add row</span></div></div>
+      </div>
+      <div class="foot">BSP-Spawn minecraft:overworld 120, 64, -40 &nbsp; frame 9x6, opening 28 cells</div>
+    </div>
+    <p>The list is a table on top with the state column visible at a glance; adding happens below, with the label typed before the row is added. Compact for eight entries, but the picker gets the least room of the three and reordering would need a drag or two more keys.</p>
+  </div>
+</div>
+
+<h2>2. The chooser popup</h2>
+<p>Shown the moment a player steps into a portal with two or more usable destinations. The player is held still on the server; every key but Esc is swallowed; Cancel or Esc applies the portal cooldown. Toggle the states to see how each option shows a destination that is down, one the player may not enter, and a single destination (no popup at all).</p>
+<div class="toggles" role="group" aria-label="States">
+  <button class="toggle" id="t-down" aria-pressed="true">A destination is down</button>
+  <button class="toggle" id="t-denied" aria-pressed="true">A destination needs access</button>
+  <button class="toggle" id="t-single" aria-pressed="false">Only one destination</button>
+  <button class="toggle" id="t-custom" aria-pressed="true">Custom labels</button>
+</div>
+
+<div class="sheets">
+  <div class="sheet">
+    <h3>A. Banner at the top <span class="pick">default</span></h3>
+    <div class="screen">
+      <div class="banner popup">
+        <div class="title">Where to?</div>
+        <div class="help">Hub East leads to several places. Pick one, or Cancel to step back out.</div>
+        <div class="rows"></div>
+        <div class="row" style="justify-content:flex-end;border:none;background:none;padding:6px 0 0"><span class="key d">Cancel (Esc)</span></div>
+      </div>
+      <div class="straight" hidden>One destination: no popup. The player walks straight through to Market, as today.</div>
+      <div class="hotbar"><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot band"></span></div>
+    </div>
+    <p>The same band the access popups use (D89), so players already know the shape. Rows with a GO key; a down row is greyed with its reason; a denied row is red with "needs access to BSP-Wilds (Access Token IX)". The world stays visible underneath, which fits "you are standing in the portal".</p>
+  </div>
+
+  <div class="sheet">
+    <h3>B. Centred card</h3>
+    <div class="screen">
+      <div class="card popup">
+        <div class="title">Hub East</div>
+        <div class="help">Choose a destination</div>
+        <div class="rows"></div>
+        <div class="row" style="justify-content:center;border:none;background:none;padding:8px 0 0"><span class="key d">Cancel (Esc)</span></div>
+      </div>
+      <div class="straight" hidden>One destination: no popup. The player walks straight through to Market, as today.</div>
+      <div class="hotbar"><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot band"></span></div>
+    </div>
+    <p>A modal in the middle of the screen, the portal's name as the title. Reads as a decision to make before anything else happens, which is the truth of it. Rows are the same as A; the card narrows the eye to the list and dims nothing around it.</p>
+  </div>
+
+  <div class="sheet">
+    <h3>C. Tiles</h3>
+    <div class="screen">
+      <div class="banner popup">
+        <div class="title">Where to?</div>
+        <div class="help">Hub East. Click a tile, or Cancel.</div>
+        <div class="tiles"></div>
+        <div class="row" style="justify-content:flex-end;border:none;background:none;padding:8px 0 0"><span class="key d">Cancel (Esc)</span></div>
+      </div>
+      <div class="straight" hidden>One destination: no popup. The player walks straight through to Market, as today.</div>
+      <div class="hotbar"><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot band"></span></div>
+    </div>
+    <p>One tile per destination with its icon (the warp's icon, a portal's field colour, the server's token for a far server), the label large and the detail small. Handsome with up to six; with eight the tiles shrink and the reason text on a down or denied tile gets tight.</p>
+  </div>
+</div>
+
+<h2>3. The rules behind both</h2>
+<ol class="rules">
+  <li>One destination in the list: straight through, no popup, the arrival as today. Two or more usable: the popup. Exactly one usable among several: straight through to it.</li>
+  <li>A destination is usable when its target exists, its server is up and the player may enter that server. Down and denied entries are shown greyed with the reason, never pressable.</li>
+  <li>While the popup shows the server keeps the player on the cell they stepped into; the screen swallows every key except Esc; inventory keys do nothing. Damage cancels; 30 s of silence cancels.</li>
+  <li>Cancel applies the portal's per-player cooldown and the arrival mark, so stepping back out does not fire the field again.</li>
+  <li>The portal's own rules are checked before the popup; coins and items are taken when a destination is chosen and the move happens.</li>
+  <li>A portal listed by a multi-destination portal, itself listing only that one, works as a plain two-way link does today.</li>
+</ol>
+
+<h2>4. Decisions (D94 to D106)</h2>
+<div class="decisions">
+  <div><b>D94</b> Any kind in the list: warp, portal warp, portal, random, position; up to 8 (portals.maxDestinations).</div>
+  <div><b>D95</b> Kind Portal replaces Link: one-way, names one portal; existing link pairs convert on first load.</div>
+  <div><b>D96</b> Labels default to the target's own name; the admin may overwrite per entry; used in the popup and "Through &lt;name&gt;".</div>
+  <div><b>D97</b> Down entries greyed with the reason; the popup only when two or more are usable.</div>
+  <div><b>D98</b> Held still on the server; Esc cancels; damage cancels; 30 s cancels; never invulnerable.</div>
+  <div><b>D99</b> Cancel applies the cooldown and the arrival mark.</div>
+  <div><b>D100</b> Rules before the popup, charges on the move; a denied entry shows why in the popup (owner's addition).</div>
+  <div><b>D101</b> READY while one entry is usable; close-when-down only when all are down.</div>
+  <div><b>D102</b> Arrival unchanged.</div>
+  <div><b>D103</b> Panel row "3 destinations: Market, Arena, +1"; one-way arrows on the map.</div>
+  <div><b>D104</b> /bsptp portal dest add|del|label|clear; the old dest forms replace the list.</div>
+  <div><b>D105</b> A destinations column added in place; NBT list; the old single destination converted once.</div>
+  <div><b>D106</b> Mock-ups first; the build after the usage reset of 2026-10-24.</div>
+</div>
+
+<script>
+(function () {
+  var state = { down: true, denied: true, single: false, custom: true };
+  var dests = [
+    { label: "Market", plain: "market", sub: "warp on BSP-Spawn", icon: "" },
+    { label: "Arena Door", plain: "Arena Door", sub: "portal on BSP-SafeRoom", icon: "v" },
+    { label: "Old Mines", plain: "mines", sub: "portal warp on BSP-Caves", icon: "g", down: "its warp is gone" },
+    { label: "The Wilds", plain: "Wilds Drop", sub: "portal on BSP-Wilds", icon: "", denied: "needs access to BSP-Wilds (Access Token IX)" }
+  ];
+  function list() {
+    var out = [];
+    for (var i = 0; i < dests.length; i++) {
+      var d = dests[i];
+      if (d.down && !state.down) continue;
+      if (d.denied && !state.denied) continue;
+      out.push(d);
+    }
+    return state.single ? out.slice(0, 1) : out;
+  }
+  function name(d) { return state.custom ? d.label : d.plain; }
+  function render() {
+    var ds = list();
+    var rows = document.querySelectorAll(".popup .rows");
+    for (var r = 0; r < rows.length; r++) {
+      var html = "";
+      for (var i = 0; i < ds.length; i++) {
+        var d = ds[i];
+        var cls = "row" + (d.down ? " dim" : d.denied ? " denied" : "");
+        var reason = d.down ? "not answering: " + d.down : d.denied ? d.denied : d.sub;
+        var key = d.down ? '<span class="key d">Down</span>' : d.denied ? '<span class="key r">No access</span>' : '<span class="key' + (d.icon === "v" ? " v" : "") + '">Go</span>';
+        html += '<div class="' + cls + '"><span class="num">' + (i + 1) + '</span><span class="name">' + name(d) + '<br><span class="sub">' + reason + '</span></span>' + key + '</div>';
+      }
+      rows[r].innerHTML = html;
+    }
+    var tiles = document.querySelector(".popup .tiles");
+    var th = "";
+    for (var j = 0; j < ds.length; j++) {
+      var t = ds[j];
+      var tcls = "tile" + (t.down ? " dim" : t.denied ? " denied" : j === 0 ? " sel" : "");
+      var tsub = t.down ? "down: " + t.down : t.denied ? t.denied : t.sub;
+      th += '<div class="' + tcls + '"><div class="icon ' + t.icon + '"></div><div class="name">' + name(t) + '</div><div class="sub">' + tsub + '</div></div>';
+    }
+    tiles.innerHTML = th;
+    var popups = document.querySelectorAll(".popup");
+    var straights = document.querySelectorAll(".straight");
+    for (var p = 0; p < popups.length; p++) { popups[p].hidden = state.single; }
+    for (var s = 0; s < straights.length; s++) { straights[s].hidden = !state.single; }
+  }
+  function bind(id, key) {
+    var b = document.getElementById(id);
+    b.addEventListener("click", function () {
+      state[key] = !state[key];
+      b.setAttribute("aria-pressed", state[key] ? "true" : "false");
+      render();
+    });
+  }
+  bind("t-down", "down"); bind("t-denied", "denied"); bind("t-single", "single"); bind("t-custom", "custom");
+  render();
+})();
+</script>

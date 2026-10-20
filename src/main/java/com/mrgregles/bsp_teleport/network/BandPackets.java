@@ -11,6 +11,8 @@ import com.mrgregles.bsp_teleport.access.AccessAction;
 import com.mrgregles.bsp_teleport.access.AccessPopup;
 import com.mrgregles.bsp_teleport.access.AccessService;
 import com.mrgregles.bsp_teleport.access.AccessSync;
+import com.mrgregles.bsp_teleport.portal.PortalChoice;
+import com.mrgregles.bsp_teleport.portal.PortalChooser;
 import com.mrgregles.bsp_teleport.portal.PortalScreenAction;
 import com.mrgregles.bsp_teleport.portal.PortalScreenData;
 import com.mrgregles.bsp_teleport.portal.PortalScreenService;
@@ -54,6 +56,8 @@ public final class BandPackets {
             buf.writeVarInt(m.size());
             buf.writeUtf(m.title());
         }, buf -> new BoardConfig(buf.readBlockPos(), buf.readVarInt(), buf.readVarInt(), buf.readUtf()), BoardConfig::handle);
+        CHANNEL.registerMessage(11, Choice.class, (m, buf) -> m.choice().encode(buf), buf -> new Choice(PortalChoice.decode(buf)), Choice::handle);
+        CHANNEL.registerMessage(12, Choose.class, (m, buf) -> buf.writeVarInt(m.index()), buf -> new Choose(buf.readVarInt()), Choose::handle);
         CHANNEL.registerMessage(3, AdminDo.class, (m, buf) -> buf.writeEnum(m.action()).writeUtf(m.arg()), buf -> new AdminDo(buf.readEnum(AdminAction.class), buf.readUtf()), AdminDo::handle);
     }
 
@@ -177,6 +181,33 @@ public final class BandPackets {
         void handle(Supplier<NetworkEvent.Context> ctx) {
             ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> com.mrgregles.bsp_teleport.client.PortalScreen.show(data)));
             ctx.get().setPacketHandled(true);
+        }
+    }
+
+    /** Packet 11: the destination chooser (D97); an empty option list closes it. */
+    public record Choice(PortalChoice choice) {
+        void handle(Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> com.mrgregles.bsp_teleport.client.PortalChooserScreen.show(choice)));
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    /** Packet 12: the player's pick, or -1 for cancel. */
+    public record Choose(int index) {
+        void handle(Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> {
+                ServerPlayer player = ctx.get().getSender();
+                if (player != null) {
+                    PortalChooser.answer(player, index);
+                }
+            });
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    public static void sendChoice(ServerPlayer player, PortalChoice choice) {
+        if (player.connection != null && player.connection.isAcceptingMessages()) {
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Choice(choice));
         }
     }
 

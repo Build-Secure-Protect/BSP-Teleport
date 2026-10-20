@@ -37,7 +37,7 @@ public final class TeleportConfig {
 
     public static final ForgeConfigSpec.IntValue REQUEST_SECONDS;
 
-    public static final ForgeConfigSpec.IntValue PORTAL_MAX_SIZE, PORTAL_MAX_OPENING;
+    public static final ForgeConfigSpec.IntValue PORTAL_MAX_SIZE, PORTAL_MAX_OPENING, PORTAL_MAX_DESTINATIONS;
     public static final ForgeConfigSpec.ConfigValue<String> PORTAL_TIME_ZONE;
 
     public static final ForgeConfigSpec.BooleanValue ACCESS_ENABLED;
@@ -145,6 +145,7 @@ public final class TeleportConfig {
         b.push("portals");
         PORTAL_MAX_SIZE = b.comment("Most blocks a portal frame may be across or tall.").defineInRange("maxSize", 24, 3, 64);
         PORTAL_MAX_OPENING = b.comment("Most cells a portal's opening may have.").defineInRange("maxOpening", 300, 1, 4096);
+        PORTAL_MAX_DESTINATIONS = b.comment("Most destinations one portal may list (D94); more than one asks the player which.").defineInRange("maxDestinations", 8, 1, 32);
         PORTAL_TIME_ZONE = b.comment("Time zone for portals on a real-time clock, for example Europe/London. Empty means this machine's zone.").define("timeZone", "");
         b.pop();
 

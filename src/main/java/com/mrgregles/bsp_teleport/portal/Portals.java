@@ -1,5 +1,6 @@
 package com.mrgregles.bsp_teleport.portal;
 
+import com.mrgregles.bsp_teleport.BSPTeleport;
 import com.mrgregles.bsp_teleport.TeleportConfig;
 import com.mrgregles.bsp_teleport.api.Destination;
 import com.mrgregles.bsp_teleport.api.event.TeleportStartEvent;
@@ -456,7 +457,7 @@ public final class Portals {
         PortalShape.Result shape = core.shape();
         boolean frameOk = shape != null && shape.status().frameOk();
         return new PortalRow(core.rowId(), TeleportConfig.serverName(), level.dimension().location().toString(), p.getX(), p.getY(), p.getZ(), core.name(),
-                core.destination(), core.arriveOnly(), frameOk ? exitOf(core) : null, frameOk, core.colour().getSerializedName(), core.status().name(), core.doorWord(), core.createdMs());
+                core.destinations(), core.arriveOnly(), frameOk ? exitOf(core) : null, frameOk, core.colour().getSerializedName(), core.status().name(), core.doorWord(), core.createdMs());
     }
 
     /** Where a linked partner lands its players (D56): one block in front of the opening on the core's facing side, feet on the lowest row, facing away. */
@@ -485,9 +486,28 @@ public final class Portals {
 
     // Destinations (D55, D57)
 
-    /** The status of the destination alone, asked only when the frame is fine. */
+    /** The status of the destinations as a whole (D101): READY while any entry is usable, else the kindest reason among them. */
     public static PortalStatus destinationStatus(PortalCoreBlockEntity core) {
-        PortalDestination d = core.destination();
+        convertLinks(core);
+        List<PortalDestination> list = core.destinations();
+        if (list.isEmpty()) {
+            return PortalStatus.NO_DESTINATION;
+        }
+        PortalStatus best = null;
+        for (PortalDestination d : list) {
+            PortalStatus st = entryStatus(core, d);
+            if (st == PortalStatus.READY) {
+                return st;
+            }
+            if (best == null || st.ordinal() > best.ordinal()) {
+                best = st;
+            }
+        }
+        return best;
+    }
+
+    /** The status of one entry on its own. */
+    public static PortalStatus entryStatus(PortalCoreBlockEntity core, PortalDestination d) {
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         switch (d.kind()) {
             case NONE:
@@ -510,6 +530,16 @@ public final class Portals {
                     return PortalStatus.MISSING;
                 }
                 return PlayerDirectory.isOnline(d.position().server()) ? PortalStatus.READY : PortalStatus.DOWN;
+            case PORTAL: {
+                PortalRow other = rowById(d.target());
+                if (other == null) {
+                    return PortalStatus.MISSING;
+                }
+                if (!other.frameOk() || other.exit() == null) {
+                    return PortalStatus.WAITING;
+                }
+                return PlayerDirectory.isOnline(other.server()) ? PortalStatus.READY : PortalStatus.DOWN;
+            }
             case LINK: {
                 if (d.target().isEmpty()) {
                     return PortalStatus.MISSING;
@@ -530,6 +560,34 @@ public final class Portals {
         }
     }
 
+    /**
+     * D95: an old link entry becomes a Portal entry pointing at its partner as soon as the pair is visible. Each side
+     * converts itself, so a pair split across servers joins once both have read the rows. An unpartnered link stays
+     * a link (WAITING) until its partner appears.
+     */
+    private static void convertLinks(PortalCoreBlockEntity core) {
+        List<PortalDestination> list = core.destinations();
+        List<PortalDestination> out = null;
+        for (int i = 0; i < list.size(); i++) {
+            PortalDestination d = list.get(i);
+            if (!d.isLink() || d.target().isEmpty()) {
+                continue;
+            }
+            PortalRow partner = partnerOf(core, d.target());
+            if (partner == null) {
+                continue;
+            }
+            if (out == null) {
+                out = new ArrayList<>(list);
+            }
+            out.set(i, PortalDestination.portal(partner.id()).withLabel(d.label()));
+        }
+        if (out != null) {
+            core.setDestinations(out);
+            BSPTeleport.LOGGER.info("Portal {} converted its link to a Portal destination", core.name());
+        }
+    }
+
     /** The two oldest rows sharing a link id (D55), this core's own row included even before it is published. */
     private static List<PortalRow> linkOwners(String linkId, PortalCoreBlockEntity core) {
         Map<String, PortalRow> byId = new HashMap<>();
@@ -541,7 +599,7 @@ public final class Portals {
         PortalRow mine = core.lastRow();
         if (mine == null || !mine.linkId().equals(linkId)) {
             long created = core.createdMs() == 0 ? System.currentTimeMillis() : core.createdMs();
-            mine = new PortalRow(core.rowId(), TeleportConfig.serverName(), "", 0, 0, 0, core.name(), core.destination(), core.arriveOnly(), null, false, "", "", "", created);
+            mine = new PortalRow(core.rowId(), TeleportConfig.serverName(), "", 0, 0, 0, core.name(), core.destinations(), core.arriveOnly(), null, false, "", "", "", created);
         }
         byId.put(mine.id(), mine);
         List<PortalRow> sorted = new ArrayList<>(byId.values());
@@ -550,16 +608,75 @@ public final class Portals {
     }
 
     @Nullable
-    private static PortalRow partnerOf(PortalCoreBlockEntity core) {
-        return linkOwners(core.destination().target(), core).stream().filter(r -> !r.id().equals(core.rowId())).findFirst().orElse(null);
+    private static PortalRow partnerOf(PortalCoreBlockEntity core, String linkId) {
+        return linkOwners(linkId, core).stream().filter(r -> !r.id().equals(core.rowId())).findFirst().orElse(null);
     }
 
-    // Walking through (D61)
+    /** An entry's own name (D96): what the label falls back to. */
+    public static Component ownName(PortalDestination d) {
+        return switch (d.kind()) {
+            case WARP, PORTAL_WARP -> Component.literal(d.target());
+            case RANDOM -> d.target().isEmpty() || d.target().equals(TeleportConfig.serverName())
+                    ? Component.translatable("message.bsp_teleport.portal.random_here")
+                    : Component.translatable("message.bsp_teleport.portal.random_on", d.target());
+            case POSITION -> d.position() == null ? Component.literal("?")
+                    : Component.translatable("message.bsp_teleport.portal.position_at", (int) Math.floor(d.position().x()), (int) Math.floor(d.position().y()), (int) Math.floor(d.position().z()));
+            case PORTAL -> {
+                PortalRow other = rowById(d.target());
+                yield other == null ? Component.translatable("message.bsp_teleport.portal.portal_gone") : Component.literal(other.name());
+            }
+            case LINK -> Component.literal("link " + d.target());
+            default -> Component.literal("-");
+        };
+    }
+
+    /** "warp market", or "3 destinations: Market, Arena, +1" (D103), for rows, the panel and the core's info line. */
+    public static String summary(List<PortalDestination> list) {
+        if (list.isEmpty()) {
+            return "-";
+        }
+        if (list.size() == 1) {
+            return list.get(0).describe();
+        }
+        StringBuilder sb = new StringBuilder(list.size() + " destinations: ");
+        for (int i = 0; i < Math.min(2, list.size()); i++) {
+            sb.append(i > 0 ? ", " : "").append(labelOf(list.get(i)).getString());
+        }
+        if (list.size() > 2) {
+            sb.append(", +").append(list.size() - 2);
+        }
+        return sb.toString();
+    }
+
+    /** The label to show for an entry: the admin's, else the entry's own name. */
+    public static Component labelOf(PortalDestination d) {
+        return d.label().isEmpty() ? ownName(d) : Component.literal(d.label());
+    }
+
+    /** Which server an entry leads to, for the access check; empty when unknown (a remote random asks that server anyway). */
+    private static String serverOf(PortalDestination d) {
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        return switch (d.kind()) {
+            case WARP, PORTAL_WARP -> {
+                Warp warp = server == null ? null : TeleportData.get(server).warp(d.target());
+                yield warp == null ? "" : warp.position().server();
+            }
+            case RANDOM -> d.target();
+            case POSITION -> d.position() == null ? "" : d.position().server();
+            case PORTAL -> {
+                PortalRow other = rowById(d.target());
+                yield other == null ? "" : other.server();
+            }
+            default -> "";
+        };
+    }
+
+    // Walking through (D61, D97)
 
     /** A player stands in a field cell. */
     public static void touched(ServerLevel level, BlockPos pos, ServerPlayer player) {
         PortalCoreBlockEntity core = coreFor(level, pos);
-        if (core == null) {
+        if (core == null || PortalChooser.isChoosing(player)) {
             return;
         }
         UUID id = player.getUUID();
@@ -586,7 +703,70 @@ public final class Portals {
             tell(player, "blocked_thief", thief);
             return;
         }
-        PortalDestination d = core.destination();
+        List<PortalDestination> list = core.destinations();
+        if (list.size() <= 1) {
+            travel(core, player, core.destination());
+            return;
+        }
+        // Several entries (D97, D100): the portal's own rules first, then the usable set, then the chooser.
+        com.mrgregles.bsp_teleport.access.AccessChecks.Result rules = com.mrgregles.bsp_teleport.access.AccessChecks.evaluate(player, core.rules(),
+                com.mrgregles.bsp_teleport.access.AccessGrant.Kind.PORTAL, core.name());
+        if (!rules.ok()) {
+            if (!rules.refusal().getString().isEmpty()) {
+                player.displayClientMessage(rules.refusal(), true);
+            }
+            hold(player, core, 3);
+            return;
+        }
+        List<PortalChooser.Candidate> candidates = new ArrayList<>();
+        List<PortalChoice.Option> options = new ArrayList<>();
+        int usable = 0;
+        PortalDestination only = null;
+        Component firstReason = null;
+        for (int i = 0; i < list.size(); i++) {
+            PortalDestination d = list.get(i);
+            PortalStatus st = entryStatus(core, d);
+            PortalChoice.State state;
+            Component detail;
+            String server = serverOf(d);
+            if (st != PortalStatus.READY) {
+                state = PortalChoice.State.DOWN;
+                detail = Component.translatable(st.key());
+            } else if (!server.isEmpty() && !com.mrgregles.bsp_teleport.access.AccessService.mayEnter(player, server)) {
+                state = PortalChoice.State.DENIED;
+                com.mrgregles.bsp_teleport.access.TokenAssignment token = com.mrgregles.bsp_teleport.access.AccessService.tokenFor(player.server, com.mrgregles.bsp_teleport.access.AccessGrant.Kind.SERVER, server);
+                detail = token == null ? Component.translatable("message.bsp_teleport.portal.needs_access", server)
+                        : Component.translatable("message.bsp_teleport.portal.needs_access_token", server, "Access Token " + com.mrgregles.bsp_teleport.access.TokenAssignment.roman(token.token()));
+                if (firstReason == null) {
+                    firstReason = detail;
+                }
+            } else {
+                state = PortalChoice.State.OK;
+                detail = server.isEmpty() ? ownName(d) : Component.translatable("message.bsp_teleport.portal.leads_to", ownName(d), server);
+                usable++;
+                only = d;
+            }
+            candidates.add(new PortalChooser.Candidate(i, d, state));
+            options.add(new PortalChoice.Option(i, labelOf(d), detail, state));
+        }
+        if (usable == 0) {
+            if (firstReason != null) {
+                player.displayClientMessage(firstReason, true);
+                hold(player, core, 3);
+            } else {
+                tell(player, "portal.not_answering");
+            }
+            return;
+        }
+        if (usable == 1) {
+            travel(core, player, only);
+            return;
+        }
+        PortalChooser.start(player, core, candidates, new PortalChoice(Component.literal(core.name()), options));
+    }
+
+    /** Sends the player to one entry: the last checks of D61, the per-kind lookup, then the forced move. */
+    static void travel(PortalCoreBlockEntity core, ServerPlayer player, PortalDestination d) {
         switch (d.kind()) {
             case WARP, PORTAL_WARP -> {
                 Warp warp = TeleportData.get(player.server).warp(d.target());
@@ -603,8 +783,16 @@ public final class Portals {
                 }
                 go(core, player, d.position().toDestination(""));
             }
+            case PORTAL -> {
+                PortalRow other = rowById(d.target());
+                if (other == null || other.exit() == null || !PlayerDirectory.isOnline(other.server())) {
+                    tell(player, "portal.not_answering");
+                    return;
+                }
+                go(core, player, other.exit());
+            }
             case LINK -> {
-                PortalRow partner = partnerOf(core);
+                PortalRow partner = partnerOf(core, d.target());
                 if (partner == null || partner.exit() == null || !PlayerDirectory.isOnline(partner.server())) {
                     tell(player, "portal.not_answering");
                     return;
@@ -634,6 +822,12 @@ public final class Portals {
             }
             default -> tell(player, "portal.not_ready");
         }
+    }
+
+    /** A chooser ended without a move (D99): the cooldown and the arrival mark, so stepping out does not fire the field. */
+    static void leftWithoutGoing(ServerPlayer player, PortalCoreBlockEntity core) {
+        hold(player, core, core.cooldownSeconds());
+        ARRIVED.put(player.getUUID(), player.blockPosition());
     }
 
     /** Another server answered a portal's random-spot request. */
@@ -722,6 +916,7 @@ public final class Portals {
                 tickDoors(core);
             }
         }
+        PortalChooser.tick(event.getServer());
         if (event.getServer().getTickCount() % WATCH_TICKS != 0) {
             return;
         }

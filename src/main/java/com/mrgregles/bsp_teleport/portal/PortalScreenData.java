@@ -11,9 +11,21 @@ public record PortalScreenData(BlockPos pos, boolean readOnly, String server, St
                                int width, int height, int cells, String destKind, String destTarget, String destText, String partner, boolean arriveOnly,
                                String colour, String doorStyle, String facing, String arrivalLine, String mode, boolean openWhenPowered, boolean powered,
                                int openAt, int closeAt, int gameOpenAt, int gameCloseAt, String zone, boolean locked, boolean closeWhenDown, int cooldown,
-                               String doors, boolean lit, List<WarpEntry> warps, List<String> servers, String rules, int accessToken) {
+                               String doors, boolean lit, List<WarpEntry> warps, List<String> servers, String rules, int accessToken,
+                               List<DestEntry> dests, List<PortalEntry> portals, int maxDests) {
 
     public record WarpEntry(String name, String server, boolean portal) {
+    }
+
+    /** One entry of the destination list (D94): kind and target, the admin's label, the target's own name, and the entry's status name. */
+    public record DestEntry(String kind, String target, String label, String own, String status) {
+        public String shown() {
+            return label.isEmpty() ? own : label;
+        }
+    }
+
+    /** Another portal on the network, for the Portal picker (D95). */
+    public record PortalEntry(String id, String name, String server) {
     }
 
     public void encode(FriendlyByteBuf buf) {
@@ -49,6 +61,15 @@ public record PortalScreenData(BlockPos pos, boolean readOnly, String server, St
         servers.forEach(buf::writeUtf);
         buf.writeUtf(rules);
         buf.writeVarInt(accessToken);
+        buf.writeVarInt(dests.size());
+        for (DestEntry d : dests) {
+            buf.writeUtf(d.kind()).writeUtf(d.target()).writeUtf(d.label()).writeUtf(d.own()).writeUtf(d.status());
+        }
+        buf.writeVarInt(portals.size());
+        for (PortalEntry e : portals) {
+            buf.writeUtf(e.id()).writeUtf(e.name()).writeUtf(e.server());
+        }
+        buf.writeVarInt(maxDests);
     }
 
     public static PortalScreenData decode(FriendlyByteBuf buf) {
@@ -79,6 +100,24 @@ public record PortalScreenData(BlockPos pos, boolean readOnly, String server, St
         }
         return new PortalScreenData(pos, readOnly, server, world, name, status, maxSize, maxOpening, width, height, cells, destKind, destTarget, destText, partner,
                 arriveOnly, colour, doorStyle, facing, arrivalLine, mode, openWhenPowered, powered, openAt, closeAt, gameOpenAt, gameCloseAt, zone, locked,
-                closeWhenDown, cooldown, doors, lit, warps, servers, buf.readUtf(), buf.readVarInt());
+                closeWhenDown, cooldown, doors, lit, warps, servers, buf.readUtf(), buf.readVarInt(), readDests(buf), readPortals(buf), buf.readVarInt());
+    }
+
+    private static List<DestEntry> readDests(FriendlyByteBuf buf) {
+        int n = buf.readVarInt();
+        List<DestEntry> out = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            out.add(new DestEntry(buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readUtf()));
+        }
+        return out;
+    }
+
+    private static List<PortalEntry> readPortals(FriendlyByteBuf buf) {
+        int n = buf.readVarInt();
+        List<PortalEntry> out = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            out.add(new PortalEntry(buf.readUtf(), buf.readUtf(), buf.readUtf()));
+        }
+        return out;
     }
 }

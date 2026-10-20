@@ -82,6 +82,129 @@ public final class PortalActions {
         return apply(player, core, PortalDestination.NONE);
     }
 
+    // The destination list (D94, D104)
+
+    public static int maxDestinations() {
+        return TeleportConfig.getOr(TeleportConfig.PORTAL_MAX_DESTINATIONS, PortalDestination.DEFAULT_MAX);
+    }
+
+    /** Resolves "kind;target" from the screen or a command into an entry, or null after telling the player why not. */
+    @Nullable
+    public static PortalDestination resolve(ServerPlayer player, PortalCoreBlockEntity core, String kind, String target) {
+        switch (kind.toUpperCase(java.util.Locale.ROOT)) {
+            case "WARP", "PORTAL_WARP", "PORTALWARP" -> {
+                Warp warp = TeleportData.get(player.server).warp(target);
+                if (warp == null) {
+                    fail(player, "warp.unknown", target);
+                    return null;
+                }
+                return PortalDestination.warp(warp.name(), warp.portal());
+            }
+            case "RANDOM" -> {
+                String server = target == null || target.isEmpty() || target.equals(TeleportConfig.serverName()) ? "" : target;
+                if (!server.isEmpty() && !PlayerDirectory.servers().contains(server)) {
+                    fail(player, "rtp.server_unknown", server);
+                    return null;
+                }
+                return PortalDestination.random(server);
+            }
+            case "POSITION", "HERE" -> {
+                return PortalDestination.position(Position.of(player));
+            }
+            case "PORTAL" -> {
+                PortalRow row = Portals.rowById(target);
+                if (row == null) {
+                    row = Portals.rowByName(target);
+                }
+                if (row == null) {
+                    fail(player, "portal.unknown", target);
+                    return null;
+                }
+                if (row.id().equals(core.rowId())) {
+                    fail(player, "portal.dest_self");
+                    return null;
+                }
+                return PortalDestination.portal(row.id());
+            }
+            default -> {
+                fail(player, "portal.unknown", kind);
+                return null;
+            }
+        }
+    }
+
+    public static boolean addDestination(ServerPlayer player, PortalCoreBlockEntity core, PortalDestination d, String label) {
+        if (d == null) {
+            return false;
+        }
+        int max = maxDestinations();
+        if (core.destinations().size() >= max) {
+            return fail(player, "portal.dest_full", core.name(), max);
+        }
+        if (!core.addDestination(d.withLabel(label == null ? "" : label), max)) {
+            return fail(player, "portal.dest_duplicate", core.name());
+        }
+        Portals.rescan(core);
+        tell(player, "portal.dest_added", core.name(), Portals.labelOf(d), core.destinations().size(), max);
+        return true;
+    }
+
+    public static boolean removeDestination(ServerPlayer player, PortalCoreBlockEntity core, int index) {
+        if (index < 0 || index >= core.destinations().size()) {
+            return fail(player, "portal.dest_bad_index", core.destinations().size());
+        }
+        PortalDestination d = core.destinations().get(index);
+        core.removeDestination(index);
+        Portals.rescan(core);
+        tell(player, "portal.dest_removed", core.name(), Portals.labelOf(d));
+        return true;
+    }
+
+    public static boolean moveDestinationUp(ServerPlayer player, PortalCoreBlockEntity core, int index) {
+        if (!core.moveDestinationUp(index)) {
+            return false;
+        }
+        Portals.rescan(core);
+        return true;
+    }
+
+    public static boolean labelDestination(ServerPlayer player, PortalCoreBlockEntity core, int index, String label) {
+        if (index < 0 || index >= core.destinations().size()) {
+            return fail(player, "portal.dest_bad_index", core.destinations().size());
+        }
+        String text = label == null ? "" : label.trim();
+        if (text.length() > 32) {
+            text = text.substring(0, 32);
+        }
+        core.setDestinationLabel(index, text);
+        Portals.rescan(core);
+        tell(player, "portal.dest_label", core.name(), index + 1, Portals.labelOf(core.destinations().get(index)));
+        return true;
+    }
+
+    public static boolean clearDestinations(ServerPlayer player, PortalCoreBlockEntity core) {
+        core.setDestinations(List.of());
+        Portals.rescan(core);
+        tell(player, "portal.dest_cleared", core.name());
+        return true;
+    }
+
+    public static boolean listDestinations(ServerPlayer player, PortalCoreBlockEntity core) {
+        List<PortalDestination> list = core.destinations();
+        if (list.isEmpty()) {
+            tell(player, "portal.destination", "-");
+            return true;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < list.size(); i++) {
+            PortalDestination d = list.get(i);
+            sb.append(i > 0 ? "; " : "").append(i + 1).append(". ").append(Portals.labelOf(d).getString()).append(" (").append(d.describe()).append(", ")
+                    .append(Portals.entryStatus(core, d).name().toLowerCase(java.util.Locale.ROOT)).append(")");
+        }
+        tell(player, "portal.dest_list", core.name(), sb.toString());
+        return true;
+    }
+
     private static boolean apply(ServerPlayer player, PortalCoreBlockEntity core, PortalDestination destination) {
         core.setDestination(destination);
         Portals.rescan(core);

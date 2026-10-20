@@ -310,8 +310,14 @@ public final class AdminService {
         }
         List<AdminData.PortalEntry> portals = new ArrayList<>();
         for (PortalRow r : Portals.rows()) {
-            portals.add(new AdminData.PortalEntry(r.id(), r.name(), r.server(), r.world(), r.x(), r.y(), r.z(), r.destination().describe() + (r.arriveOnly() ? " (arrive only)" : ""),
-                    r.linkId(), r.status(), r.doors()));
+            List<String> leads = new ArrayList<>();
+            for (com.mrgregles.bsp_teleport.portal.PortalDestination d : r.destinations()) {
+                if (d.isPortal()) {
+                    leads.add(d.target());
+                }
+            }
+            portals.add(new AdminData.PortalEntry(r.id(), r.name(), r.server(), r.world(), r.x(), r.y(), r.z(), Portals.summary(r.destinations()) + (r.arriveOnly() ? " (arrive only)" : ""),
+                    r.linkId(), r.status(), r.doors(), leads));
         }
         portals.sort((x, y) -> x.server().equals(y.server()) ? x.name().compareToIgnoreCase(y.name()) : x.server().equals(TeleportConfig.serverName()) ? -1 : y.server().equals(TeleportConfig.serverName()) ? 1 : x.server().compareTo(y.server()));
         List<AdminData.TokenRow> tokens = new ArrayList<>();

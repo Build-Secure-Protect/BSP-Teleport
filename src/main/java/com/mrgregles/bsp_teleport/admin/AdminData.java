@@ -22,7 +22,7 @@ public record AdminData(String server, boolean readOnly, String storage, String 
     }
 
     /** One portal on the network, from its shared row. */
-    public record PortalEntry(String id, String name, String server, String world, int x, int y, int z, String destination, String linkId, String status, String doors) {
+    public record PortalEntry(String id, String name, String server, String world, int x, int y, int z, String destination, String linkId, String status, String doors, List<String> leadsTo) {
     }
 
     public record ServerRow(String name, boolean up, boolean here, List<String> players) {
@@ -63,6 +63,8 @@ public record AdminData(String server, boolean readOnly, String storage, String 
             buf.writeInt(p.y());
             buf.writeInt(p.z());
             buf.writeUtf(p.destination()).writeUtf(p.linkId()).writeUtf(p.status()).writeUtf(p.doors());
+            buf.writeVarInt(p.leadsTo().size());
+            p.leadsTo().forEach(buf::writeUtf);
         }
         buf.writeVarInt(tokens.size());
         for (TokenRow t : tokens) {
@@ -110,7 +112,13 @@ public record AdminData(String server, boolean readOnly, String storage, String 
         for (int i = 0; i < n; i++) {
             String id = buf.readUtf(), pn = buf.readUtf(), ps = buf.readUtf(), pw = buf.readUtf();
             int x = buf.readInt(), y = buf.readInt(), z = buf.readInt();
-            portals.add(new PortalEntry(id, pn, ps, pw, x, y, z, buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readUtf()));
+            String pd = buf.readUtf(), pl = buf.readUtf(), pst = buf.readUtf(), pdo = buf.readUtf();
+            int m = buf.readVarInt();
+            List<String> leads = new ArrayList<>(m);
+            for (int k = 0; k < m; k++) {
+                leads.add(buf.readUtf());
+            }
+            portals.add(new PortalEntry(id, pn, ps, pw, x, y, z, pd, pl, pst, pdo, leads));
         }
         n = buf.readVarInt();
         List<TokenRow> tokens = new ArrayList<>(n);

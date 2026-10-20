@@ -62,6 +62,13 @@ public final class ClientNet {
         }
     }
 
+    /** The chooser's answer (packet 12): an option index, or -1 to cancel. */
+    public static void sendPortalChoice(int index) {
+        if (ready()) {
+            BandPackets.CHANNEL.sendToServer(new BandPackets.Choose(index));
+        }
+    }
+
     public static void sendAdmin(AdminAction action, String arg) {
         if (ready()) {
             BandPackets.sendAdminAction(action, arg);

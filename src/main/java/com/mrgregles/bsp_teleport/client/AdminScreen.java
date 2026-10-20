@@ -478,6 +478,16 @@ public class AdminScreen extends Screen {
                         line(g, nx[i], ny[i], nx[j], ny[j], VIO);
                     }
                 }
+                // D103: a one-way violet line to each Portal destination, with a dot at the far end.
+                for (String target : portals.get(i).leadsTo()) {
+                    for (int j = 0; j < n; j++) {
+                        if (j != i && portals.get(j).id().equals(target)) {
+                            line(g, nx[i], ny[i], nx[j], ny[j], VIO);
+                            int ax = nx[i] + (nx[j] - nx[i]) * 4 / 5, ay = ny[i] + (ny[j] - ny[i]) * 4 / 5;
+                            g.fill(ax - 2, ay - 2, ax + 2, ay + 2, VIO);
+                        }
+                    }
+                }
             }
             if (selectedPortal.isEmpty() || portals.stream().noneMatch(p -> p.id().equals(selectedPortal))) {
                 selectedPortal = portals.get(0).id();

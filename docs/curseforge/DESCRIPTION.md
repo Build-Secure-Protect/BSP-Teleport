@@ -81,13 +81,15 @@ Give the core a destination and the opening fills with a lit field in one of 24 
 
 ![The core screen](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/core-screen.png)
 
-Right-click the core for its screen. **Destination** is one of five:
+Right-click the core for its screen. **Destination** holds a list of up to eight places; pick on the left and press ADD, and give any entry a label of your own:
 
 - **Warp**: any existing warp.
 - **Portal warp**: a warp only portals can reach. The band never shows it and `/warp` refuses it, so a portal can lead somewhere a bracelet cannot.
+- **Portal**: another portal anywhere on the network, one way. Two portals that list each other are a two-way pair.
 - **Random**: a random spot on this or any other server, with that server's rules.
 - **Position**: where you stand.
-- **Link**: a link id. Give the same id to one other core anywhere on the network and the two are joined, two-way, or one-way with "arrive only".
+
+One destination sends a player straight through. With several, a card opens the moment they step in, naming the portal and its destinations: they pick one and go, or cancel and step back out. While the card shows they are held still and cannot open the inventory or act; a hit or 30 seconds of silence ends it. Destinations that are down, or on a server the player may not enter, are listed greyed with the reason.
 
 **Look** sets the colour, the door style, the arrival side, the name and an optional arrival line.
 
@@ -99,7 +101,7 @@ Closed portals grow hangar doors that slide in from both ends of every row and m
 
 ![Portals on the panel](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/admin-portals.png)
 
-The panel's PORTALS tab lists every portal on the network under its server, or draws them as a map with the links between them. Go to any of them, open, close, lock or unlock it, even on another server. `/bsptp portal <name> open|close|lock|unlock|tp|info` does the same from a command block.
+The panel's PORTALS tab lists every portal on the network under its server, or draws them as a map with the links between them. Go to any of them, open, close, lock or unlock it, even on another server. `/bsptp portal <name> open|close|lock|unlock|tp|info` does the same from a command block, and `/bsptp portal dest add|del|label|clear|list` edits the looked-at core's destinations.
 
 ---
 

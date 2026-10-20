@@ -41,5 +41,13 @@ public enum PortalScreenAction {
     /** kind;value;count;consume (D86) */
     RULE_ADD,
     /** index */
-    RULE_DEL
+    RULE_DEL,
+    /** kind;target: WARP;name, PORTAL_WARP;name, RANDOM;server (empty = here), POSITION; (where the admin stands), PORTAL;rowId (D94) */
+    DEST_ADD,
+    /** index */
+    DEST_DEL,
+    /** index */
+    DEST_UP,
+    /** index;label (empty label = the target's own name, D96) */
+    DEST_LABEL
 }

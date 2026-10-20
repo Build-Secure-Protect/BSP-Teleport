@@ -78,7 +78,8 @@ public class PortalCoreBlockEntity extends BlockEntity {
     private int cooldownSeconds = 5;
     /** Reserved for the later Warp Gate (D53): a player-made portal with the admin tabs hidden. */
     private boolean playerOwned;
-    private PortalDestination destination = PortalDestination.NONE;
+    /** The places this portal leads to (D94): empty means no destination; one is "straight through"; more asks the player. */
+    private List<PortalDestination> destinations = List.of();
     /** Players may arrive through this portal but not leave through it (D55). */
     private boolean arriveOnly;
     /** Shown to a player on arrival; empty for none (D61). */
@@ -139,7 +140,7 @@ public class PortalCoreBlockEntity extends BlockEntity {
         tag.putBoolean("CloseWhenDown", closeWhenDown);
         tag.putInt("Cooldown", cooldownSeconds);
         tag.putBoolean("PlayerOwned", playerOwned);
-        tag.put("Destination", destination.save());
+        tag.put("Destinations", PortalDestination.saveAll(destinations));
         tag.putBoolean("ArriveOnly", arriveOnly);
         tag.putString("ArrivalLine", arrivalLine);
         tag.putLong("Created", createdMs);
@@ -168,7 +169,14 @@ public class PortalCoreBlockEntity extends BlockEntity {
         closeWhenDown = !tag.contains("CloseWhenDown") || tag.getBoolean("CloseWhenDown");
         cooldownSeconds = tag.contains("Cooldown") ? tag.getInt("Cooldown") : 5;
         playerOwned = tag.getBoolean("PlayerOwned");
-        destination = tag.contains("Destination") ? PortalDestination.load(tag.getCompound("Destination")) : PortalDestination.NONE;
+        if (tag.contains("Destinations")) {
+            destinations = List.copyOf(PortalDestination.loadAll(tag.getList("Destinations", net.minecraft.nbt.Tag.TAG_COMPOUND)));
+        } else if (tag.contains("Destination")) {
+            PortalDestination old = PortalDestination.load(tag.getCompound("Destination"));
+            destinations = old.isSet() ? List.of(old) : List.of();
+        } else {
+            destinations = List.of();
+        }
         arriveOnly = tag.getBoolean("ArriveOnly");
         arrivalLine = tag.getString("ArrivalLine");
         createdMs = tag.getLong("Created");
@@ -317,8 +325,14 @@ public class PortalCoreBlockEntity extends BlockEntity {
         return playerOwned;
     }
 
+    /** The first destination, or NONE: what a single-destination portal leads to, and the summary for older callers. */
     public PortalDestination destination() {
-        return destination;
+        return destinations.isEmpty() ? PortalDestination.NONE : destinations.get(0);
+    }
+
+    /** Every destination in order (D94). */
+    public List<PortalDestination> destinations() {
+        return destinations;
     }
 
     public boolean arriveOnly() {
@@ -357,9 +371,72 @@ public class PortalCoreBlockEntity extends BlockEntity {
 
     // Settings (the commands and, with T56, the screen call these, then Portals.rescan)
 
+    /** Replaces the whole list with one destination (the old commands and screen picks, D104), or clears it for NONE. */
     public void setDestination(PortalDestination destination) {
-        this.destination = destination;
+        this.destinations = destination.isSet() ? List.of(destination) : List.of();
         setChanged();
+    }
+
+    public void setDestinations(List<PortalDestination> list) {
+        List<PortalDestination> out = new ArrayList<>();
+        for (PortalDestination d : list) {
+            if (d.isSet()) {
+                out.add(d);
+            }
+        }
+        this.destinations = List.copyOf(out);
+        setChanged();
+    }
+
+    /** Adds an entry at the end unless the same place is already listed; false when refused (full or duplicate). */
+    public boolean addDestination(PortalDestination destination, int max) {
+        if (!destination.isSet() || destinations.size() >= max) {
+            return false;
+        }
+        for (PortalDestination d : destinations) {
+            if (d.samePlace(destination)) {
+                return false;
+            }
+        }
+        List<PortalDestination> out = new ArrayList<>(destinations);
+        out.add(destination);
+        this.destinations = List.copyOf(out);
+        setChanged();
+        return true;
+    }
+
+    public boolean removeDestination(int index) {
+        if (index < 0 || index >= destinations.size()) {
+            return false;
+        }
+        List<PortalDestination> out = new ArrayList<>(destinations);
+        out.remove(index);
+        this.destinations = List.copyOf(out);
+        setChanged();
+        return true;
+    }
+
+    public boolean moveDestinationUp(int index) {
+        if (index <= 0 || index >= destinations.size()) {
+            return false;
+        }
+        List<PortalDestination> out = new ArrayList<>(destinations);
+        PortalDestination d = out.remove(index);
+        out.add(index - 1, d);
+        this.destinations = List.copyOf(out);
+        setChanged();
+        return true;
+    }
+
+    public boolean setDestinationLabel(int index, String label) {
+        if (index < 0 || index >= destinations.size()) {
+            return false;
+        }
+        List<PortalDestination> out = new ArrayList<>(destinations);
+        out.set(index, out.get(index).withLabel(label));
+        this.destinations = List.copyOf(out);
+        setChanged();
+        return true;
     }
 
     public void setName(String name) {
@@ -508,9 +585,14 @@ public class PortalCoreBlockEntity extends BlockEntity {
         return open < close ? now >= open && now < close : now >= open || now < close;
     }
 
+    /** "warp market", or "3 destinations: Market, Arena, +1" (D103). */
+    public String describeDestinations() {
+        return Portals.summary(destinations);
+    }
+
     /** Whether the frame is fine and a destination is set: the portal then has doors and may light. */
     public boolean hasDoors() {
-        return status.frameOk() && destination.isSet();
+        return status.frameOk() && !destinations.isEmpty();
     }
 
     /** Whether the doors should be open: not locked, the mode says open, and the destination is not away while "close when down" is on (D57). */
@@ -641,7 +723,7 @@ public class PortalCoreBlockEntity extends BlockEntity {
         if (shape != null && status.frameOk()) {
             player.sendSystemMessage(Component.translatable("message.bsp_teleport.portal.size", shape.width(), shape.height(), opening.size()).withStyle(ChatFormatting.GRAY));
         }
-        player.sendSystemMessage(Component.translatable("message.bsp_teleport.portal.destination", destination.describe() + (arriveOnly ? " (arrive only)" : "")).withStyle(ChatFormatting.GRAY));
+        player.sendSystemMessage(Component.translatable("message.bsp_teleport.portal.destination", describeDestinations() + (arriveOnly ? " (arrive only)" : "")).withStyle(ChatFormatting.GRAY));
         player.sendSystemMessage(Component.translatable("message.bsp_teleport.portal.doors", describeDoors()).withStyle(ChatFormatting.GRAY));
     }
 }

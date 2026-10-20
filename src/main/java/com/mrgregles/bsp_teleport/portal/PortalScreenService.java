@@ -87,6 +87,10 @@ public final class PortalScreenService {
                 PortalActions.addRule(player, core, com.mrgregles.bsp_teleport.access.AccessRule.of(a, b, parseInt(c), Boolean.parseBoolean(d)));
             }
             case RULE_DEL -> PortalActions.removeRule(player, core, parseInt(a));
+            case DEST_ADD -> PortalActions.addDestination(player, core, PortalActions.resolve(player, core, a, b), "");
+            case DEST_DEL -> PortalActions.removeDestination(player, core, parseInt(a));
+            case DEST_UP -> PortalActions.moveDestinationUp(player, core, parseInt(a));
+            case DEST_LABEL -> PortalActions.labelDestination(player, core, parseInt(a), b);
         }
         open(player, core);
     }
@@ -116,13 +120,24 @@ public final class PortalScreenService {
                 servers.add(s);
             }
         }
+        List<PortalScreenData.DestEntry> dests = new ArrayList<>();
+        for (PortalDestination e : core.destinations()) {
+            dests.add(new PortalScreenData.DestEntry(e.kind().name(), e.target(), e.label(), Portals.ownName(e).getString(), Portals.entryStatus(core, e).name()));
+        }
+        List<PortalScreenData.PortalEntry> portals = new ArrayList<>();
+        for (PortalRow r : Portals.rows()) {
+            if (!r.id().equals(core.rowId())) {
+                portals.add(new PortalScreenData.PortalEntry(r.id(), r.name(), r.server()));
+            }
+        }
+        portals.sort(java.util.Comparator.comparing((PortalScreenData.PortalEntry e) -> !e.server().equals(TeleportConfig.serverName())).thenComparing(PortalScreenData.PortalEntry::name, String.CASE_INSENSITIVE_ORDER));
         return new PortalScreenData(core.getBlockPos(), !Permissions.isAdmin(player), TeleportConfig.serverName(), level.dimension().location().toString(), core.name(),
                 core.status().name(), Portals.maxSize(), Portals.maxOpening(), frameOk ? shape.width() : 0, frameOk ? shape.height() : 0, core.opening().size(),
                 d.kind().name(), d.target(), d.describe(), partner, core.arriveOnly(), core.colour().getSerializedName(), core.doorStyle().name(),
                 core.getBlockState().getValue(PortalCoreBlock.FACING).getName(), core.arrivalLine(), core.mode().name(), core.openWhenPowered(), core.powered(),
                 core.openAtMinute(), core.closeAtMinute(), core.gameOpenAt(), core.gameCloseAt(), PortalCoreBlockEntity.zone().getId(), core.isLocked(),
                 core.closeWhenDown(), core.cooldownSeconds(), core.doorWord(), core.lit(), warps, servers,
-                com.mrgregles.bsp_teleport.access.AccessRule.serializeList(core.rules()), tokenFor(player, core));
+                com.mrgregles.bsp_teleport.access.AccessRule.serializeList(core.rules()), tokenFor(player, core), dests, portals, PortalActions.maxDestinations());
     }
 
     /** The token that sells access to this portal (D86, TOKEN rule), or 0. */
