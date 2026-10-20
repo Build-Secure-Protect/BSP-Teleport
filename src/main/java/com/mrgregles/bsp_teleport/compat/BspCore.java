@@ -81,8 +81,8 @@ public final class BspCore {
         try {
             Boards.register(id, title, lines);
         } catch (LinkageError e) {
-            // A BSP-Core 1.3.0 jar from before R8 has no BspBoards: everything else works, the board is just not offered.
-            BSPTeleport.LOGGER.warn("This BSP-Core has no board API (needs the release after 1.3.0); the {} board is not registered", id);
+            // A BSP-Core jar before 1.4.0 has no BspBoards: everything else works, the board is just not offered.
+            BSPTeleport.LOGGER.warn("This BSP-Core has no board API (needs 1.4.0 or newer); the {} board is not registered", id);
         }
     }
 

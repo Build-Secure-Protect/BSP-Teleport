@@ -139,7 +139,7 @@ Any portal or warp can carry rules an admin sets on the portal's ACCESS tab or t
 
 ![The Home Servers board on a Score Screen](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/score-board.png)
 
-**On BSP-Core's Score Screens.** The same numbers are offered to BSP-Core as a board called HOME SERVERS. In a Score Screen's settings set Show to Board and pick it, or set Show to Rotate and the screen turns through the leaderboard and the board at the interval you choose, in BSP-Core's Ledger, Tiles or Side column look. Needs the BSP-Core release after 1.3.0.
+**On BSP-Core's Score Screens.** The same numbers are offered to BSP-Core as a board called HOME SERVERS. In a Score Screen's settings set Show to Board and pick it, or set Show to Rotate and the screen turns through the leaderboard and the board at the interval you choose, in BSP-Core's Ledger, Tiles or Side column look. Needs BSP-Core 1.4.0 or newer.
 
 ---
 

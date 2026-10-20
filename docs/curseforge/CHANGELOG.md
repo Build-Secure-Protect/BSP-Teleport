@@ -6,7 +6,7 @@
 
 # BSP-Teleport 0.2.0
 
-Minecraft 1.20.1, Forge 47.4, Java 17. Needed on the client and the server. Requires BSP-Core 1.3.0 or newer; the Home Servers board on BSP-Core's Score Screens needs the BSP-Core release after 1.3.0, everything else runs on 1.3.0. BSP-Region Guard (0.1.0 or newer, built against 0.2.0) and BSP-RankUp are optional.
+Minecraft 1.20.1, Forge 47.4, Java 17. Needed on the client and the server. Requires BSP-Core 1.3.0 or newer; the Home Servers board on BSP-Core's Score Screens needs BSP-Core 1.4.0, everything else runs on 1.3.0. BSP-Region Guard (0.1.0 or newer, built against 0.2.0) and BSP-RankUp are optional.
 
 ## Added
 

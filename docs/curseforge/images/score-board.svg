@@ -641,7 +641,7 @@
 <text x="800" y="286" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">the title.</text>
 <text x="800" y="330" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">The lines come from the access</text>
 <text x="800" y="348" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">counts every client already has, so</text>
-<text x="800" y="366" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">nothing extra is synced. Needs the</text>
-<text x="800" y="384" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">BSP-Core release after 1.3.0.</text>
+<text x="800" y="366" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">nothing extra is synced. Needs</text>
+<text x="800" y="384" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">BSP-Core 1.4.0 or newer.</text>
 </g>
 </svg>

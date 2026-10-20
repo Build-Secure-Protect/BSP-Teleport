@@ -41,7 +41,7 @@ Needs the owner, one server first, then two behind Velocity with Redis:
 
 ## Home Servers board on BSP-Core's Score Screens (R8, 2026-10-18)
 
-Needs BSP-Core 1.3.0 with the boards line (built 2026-10-18 or later) on the client and on every backend; the servers must run the 1.3.0 jar (slim on Mohist). Nothing to configure here: the board registers itself at client setup from the counts the access sync already sends.
+Needs BSP-Core 1.4.0 on the client and on every backend (`bsp-core-1.4.0.jar`, `bsp-core-1.4.0-slim.jar` on Mohist). Nothing to configure here: the board registers itself at client setup from the counts the access sync already sends.
 
 Headless, already passing: the build against `BspBoards`. Nothing in game yet.
 

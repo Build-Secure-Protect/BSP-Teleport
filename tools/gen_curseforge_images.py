@@ -718,7 +718,7 @@ def score_board():
     s.text(rx, 130, "How an admin shows it", 22, TEXT, "bold")
     for k, line in enumerate(wrap("Open a Score Screen's settings and set Show to Board, then pick HOME SERVERS; or set Show to Rotate and leave the board among the pages, and the screen turns through the leaderboard and the board at the interval you choose, with dots under the title.", 36)):
         s.text(rx, 160 + k * 18, line, 14, MUTED)
-    for k, line in enumerate(wrap("The lines come from the access counts every client already has, so nothing extra is synced. Needs the BSP-Core release after 1.3.0.", 36)):
+    for k, line in enumerate(wrap("The lines come from the access counts every client already has, so nothing extra is synced. Needs BSP-Core 1.4.0 or newer.", 36)):
         s.text(rx, 330 + k * 18, line, 14, MUTED)
     s.save("score-board")
 
