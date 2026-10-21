@@ -1,6 +1,7 @@
 package com.mrgregles.bsp_teleport.storage;
 
 import com.mrgregles.bsp_teleport.api.Destination;
+import com.mrgregles.bsp_teleport.compat.BspCore;
 import com.mrgregles.bsp_teleport.data.Home;
 import com.mrgregles.bsp_teleport.data.Position;
 import com.mrgregles.bsp_teleport.access.AccessGrant;
@@ -26,9 +27,10 @@ import java.util.UUID;
 /**
  * The shared MySQL (or MariaDB) tables. Every method blocks and runs on the storage worker thread only.
  *
- * <p>No driver is bundled: the server's own (Mohist ships one; BSP-Core's full jar ships one for dev runs) is created
- * directly, because {@code DriverManager} refuses drivers loaded by a mod class loader. The mod only creates and uses
- * its own tables, all named with the configured prefix, in a database the owner provides.
+ * <p>No driver is bundled: the server's own is created directly, because {@code DriverManager} refuses drivers loaded by
+ * a mod class loader. Mohist ships MySQL Connector/J under its usual name; on plain Forge the only copy is the one inside
+ * BSP-Core's full jar, under a relocated name (B8). The mod only creates and uses its own tables, all named with the
+ * configured prefix, in a database the owner provides.
  */
 final class MySqlStore implements AutoCloseable {
     private final String host, database, user, password, prefix;
@@ -58,13 +60,18 @@ final class MySqlStore implements AutoCloseable {
         return "`" + prefix + table + "`";
     }
 
+    /** Driver class and URL start, tried in order: the server's own MySQL (Mohist), BSP-Core's relocated copy (plain Forge), MariaDB. */
+    static final String[][] DRIVERS = {
+            {"com.mysql.cj.jdbc.Driver", "jdbc:mysql://"},
+            {BspCore.MYSQL_DRIVER, "jdbc:mysql://"},
+            {"org.mariadb.jdbc.Driver", "jdbc:mariadb://"}};
+
     private Connection open() throws SQLException {
-        String[][] drivers = {{"com.mysql.cj.jdbc.Driver", "jdbc:mysql://"}, {"org.mariadb.jdbc.Driver", "jdbc:mariadb://"}};
         Properties props = new Properties();
         props.setProperty("user", user);
         props.setProperty("password", password);
         SQLException last = null;
-        for (String[] d : drivers) {
+        for (String[] d : DRIVERS) {
             Driver driver;
             try {
                 driver = (Driver) Class.forName(d[0]).getDeclaredConstructor().newInstance();

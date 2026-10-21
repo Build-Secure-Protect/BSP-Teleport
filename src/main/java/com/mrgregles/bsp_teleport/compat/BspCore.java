@@ -47,6 +47,12 @@ import java.util.function.Supplier;
  * too, with BSP-Core's server ids turned into proxy names.
  */
 public final class BspCore {
+    /**
+     * The MySQL driver inside BSP-Core's full jar, which relocates MySQL Connector/J so it never clashes with Mohist's
+     * copy (RG-C4). On plain Forge it is the only driver there is (B8). Not part of BSP-Core's api: R9 asks for one.
+     */
+    public static final String MYSQL_DRIVER = "com.mrgregles.bsp_core.shaded.mysql.cj.jdbc.Driver";
+
     /** Thieves who just took a totem, and when their invincibility (and teleport block) ends. */
     private static final Map<UUID, Long> THIEF_UNTIL = new ConcurrentHashMap<>();
 

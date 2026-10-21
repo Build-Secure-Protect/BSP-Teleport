@@ -84,3 +84,15 @@ Needs the owner, one server first, then two behind Velocity:
 - [ ] The panel's PORTALS tab reads "3 destinations: Market, Arena, +1" on the row; MAP draws a violet line from a portal to each portal it leads to, with a dot near the far end; a two-way pair has dots at both ends.
 - [ ] Commands on the looked-at core: `/bsptp portal dest add warp market Market Square`, `dest add portalwarp arena`, `dest add portal "Hub East"`, `dest add random BSP-Wilds The Wilds`, `dest add here`, `dest list`, `dest label 2 Arena Door`, `dest del 2`, `dest clear`. `dest warp <name>` still works and replaces the whole list with that one entry.
 - [ ] Rules: a portal with a rank or coin rule and several destinations refuses before the card (the rule line on the action bar), and charges coins only when a destination is chosen and the move happens.
+
+## MySQL on plain Forge (B8, 2026-10-21)
+
+On plain Forge the only MySQL driver is the one inside BSP-Core's full jar, which keeps it under a relocated name. BSP-Teleport now tries that name after the server's own MySQL driver (Mohist) and before MariaDB.
+
+Headless, already passing: `MySqlDriversTest` (the order, and that BSP-Core's full jar has the driver under that name).
+
+Needs the owner:
+
+- [ ] A plain Forge 1.20.1 server with BSP-Core's **full** jar (not `-slim`), BSP-Teleport and `storage.mode = mysql`: `/bsptp status` reads "mysql: connected to ...", not "mysql: FAILED, No MySQL or MariaDB JDBC driver".
+- [ ] A Mohist server with the slim BSP-Core jar still reads "mysql: connected" (Mohist's own driver is tried first).
+- [ ] Two servers, one of each kind: a warp set on one is listed on the other, and a teleport between them lands.

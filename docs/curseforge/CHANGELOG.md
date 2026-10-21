@@ -4,6 +4,10 @@
 
 **Portals with several destinations.** A portal may now lead to up to eight places: warps, portal warps, other portals, random spots and positions, each with a label the admin may set. The core screen's DESTINATION tab lists them on the right; pick on the left and press ADD. One destination works as before. With more, a player stepping in gets a card naming the portal and its destinations, picks one and goes, or cancels and steps back out. While the card shows the player is held still and cannot open the inventory or act; being hurt or waiting 30 seconds ends it; a cancel applies the portal's cooldown so stepping out does not fire the field again. Destinations that are down are listed greyed with the reason; destinations on a server the player may not enter say so and name the token. A portal that lists another portal leads to it one way; two portals listing each other are the old two-way link, and old link ids convert by themselves. The panel's PORTALS tab sums a row up as "3 destinations: Market, Arena, +1" and the map draws an arrow to each portal a portal leads to. Commands: `/bsptp portal dest add|del|label|clear|list`. Config `portals.maxDestinations`.
 
+## Fixed
+
+**MySQL on plain Forge servers.** On a Forge server (not Mohist) the shared storage could not find a MySQL driver, so homes, warps and cross-server landings stayed on each server. It now uses the driver inside BSP-Core's full jar. Mohist servers are unchanged.
+
 # BSP-Teleport 0.2.0
 
 Minecraft 1.20.1, Forge 47.4, Java 17. Needed on the client and the server. Requires BSP-Core 1.3.0 or newer; the Home Servers board on BSP-Core's Score Screens needs BSP-Core 1.4.0, everything else runs on 1.3.0. BSP-Region Guard (0.1.0 or newer, built against 0.2.0) and BSP-RankUp are optional.
