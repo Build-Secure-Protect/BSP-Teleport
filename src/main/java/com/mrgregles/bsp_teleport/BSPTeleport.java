@@ -6,6 +6,7 @@ import com.mrgregles.bsp_teleport.api.BspTeleportApiSetter;
 import com.mrgregles.bsp_teleport.command.AdminCommands;
 import com.mrgregles.bsp_teleport.command.TeleportCommands;
 import com.mrgregles.bsp_teleport.compat.BspCore;
+import com.mrgregles.bsp_teleport.compat.BspInventorySync;
 import com.mrgregles.bsp_teleport.compat.RegionGuard;
 import com.mrgregles.bsp_teleport.request.TeleportRequests;
 import com.mrgregles.bsp_teleport.network.BandPackets;
@@ -86,5 +87,6 @@ public class BSPTeleport {
         MinecraftForge.EVENT_BUS.addListener(AdminCommands::onPermissionNodes);
         BspCore.init();
         RegionGuard.init();
+        BspInventorySync.init();
     }
 }

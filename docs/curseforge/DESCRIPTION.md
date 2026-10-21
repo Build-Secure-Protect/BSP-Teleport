@@ -5,7 +5,7 @@
 **Homes, warps, portals, team teleports and server access across the Build Secure Protect network.** Every player gets a Teleport Band on their hotbar that takes them home, to a warp, to a friend, to a teammate or to a random spot on any server in the network. Admins build walk-through portals with hangar doors, and sell access to servers, regions, portals and warps with Access Tokens. Built around [BSP-Core](https://www.curseforge.com/minecraft/mc-mods/bsp-core)'s Shatter Totem: your totem travels with you, and nothing here can take you into a raid for free.
 
 - Minecraft 1.20.1, Forge 47 or newer, Java 17. Needed on the client and the server.
-- Requires BSP-Core 1.3.0 or newer. BSP-Region Guard and BSP-RankUp are optional and switch more on. Made to sit behind BSP-Velocity Additions on the proxy.
+- Requires BSP-Core 1.3.0 or newer. BSP-Region Guard, BSP-RankUp and BSP-InventorySync are optional and switch more on. Made to sit behind BSP-Velocity Additions on the proxy.
 - Made for a Velocity network of Mohist backends with Proxy Compatible Forge, one MySQL database and one Redis. Runs on a single server with no database too.
 - MIT licence, source on [GitHub](https://github.com/Build-Secure-Protect/BSP-Teleport).
 
@@ -160,6 +160,8 @@ Behind a proxy, every server switch looks to a backend like a leave and a join, 
 **BSP-Region Guard** (optional). Regions forbid teleporting in or out and setting homes with their flags. Region triggers (enter, exit, timer, shutdown) and world-edge links that lead to another server are carried out by this mod, with the landing exactly where the trigger says. Random teleport stays inside the world border. Set a region's `entry` flag to deny and assign a token to it: players who bought access walk in, everyone else is kept out. Shutdown triggers evacuate everyone to a holding server; `/back` brings them home.
 
 **BSP-RankUp** (optional). RankUp's ranks are LuckPerms groups, so a rung's name is a rank rule on any portal or warp: "Warden or better" gates the portal to the arena.
+
+**BSP-InventorySync** (optional). On every server switch this mod tells BSP-InventorySync to start saving the inventory just before the player leaves, after BSP-Core has taken the totems, so the next server has it ready and the arrival freeze is shorter.
 
 **BSP-Velocity Additions** (on the proxy). Prints the network's one join and leave line, and sends a player back to the server they were last on; this mod's landings wait for them there.
 

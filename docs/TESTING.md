@@ -96,3 +96,16 @@ Needs the owner:
 - [ ] A plain Forge 1.20.1 server with BSP-Core's **full** jar (not `-slim`), BSP-Teleport and `storage.mode = mysql`: `/bsptp status` reads "mysql: connected to ...", not "mysql: FAILED, No MySQL or MariaDB JDBC driver".
 - [ ] A Mohist server with the slim BSP-Core jar still reads "mysql: connected" (Mohist's own driver is tried first).
 - [ ] Two servers, one of each kind: a warp set on one is listed on the other, and a teleport between them lands.
+
+## Inventory save before a server switch (BSP-InventorySync T1, 2026-10-21)
+
+With BSP-InventorySync loaded, every cross-server departure calls `InventorySyncApi.beginTransfer(player, target)` after BSP-Core has taken the totems and before the proxy `Connect`. Without it nothing changes.
+
+Headless, already passing: GameTests `without_inventory_sync_the_adapter_is_absent_and_a_departure_still_goes` and `inventory_sync_is_told_after_bsp_core_and_before_the_connect` (through the adapter's real lookup on a stand-in class: the call comes after BSP-Core holds the transfer and before the Connect; `cancelTransfer` reaches it; a throw is logged and the Connect still goes).
+
+Needs the owner, both mods on two backends behind Velocity:
+
+- [ ] Start-up log on each backend: "BSP-InventorySync found: departures start the inventory save before the switch". A backend without the mod says "BSP-InventorySync not loaded"; a warning naming the api means the lookup failed and the switch goes without it.
+- [ ] Switch servers (a warp, a home on the other server, a portal, `/bsptp send`). On the source run `/invsync snapshots <you>`: a transfer snapshot is listed, taken before the logout snapshot.
+- [ ] The arrival has no visible freeze, and the inventory, armour and offhand are as they were. Carry a Shatter Totem across: it arrives through BSP-Core as before and is not duplicated in the synced inventory.
+- [ ] A backend with the sync switched off still switches normally (the call answers false and is ignored).

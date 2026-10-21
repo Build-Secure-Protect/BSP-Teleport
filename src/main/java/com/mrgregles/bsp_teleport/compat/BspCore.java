@@ -245,6 +245,11 @@ public final class BspCore {
         BspTransfer.endTransfer(player);
     }
 
+    /** Whether BSP-Core holds a transfer open for this player (between {@link #beginTransfer} and the logout or end). */
+    public static boolean isTransferring(UUID player) {
+        return BspTransfer.isTransferring(player);
+    }
+
     // Seasons (D13)
 
     private static void onSeasonEnded(SeasonEvent.Ended event) {

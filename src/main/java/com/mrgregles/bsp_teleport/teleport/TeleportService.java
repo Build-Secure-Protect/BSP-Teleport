@@ -5,6 +5,7 @@ import com.mrgregles.bsp_teleport.TeleportConfig;
 import com.mrgregles.bsp_teleport.api.BspTeleportApi;
 import com.mrgregles.bsp_teleport.api.Destination;
 import com.mrgregles.bsp_teleport.compat.BspCore;
+import com.mrgregles.bsp_teleport.compat.BspInventorySync;
 import com.mrgregles.bsp_teleport.compat.RegionGuard;
 import com.mrgregles.bsp_teleport.network.Messenger;
 import com.mrgregles.bsp_teleport.network.ProxyMessenger;
@@ -163,13 +164,18 @@ public final class TeleportService implements BspTeleportApi {
         return Messenger.enabled();
     }
 
-    /** The actual departure: off any mount, BSP-Core told, then the proxy asked. */
+    /**
+     * The actual departure: off any mount, BSP-Core told (it takes the totems out first, so no snapshot holds one), then
+     * BSP-InventorySync told to start the save (T1, when present; its answer does not change anything here), then the
+     * proxy asked.
+     */
     private static void leave(ServerPlayer player, String server) {
         if (player.hasDisconnected()) {
             return;
         }
         dismount(player);
         BspCore.beginTransfer(player);
+        BspInventorySync.beginTransfer(player, server);
         ProxyMessenger.connect(player, server);
     }
 

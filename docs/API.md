@@ -23,7 +23,7 @@ These skip warm-up, cooldown, cost and region checks. They are for rules that ha
 
 ## Cross-server landings
 
-A cross-server `teleport` writes the landing to the shared database (`storage.mode = mysql`, table `<prefix>pending`), tells BSP-Core the player is transferring, dismounts them and asks the proxy to move them; the target server reads the row when the player logs in and lands them. Rows older than `network.landingSeconds` are ignored. Without the shared database, the landing is announced through Region Guard's message store instead (kind `bsp_teleport.landing`) when Region Guard is present; without either, the player is still moved and appears wherever the target server puts them.
+A cross-server `teleport` writes the landing to the shared database (`storage.mode = mysql`, table `<prefix>pending`), dismounts them, tells BSP-Core the player is transferring, tells BSP-InventorySync to start saving their inventory (when loaded) and asks the proxy to move them; the target server reads the row when the player logs in and lands them. Rows older than `network.landingSeconds` are ignored. Without the shared database, the landing is announced through Region Guard's message store instead (kind `bsp_teleport.landing`) when Region Guard is present; without either, the player is still moved and appears wherever the target server puts them.
 
 ## Messaging
 
@@ -44,3 +44,7 @@ The Redis channel is `bsp_teleport:<redis.cluster>:v<API_VERSION>`, so servers r
 ## Region Guard
 
 When Region Guard is loaded, BSP Teleport listens for `RegionTriggerEvent` with a cross-server destination, whatever its cause (ENTER, EXIT, TIMER, SHUTDOWN, EDGE), cancels it and performs the move to the exact x/z given, with 3 s of arrival protection; same-server triggers are left to Region Guard. Teleports and homes ask Region Guard's `teleport-out`, `teleport-in` and `set-home` flags, and `/rtp` samples inside Region Guard's world border (shrunk by 16 blocks). Both mods must call this server by the same name: `network.serverName` here, `storage.serverId` there; a warning is logged at start when they differ.
+
+## BSP-InventorySync
+
+Optional, never compiled against. When `bsp_inventorysync` is loaded, every cross-server departure (teleports, `sendToServer`, portals, warps, homes, requests, bounces, admin sends) calls its `InventorySyncApi.beginTransfer(player, targetServer)` after BSP-Core has taken the player's totems and just before the proxy `Connect`, so the inventory save starts before the switch instead of at the logout and the arriving server finds the snapshot ready. The answer does not change the departure (false means the sync is off on this server or the player's data is still arriving), and a throw is logged and ignored. Nothing undoes a departure once it has started, so `cancelTransfer` is not called; BSP-InventorySync clears a leftover mark at the next logout. The start-up log says whether the mod was found. Every call goes through `compat/BspInventorySync`.
