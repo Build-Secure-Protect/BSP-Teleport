@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+<rect width="1200" height="1200" fill="#0B0F14"/>
+<g transform="translate(0, 280)">
+<rect width="1200" height="640" fill="#0B0F14"/>
+<text x="40" y="48" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="28" font-weight="bold" fill="#E6EAF2" text-anchor="start">Choosing a destination, and the warm-up</text>
+<text x="40" y="78" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="16" font-weight="normal" fill="#9AA3B5" text-anchor="start">Step into a portal with several places on its list and a card opens. With a warm-up you wait a few seconds in the field first.</text>
+<rect x="40" y="110" width="620" height="500" rx="0" fill="#2b3f55" opacity="1"/>
+<rect x="128" y="138" width="444" height="342" rx="0" fill="#B58CFF" opacity="1"/>
+<rect x="130" y="140" width="440" height="338" rx="0" fill="#10151C" opacity="1"/>
+<text x="146" y="170" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#B58CFF" text-anchor="start" letter-spacing="2">HUB EAST</text>
+<text x="146" y="190" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Choose a destination</text>
+<rect x="146" y="206" width="408" height="42" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="2.5" opacity="1"/>
+<text x="350.0" y="225" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="3">BACK</text>
+<text x="350.0" y="240" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="middle">where you came from: BSP-Wilds</text>
+<rect x="146" y="258" width="408" height="38" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="156" y="275" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#E6EAF2" text-anchor="start">Market</text>
+<text x="156" y="289" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="normal" fill="#9AA3B5" text-anchor="start">warp on BSP-Spawn</text>
+<rect x="510.8" y="266" width="33.2" height="22" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="527.4" y="281" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">GO</text>
+<rect x="146" y="302" width="408" height="38" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="156" y="319" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#E6EAF2" text-anchor="start">Arena Door</text>
+<text x="156" y="333" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="normal" fill="#9AA3B5" text-anchor="start">portal on BSP-SafeRoom</text>
+<rect x="510.8" y="310" width="33.2" height="22" rx="0" fill="#0C0E12" stroke="#B58CFF" stroke-width="1.5" opacity="1"/>
+<text x="527.4" y="325" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#B58CFF" text-anchor="middle" letter-spacing="1">GO</text>
+<rect x="146" y="346" width="408" height="38" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="156" y="363" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#9AA3B5" text-anchor="start">Old Mines</text>
+<text x="156" y="377" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="normal" fill="#2A2F3A" text-anchor="start">Destination missing</text>
+<rect x="495.6" y="354" width="48.4" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="519.8000000000001" y="369" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">DOWN</text>
+<rect x="146" y="390" width="408" height="38" rx="0" fill="#0C0E12" stroke="#FF6B5C" stroke-width="1.5" opacity="1"/>
+<text x="156" y="407" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#9AA3B5" text-anchor="start">The Wilds</text>
+<text x="156" y="421" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="normal" fill="#FF6B5C" text-anchor="start">needs access to BSP-Wilds (Access Token IX)</text>
+<rect x="457.6" y="398" width="86.39999999999999" height="22" rx="0" fill="#0C0E12" stroke="#FF6B5C" stroke-width="1.5" opacity="1"/>
+<text x="500.8" y="413" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#FF6B5C" text-anchor="middle" letter-spacing="1">NO ACCESS</text>
+<rect x="290.8" y="440" width="109.19999999999999" height="22" rx="0" fill="#0C0E12" stroke="#FFD23A" stroke-width="1.5" opacity="1"/>
+<text x="345.4" y="455" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#FFD23A" text-anchor="middle" letter-spacing="1">CANCEL (ESC)</text>
+<rect x="200.0" y="570" width="28" height="28" rx="0" fill="#1c1c1c" stroke="#6a6a6a" stroke-width="1.5" opacity="1"/>
+<rect x="230.0" y="570" width="28" height="28" rx="0" fill="#1c1c1c" stroke="#6a6a6a" stroke-width="1.5" opacity="1"/>
+<rect x="260.0" y="570" width="28" height="28" rx="0" fill="#1c1c1c" stroke="#6a6a6a" stroke-width="1.5" opacity="1"/>
+<rect x="290.0" y="570" width="28" height="28" rx="0" fill="#1c1c1c" stroke="#6a6a6a" stroke-width="1.5" opacity="1"/>
+<rect x="320.0" y="570" width="28" height="28" rx="0" fill="#1c1c1c" stroke="#6a6a6a" stroke-width="1.5" opacity="1"/>
+<rect x="350.0" y="570" width="28" height="28" rx="0" fill="#1c1c1c" stroke="#6a6a6a" stroke-width="1.5" opacity="1"/>
+<rect x="380.0" y="570" width="28" height="28" rx="0" fill="#1c1c1c" stroke="#6a6a6a" stroke-width="1.5" opacity="1"/>
+<rect x="410.0" y="570" width="28" height="28" rx="0" fill="#1c1c1c" stroke="#6a6a6a" stroke-width="1.5" opacity="1"/>
+<rect x="440.0" y="570" width="28" height="28" rx="0" fill="#1c1c1c" stroke="#6a6a6a" stroke-width="1.5" opacity="1"/>
+<rect x="478.0" y="570" width="28" height="28" rx="0" fill="#0F2A28" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<rect x="700" y="110" width="460" height="250" rx="0" fill="#2b3f55" opacity="1"/>
+<rect x="778.5" y="128" width="303" height="74" rx="0" fill="#19D3B0" opacity="1"/>
+<rect x="780.0" y="129.5" width="300" height="71" rx="0" fill="#10151C" opacity="1"/>
+<text x="794.0" y="154" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#19D3B0" text-anchor="start" letter-spacing="2">HUB EAST</text>
+<text x="794.0" y="174" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Going in 2 s. Step out to stay.</text>
+<rect x="794.0" y="184" width="272" height="7" rx="0" fill="#0C0E12" opacity="1"/>
+<rect x="794.0" y="184" width="168.64" height="7" rx="0" fill="#19D3B0" opacity="1"/>
+<text x="930.0" y="270" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="normal" fill="#E6EAF2" text-anchor="middle">+</text>
+<text x="700" y="400" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">Back is one wide key across the top: it takes you</text>
+<text x="700" y="418" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">to wherever you came from. Places that are down</text>
+<text x="700" y="436" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">are greyed with the reason; a server you may not</text>
+<text x="700" y="454" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">enter names its token.</text>
+<text x="700" y="490" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">A portal with a warm-up shows this box while you</text>
+<text x="700" y="508" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">wait in the field. Walk about inside the field if</text>
+<text x="700" y="526" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">you like; step out or take a hit and it is</text>
+<text x="700" y="544" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">cancelled. After the card you are held still until</text>
+<text x="700" y="562" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">it ends.</text>
+</g>
+</svg>

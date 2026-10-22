@@ -1,80 +1,111 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
 <rect width="1200" height="1200" fill="#0B0F14"/>
-<g transform="translate(0, 280)">
-<rect width="1200" height="640" fill="#0B0F14"/>
+<g transform="translate(0, 220)">
+<rect width="1200" height="760" fill="#0B0F14"/>
 <text x="40" y="48" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="28" font-weight="bold" fill="#E6EAF2" text-anchor="start">Works with the other BSP mods</text>
-<text x="40" y="78" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="16" font-weight="normal" fill="#9AA3B5" text-anchor="start">BSP-Core is required. Region Guard, RankUp and the Velocity Additions proxy plugin are optional: with them, more of the mod switches on.</text>
-<rect x="40" y="110" width="270" height="500" rx="10" fill="#10151C" stroke="#FFD23A" stroke-width="1.5" opacity="1"/>
-<text x="56" y="140" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#FFD23A" text-anchor="start">BSP-Core (required)</text>
-<line x1="56" y1="152" x2="294" y2="152" stroke="#2A2F3A" stroke-width="1" stroke-linecap="round"/>
-<circle cx="62" cy="171" r="4" fill="#FFD23A"/>
-<text x="74" y="176" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Your Shatter Totem travels</text>
-<text x="74" y="193" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">with you on every cross-server</text>
-<text x="74" y="210" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">move</text>
-<circle cx="62" cy="236" r="4" fill="#FFD23A"/>
-<text x="74" y="241" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Recall from another server</text>
-<text x="74" y="258" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">brings you back to your totem</text>
-<text x="74" y="275" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">through this mod</text>
-<circle cx="62" cy="301" r="4" fill="#FFD23A"/>
-<text x="74" y="306" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Nothing lands within 150</text>
-<text x="74" y="323" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">blocks of a totem being</text>
-<text x="74" y="340" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">stolen, on any server</text>
-<circle cx="62" cy="366" r="4" fill="#FFD23A"/>
-<text x="74" y="371" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Extra Homes and Swift Travel</text>
-<text x="74" y="388" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">give more home slots and</text>
-<text x="74" y="405" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">shorter cooldowns</text>
-<circle cx="62" cy="431" r="4" fill="#FFD23A"/>
-<text x="74" y="436" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Team teleports: GO to a</text>
-<text x="74" y="453" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">teammate from the band or</text>
-<text x="74" y="470" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">BSP-Core's Team screen</text>
-<circle cx="62" cy="496" r="4" fill="#FFD23A"/>
-<text x="74" y="501" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">The Home Servers board on</text>
-<text x="74" y="518" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">BSP-Core's Score Screens</text>
-<circle cx="62" cy="544" r="4" fill="#FFD23A"/>
-<text x="74" y="549" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Coins for warps and rules;</text>
-<text x="74" y="566" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Access Tokens in BSP-Core's</text>
-<text x="74" y="583" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">shops</text>
-<rect x="325" y="110" width="270" height="500" rx="10" fill="#10151C" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
-<text x="341" y="140" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#19D3B0" text-anchor="start">BSP-Region Guard (optional)</text>
-<line x1="341" y1="152" x2="579" y2="152" stroke="#2A2F3A" stroke-width="1" stroke-linecap="round"/>
-<circle cx="347" cy="171" r="4" fill="#19D3B0"/>
-<text x="359" y="176" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Regions forbid teleporting in,</text>
-<text x="359" y="193" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">out, or setting a home</text>
-<circle cx="347" cy="219" r="4" fill="#19D3B0"/>
-<text x="359" y="224" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Region triggers and world-edge</text>
-<text x="359" y="241" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">links move players to other</text>
-<text x="359" y="258" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">servers</text>
-<circle cx="347" cy="284" r="4" fill="#19D3B0"/>
-<text x="359" y="289" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Random teleport stays inside</text>
-<text x="359" y="306" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">the world border</text>
-<circle cx="347" cy="332" r="4" fill="#19D3B0"/>
-<text x="359" y="337" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Buy access to an admin region</text>
-<text x="359" y="354" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">with an Access Token</text>
-<circle cx="347" cy="380" r="4" fill="#19D3B0"/>
-<text x="359" y="385" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Shutdown triggers evacuate</text>
-<text x="359" y="402" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">everyone; /back brings them</text>
-<text x="359" y="419" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">home</text>
-<rect x="610" y="110" width="270" height="500" rx="10" fill="#10151C" stroke="#B58CFF" stroke-width="1.5" opacity="1"/>
-<text x="626" y="140" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#B58CFF" text-anchor="start">BSP-RankUp (optional)</text>
-<line x1="626" y1="152" x2="864" y2="152" stroke="#2A2F3A" stroke-width="1" stroke-linecap="round"/>
-<circle cx="632" cy="171" r="4" fill="#B58CFF"/>
-<text x="644" y="176" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Rank rules on portals and</text>
-<text x="644" y="193" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">warps: a LuckPerms group, this</text>
-<text x="644" y="210" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">or better</text>
-<circle cx="632" cy="236" r="4" fill="#B58CFF"/>
-<text x="644" y="241" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">RankUp ranks are LuckPerms</text>
-<text x="644" y="258" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">groups, so a rung name is a</text>
-<text x="644" y="275" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">rule name</text>
-<rect x="895" y="110" width="270" height="500" rx="10" fill="#10151C" stroke="#8FE04A" stroke-width="1.5" opacity="1"/>
-<text x="911" y="140" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#8FE04A" text-anchor="start">BSP-Velocity Additions (proxy)</text>
-<line x1="911" y1="152" x2="1149" y2="152" stroke="#2A2F3A" stroke-width="1" stroke-linecap="round"/>
-<circle cx="917" cy="171" r="4" fill="#8FE04A"/>
-<text x="929" y="176" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">One join and leave line for</text>
-<text x="929" y="193" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">the whole network: switch this</text>
-<text x="929" y="210" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">backend's own lines off</text>
-<circle cx="917" cy="236" r="4" fill="#8FE04A"/>
-<text x="929" y="241" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Players sent back to their</text>
-<text x="929" y="258" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">last server on login; landings</text>
-<text x="929" y="275" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">wait for them</text>
+<text x="40" y="78" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="16" font-weight="normal" fill="#9AA3B5" text-anchor="start">BSP-Core is required. Region Guard, RankUp, InventorySync and the Velocity Additions proxy plugin are optional: with them, more switches on.</text>
+<rect x="40" y="110" width="214" height="620" rx="10" fill="#10151C" stroke="#FFD23A" stroke-width="1.5" opacity="1"/>
+<text x="54" y="138" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#FFD23A" text-anchor="start">BSP-Core (required)</text>
+<line x1="54" y1="150" x2="240" y2="150" stroke="#2A2F3A" stroke-width="1" stroke-linecap="round"/>
+<circle cx="60" cy="169" r="4" fill="#FFD23A"/>
+<text x="72" y="174" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Your Shatter Totem</text>
+<text x="72" y="191" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">travels with you on</text>
+<text x="72" y="208" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">every cross-server move</text>
+<circle cx="60" cy="232" r="4" fill="#FFD23A"/>
+<text x="72" y="237" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Recall from another</text>
+<text x="72" y="254" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">server brings you back</text>
+<text x="72" y="271" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">to your totem through</text>
+<text x="72" y="288" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">this mod</text>
+<circle cx="60" cy="312" r="4" fill="#FFD23A"/>
+<text x="72" y="317" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Nothing lands within</text>
+<text x="72" y="334" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">150 blocks of a totem</text>
+<text x="72" y="351" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">being stolen, on any</text>
+<text x="72" y="368" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">server</text>
+<circle cx="60" cy="392" r="4" fill="#FFD23A"/>
+<text x="72" y="397" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Extra Homes and Swift</text>
+<text x="72" y="414" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Travel give more home</text>
+<text x="72" y="431" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">slots and shorter</text>
+<text x="72" y="448" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">cooldowns</text>
+<circle cx="60" cy="472" r="4" fill="#FFD23A"/>
+<text x="72" y="477" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Team teleports: GO to a</text>
+<text x="72" y="494" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">teammate from the band</text>
+<text x="72" y="511" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">or BSP-Core's Team</text>
+<text x="72" y="528" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">screen</text>
+<circle cx="60" cy="552" r="4" fill="#FFD23A"/>
+<text x="72" y="557" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">The Home Servers board</text>
+<text x="72" y="574" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">on BSP-Core's Score</text>
+<text x="72" y="591" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Screens</text>
+<circle cx="60" cy="615" r="4" fill="#FFD23A"/>
+<text x="72" y="620" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Coins for warps and</text>
+<text x="72" y="637" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">rules; Access Tokens in</text>
+<text x="72" y="654" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">BSP-Core's shops</text>
+<rect x="266" y="110" width="214" height="620" rx="10" fill="#10151C" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="280" y="138" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#19D3B0" text-anchor="start">BSP-Region Guard</text>
+<text x="280" y="156" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#19D3B0" text-anchor="start">(optional)</text>
+<line x1="280" y1="168" x2="466" y2="168" stroke="#2A2F3A" stroke-width="1" stroke-linecap="round"/>
+<circle cx="286" cy="187" r="4" fill="#19D3B0"/>
+<text x="298" y="192" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Regions forbid</text>
+<text x="298" y="209" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">teleporting in, out, or</text>
+<text x="298" y="226" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">setting a home</text>
+<circle cx="286" cy="250" r="4" fill="#19D3B0"/>
+<text x="298" y="255" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Region triggers and</text>
+<text x="298" y="272" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">world-edge links move</text>
+<text x="298" y="289" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">players to other</text>
+<text x="298" y="306" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">servers</text>
+<circle cx="286" cy="330" r="4" fill="#19D3B0"/>
+<text x="298" y="335" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Random teleport stays</text>
+<text x="298" y="352" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">inside the world border</text>
+<circle cx="286" cy="376" r="4" fill="#19D3B0"/>
+<text x="298" y="381" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Buy access to an admin</text>
+<text x="298" y="398" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">region with an Access</text>
+<text x="298" y="415" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Token</text>
+<circle cx="286" cy="439" r="4" fill="#19D3B0"/>
+<text x="298" y="444" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Shutdown triggers</text>
+<text x="298" y="461" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">evacuate everyone;</text>
+<text x="298" y="478" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">/back brings them home</text>
+<rect x="492" y="110" width="214" height="620" rx="10" fill="#10151C" stroke="#B58CFF" stroke-width="1.5" opacity="1"/>
+<text x="506" y="138" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#B58CFF" text-anchor="start">BSP-RankUp (optional)</text>
+<line x1="506" y1="150" x2="692" y2="150" stroke="#2A2F3A" stroke-width="1" stroke-linecap="round"/>
+<circle cx="512" cy="169" r="4" fill="#B58CFF"/>
+<text x="524" y="174" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Rank rules on portals</text>
+<text x="524" y="191" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">and warps: a LuckPerms</text>
+<text x="524" y="208" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">group, this or better</text>
+<circle cx="512" cy="232" r="4" fill="#B58CFF"/>
+<text x="524" y="237" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">RankUp ranks are</text>
+<text x="524" y="254" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">LuckPerms groups, so a</text>
+<text x="524" y="271" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">rung name is a rule</text>
+<text x="524" y="288" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">name</text>
+<rect x="718" y="110" width="214" height="620" rx="10" fill="#10151C" stroke="#FFD23A" stroke-width="1.5" opacity="1"/>
+<text x="732" y="138" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#FFD23A" text-anchor="start">BSP-InventorySync</text>
+<text x="732" y="156" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#FFD23A" text-anchor="start">(optional)</text>
+<line x1="732" y1="168" x2="918" y2="168" stroke="#2A2F3A" stroke-width="1" stroke-linecap="round"/>
+<circle cx="738" cy="187" r="4" fill="#FFD23A"/>
+<text x="750" y="192" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Every server switch</text>
+<text x="750" y="209" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">starts the inventory</text>
+<text x="750" y="226" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">save before you leave</text>
+<circle cx="738" cy="250" r="4" fill="#FFD23A"/>
+<text x="750" y="255" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">The next server has</text>
+<text x="750" y="272" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">your inventory ready,</text>
+<text x="750" y="289" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">so the arrival freeze</text>
+<text x="750" y="306" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">is short</text>
+<circle cx="738" cy="330" r="4" fill="#FFD23A"/>
+<text x="750" y="335" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">BSP-Core takes your</text>
+<text x="750" y="352" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">totems out first, so a</text>
+<text x="750" y="369" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">snapshot never holds</text>
+<text x="750" y="386" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">one</text>
+<rect x="944" y="110" width="214" height="620" rx="10" fill="#10151C" stroke="#8FE04A" stroke-width="1.5" opacity="1"/>
+<text x="958" y="138" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#8FE04A" text-anchor="start">BSP-Velocity Additions</text>
+<text x="958" y="156" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#8FE04A" text-anchor="start">(proxy)</text>
+<line x1="958" y1="168" x2="1144" y2="168" stroke="#2A2F3A" stroke-width="1" stroke-linecap="round"/>
+<circle cx="964" cy="187" r="4" fill="#8FE04A"/>
+<text x="976" y="192" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">One join and leave line</text>
+<text x="976" y="209" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">for the whole network:</text>
+<text x="976" y="226" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">switch this backend's</text>
+<text x="976" y="243" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">own lines off</text>
+<circle cx="964" cy="267" r="4" fill="#8FE04A"/>
+<text x="976" y="272" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Players sent back to</text>
+<text x="976" y="289" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">their last server on</text>
+<text x="976" y="306" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">login; landings wait</text>
+<text x="976" y="323" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">for them</text>
 </g>
 </svg>

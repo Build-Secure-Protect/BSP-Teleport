@@ -6,7 +6,7 @@
 
 - Minecraft 1.20.1, Forge 47 or newer, Java 17. Needed on the client and the server.
 - Requires BSP-Core 1.3.0 or newer. BSP-Region Guard, BSP-RankUp and BSP-InventorySync are optional and switch more on. Made to sit behind BSP-Velocity Additions on the proxy.
-- Made for a Velocity network of Mohist backends with Proxy Compatible Forge, one MySQL database and one Redis. Runs on a single server with no database too.
+- Made for a Velocity network of Mohist backends with Proxy Compatible Forge, one MySQL database and one Redis. Plain Forge backends work too, using the MySQL driver in BSP-Core's full jar. Runs on a single server with no database too.
 - MIT licence, source on [GitHub](https://github.com/Build-Secure-Protect/BSP-Teleport).
 
 ---
@@ -92,17 +92,19 @@ Right-click the core for its screen. **Destination** holds a list of up to eight
 
 One destination sends a player straight through. With several, a card opens the moment they step in, naming the portal and its destinations: they pick one and go, or cancel and step back out. Back sits across the top of the card as one wide key. While the card shows they are held still and cannot open the inventory or act; a hit or 30 seconds of silence ends it. Destinations that are down, or on a server the player may not enter, are listed greyed with the reason.
 
+![Choosing a destination, and the warm-up](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/portal-chooser.png)
+
 **Look** sets the colour, the door style, the arrival side, the name and an optional arrival line.
 
 ![Open and close](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/core-doors.png)
 
-**Open/close** picks how the portal opens: by hand, by a redstone signal into the core, on a real-time clock in the server's time zone, or on the game clock. A Lock forces it closed in any mode. With "close when the destination is down" on, the doors shut by themselves while the partner portal or its server is away, and reopen when it is back. A **warm-up** of up to 30 seconds makes players wait in the field first, with a countdown box at the top of the screen; stepping out or being hurt cancels it.
+**Open/close** picks how the portal opens: by hand, by a redstone signal into the core, on a real-time clock in the server's time zone, or on the game clock. A Lock forces it closed in any mode. With "close when every destination is down" on, the doors shut by themselves while nothing on the list answers, and reopen when something does. A **warm-up** of up to 30 seconds makes players wait in the field first, with a countdown box at the top of the screen; stepping out or being hurt cancels it.
 
 Closed portals grow hangar doors that slide in from both ends of every row and meet in the middle, hazard stripes facing each other. Two styles: solid **blocks** that fill in cell by cell, or smooth **rendered** panels. Either way the wall is real.
 
 ![Portals on the panel](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/admin-portals.png)
 
-The panel's PORTALS tab lists every portal on the network under its server, or draws them as a map with the links between them. Go to any of them, open, close, lock or unlock it, even on another server. `/bsptp portal <name> open|close|lock|unlock|tp|info` does the same from a command block, and `/bsptp portal dest add|del|label|clear|list` edits the looked-at core's destinations.
+The panel's PORTALS tab lists every portal on the network under its server, or draws them as a map with the links between them. Go to any of them, open, close, lock or unlock it, even on another server. `/bsptp portal <name> open|close|lock|unlock|tp|info` does the same from a command block, and `/bsptp portal dest add|del|label|clear|list` edits the looked-at core's destinations (`dest add back` adds Back); `/bsptp portal warmup <seconds>` sets its warm-up.
 
 ---
 

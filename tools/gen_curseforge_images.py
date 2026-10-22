@@ -341,8 +341,8 @@ def admin_portals():
     s.hud(x, y, w, h, "Admin", VIOLET, "Open and Close act now and switch the portal to manual. Click a node on the map to select it.", ("Network", "Settings", "Warps", "Portals", "Tokens"), 3)
     s.button(x + w - 16, y + 58, "map", VIOLET)
     ry = y + 90
-    rows = [("BSP-SPAWN  (this server)", None), ("Hub East", ("open", OK, "120,64,-40   link hub-east: Market Gate (BSP-SafeRoom)")), ("Wilds Drop", ("open", OK, "88,70,12   random on BSP-Wilds")),
-            ("Old Gate", ("no destination", GOLD, "-10,64,200   -")), ("BSP-SAFEROOM", None), ("Market Gate", ("closed", GOLD, "4,65,-90   link hub-east: Hub East (BSP-Spawn)   real clock, opens 18:00")),
+    rows = [("BSP-SPAWN  (this server)", None), ("Hub East", ("open", OK, "120,64,-40   3 destinations: Market, Arena Door, +1, warm-up 3 s")), ("Return Gate", ("open", OK, "88,70,12   back")),
+            ("Old Gate", ("no destination", GOLD, "-10,64,200   -")), ("BSP-SAFEROOM", None), ("Market Gate", ("closed", GOLD, "4,65,-90   warp market   real clock, opens 18:00")),
             ("Arena Door", ("locked", BAD, "300,64,300   portal warp arena"))]
     for name, info in rows:
         if info is None:
@@ -417,35 +417,55 @@ def portal_views():
 def core_screen():
     s = Svg(1200, 640)
     x, y, w, h = 40, 40, 700, 560
-    s.hud(x, y, w, h, "Portal", VIOLET, "Hub East.  One destination per portal. Links are two-way unless Arrive only is on.", ("Destination", "Look", "Open/close", "Access"), 0)
+    s.hud(x, y, w, h, "Portal", VIOLET, "Hub East.  Pick on the left, press ADD, edit the label on the right.", ("Destination", "Look", "Open/close", "Access"), 0)
     s.rect(x + 16, y + 62, w - 32, 26, INSET, OK, r=0)
-    s.text(x + 26, y + 80, "READY: LINKED TO MARKET GATE ON BSP-SAFEROOM", 12, OK, "bold", spacing=1)
+    s.text(x + 26, y + 80, "READY: 3 DESTINATIONS", 12, OK, "bold", spacing=1)
     px = x + 16
-    for label, on in (("warp", False), ("portal warp", False), ("random", False), ("position", False), ("link", True)):
+    for label, on in (("warp", False), ("portal warp", False), ("portal", False), ("random", False), ("position", False), ("back", True)):
         tw = len(label) * 8 + 20
         s.rect(px, y + 100, tw, 22, INSET, VIOLET if on else LINE, r=0)
         s.text(px + tw / 2, y + 115, label.upper(), 11, VIOLET if on else MUTED, "bold", "middle", spacing=1)
         px += tw + 6
-    s.button(x + w - 16, y + 100, "clear", BAD)
-    s.text(x + 26, y + 146, "Link id   letters, numbers, _ or -", 12, MUTED)
-    s.rect(x + 26, y + 156, 220, 24, INSET, LINE, r=0)
-    s.text(x + 34, y + 173, "hub-east", 13, TEXT, family=MONO)
-    s.button(x + 310, y + 157, "set", ACCENT)
-    s.text(x + 26, y + 204, "Partner: Market Gate (BSP-SafeRoom 4,65,-90)", 13, OK)
+    # Left: the picker for BACK has nothing to pick.
+    lx, lw = x + 16, 250
+    s.rect(lx, y + 136, lw, 24, INSET, LINE, r=0)
+    s.text(lx + 10, y + 153, "Each player goes back to", 12, MUTED)
+    s.rect(lx, y + 164, lw, 24, INSET, LINE, r=0)
+    s.text(lx + 10, y + 181, "where they came from.", 12, MUTED)
+    s.button(lx + lw, y + 196, "add", ACCENT)
+    s.text(lx + lw + 18, y + 170, ">", 22, ACCENT, "bold")
+    # Right: the list.
+    rx0, rw = lx + lw + 40, w - 32 - lw - 40
+    s.text(rx0 + 2, y + 146, "DESTINATIONS 3 OF 8", 11, MUTED, "bold", spacing=1.5)
+    ry = y + 156
+    for n, (kind, label, color, ok) in enumerate((("warp", "Market", ACCENT, True), ("portal", "Arena Door", VIOLET, True), ("back", "Back", ACCENT, True)), start=1):
+        s.rect(rx0, ry, rw, 30, INSET, LINE if ok else BAD, r=0)
+        s.text(rx0 + 8, ry + 20, str(n), 12, GOLD, family=MONO)
+        cw = len(kind) * 7 + 10
+        s.rect(rx0 + 24, ry + 8, cw, 15, INSET, color, r=0)
+        s.text(rx0 + 24 + cw / 2, ry + 19, kind.upper(), 9, color, "bold", "middle", spacing=1)
+        s.text(rx0 + 32 + cw, ry + 20, label, 13, TEXT, "bold")
+        bx = s.button(rx0 + rw - 6, ry + 4, "del", BAD) - 4
+        if n > 1:
+            s.button(bx, ry + 4, "up", LINE, True)
+        ry += 36
+    s.text(rx0 + 2, ry + 10, "Click a name to type your own label.", 12, MUTED)
     ry = y + h - 150
     s.row(x + 16, ry, w - 32, 40, "Arrive only", "players may arrive here but not leave through it")
     s.switch(x + w - 26, ry + 9, False)
-    s.row(x + 16, ry + 46, w - 32, 40, "Close when the destination is down", "the doors shut while the partner or its server is away")
+    s.row(x + 16, ry + 46, w - 32, 40, "Close when every destination is down", "the doors shut while nothing on the list answers")
     s.switch(x + w - 26, ry + 55, True)
     s.footer(x, y + h - 50, w, "BSP-Spawn  minecraft:overworld  120, 64, -40      frame 9x6, opening 28 cells", "LIT")
     rx = 780
     s.text(rx, 70, "The core screen", 22, TEXT, "bold")
-    for k, line in enumerate(wrap("Right-click the core. DESTINATION picks where the portal leads: an existing warp, a portal warp (a warp only portals can reach), a random spot on any server, a position, or a link id shared with one other core anywhere on the network.", 44)):
+    for k, line in enumerate(wrap("Right-click the core. DESTINATION holds a list of up to eight places: a warp, a portal warp (a warp only portals can reach), another portal anywhere on the network, a random spot on any server, a position, or Back.", 44)):
         s.text(rx, 100 + k * 18, line, 14, MUTED)
-    for k, line in enumerate(wrap("LOOK sets the colour from 24, the door style, which side players arrive on, the name and an arrival line. OPEN/CLOSE sets the mode and the lock. ACCESS holds the rules.", 44)):
-        s.text(rx, 240 + k * 18, line, 14, MUTED)
+    for k, line in enumerate(wrap("Back sends each player to wherever they came from, the spot /back would take them to. Alone on a portal it is a way home for everyone.", 44)):
+        s.text(rx, 222 + k * 18, line, 14, MUTED)
+    for k, line in enumerate(wrap("LOOK sets the colour from 24, the door style, which side players arrive on, the name and an arrival line. OPEN/CLOSE sets the mode, the lock, the cooldown and the warm-up. ACCESS holds the rules.", 44)):
+        s.text(rx, 326 + k * 18, line, 14, MUTED)
     for k, line in enumerate(wrap("Moderators see everything and can press nothing.", 44)):
-        s.text(rx, 360 + k * 18, line, 14, MUTED)
+        s.text(rx, 448 + k * 18, line, 14, MUTED)
     s.save("core-screen")
 
 
@@ -462,19 +482,23 @@ def core_doors():
         s.text(px + tw / 2, y + 115, label.upper(), 11, VIOLET if on else MUTED, "bold", "middle", spacing=1)
         px += tw + 6
     s.row(x + 16, y + 134, w - 32, 50, "Real clock", "opens and closes at these times (Europe/London)")
-    s.rect(x + 26, y + 150, 70, 24, INSET, LINE, r=0)
-    s.text(x + 34, y + 167, "18:00", 13, TEXT, family=MONO)
-    s.text(x + 106, y + 167, "to", 13, MUTED)
-    s.rect(x + 130, y + 150, 70, 24, INSET, LINE, r=0)
-    s.text(x + 138, y + 167, "23:00", 13, TEXT, family=MONO)
-    s.button(x + w - 26, y + 150, "set", ACCENT)
+    s.rect(x + 380, y + 147, 70, 24, INSET, LINE, r=0)
+    s.text(x + 388, y + 164, "18:00", 13, TEXT, family=MONO)
+    s.text(x + 460, y + 164, "to", 13, MUTED)
+    s.rect(x + 484, y + 147, 70, 24, INSET, LINE, r=0)
+    s.text(x + 492, y + 164, "23:00", 13, TEXT, family=MONO)
+    s.button(x + w - 26, y + 147, "set", ACCENT)
     s.row(x + 16, y + 196, w - 32, 40, "Lock", "forces the portal closed in any mode")
     s.switch(x + w - 26, y + 205, False)
     s.row(x + 16, y + 242, w - 32, 40, "Cooldown per player", "seconds before the same player may use it again")
     bx = s.button(x + w - 26, y + 251, "+", ACCENT) - 8
     s.text(bx, y + 267, "5 s", 14, GOLD, anchor="end")
     s.button(bx - 36, y + 251, "-", ACCENT)
-    s.text(x + 26, y + 310, "Doors: closed, mode real clock 18:00 to 23:00, doors rendered, close when down", 12, MUTED)
+    s.row(x + 16, y + 288, w - 32, 40, "Warm-up", "seconds a player waits in the field; 0 for none", border=ACCENT)
+    bx = s.button(x + w - 26, y + 297, "+", ACCENT) - 8
+    s.text(bx, y + 313, "3 s", 14, GOLD, anchor="end")
+    s.button(bx - 36, y + 297, "-", ACCENT)
+    s.text(x + 26, y + 356, "Doors: closed, mode real clock 18:00 to 23:00, doors rendered, close when down", 12, MUTED)
     s.footer(x, y + h - 50, w, "BSP-Spawn  minecraft:overworld  120, 64, -40      frame 9x6, opening 28 cells", "DARK", MUTED, MUTED)
     rx = 780
     s.text(rx, 70, "Four ways to open and close", 22, TEXT, "bold")
@@ -483,12 +507,63 @@ def core_doors():
                  ("Redstone", "the core reads power on any side: open while powered, or closed while powered"),
                  ("Real clock", "open from one time of day to another on the server's clock, wrapping past midnight"),
                  ("Game clock", "the same in world time, 0 to 24000"),
-                 ("Close when down", "the doors shut by themselves while the destination's server is away and reopen when it is back")):
+                 ("Close when down", "the doors shut by themselves while every destination is away and reopen when one is back"),
+                 ("Warm-up", "up to 30 s waiting in the field first, with a countdown box; stepping out or a hit cancels it")):
         s.text(rx, yy, t, 14, VIOLET, "bold", spacing=1.5)
         for k, chunk in enumerate(wrap(d, 44)):
             s.text(rx, yy + 20 + k * 18, chunk, 14, MUTED)
         yy += 30 + 18 * len(wrap(d, 44)) + 8
     s.save("core-doors")
+
+
+def portal_chooser():
+    s = Svg(1200, 640)
+    s.text(40, 48, "Choosing a destination, and the warm-up", 28, TEXT, "bold")
+    s.text(40, 78, "Step into a portal with several places on its list and a card opens. With a warm-up you wait a few seconds in the field first.", 16, MUTED)
+    # Left: the card over the world.
+    gx, gy, gw, gh = 40, 110, 620, 500
+    s.rect(gx, gy, gw, gh, "#2b3f55", r=0)
+    cx, cy, cw = gx + 90, gy + 30, 440
+    rows = (("Market", "warp on BSP-Spawn", "go", ACCENT, LINE, TEXT, MUTED),
+            ("Arena Door", "portal on BSP-SafeRoom", "go", VIOLET, LINE, TEXT, MUTED),
+            ("Old Mines", "Destination missing", "down", LINE, LINE, MUTED, LINE),
+            ("The Wilds", "needs access to BSP-Wilds (Access Token IX)", "no access", BAD, BAD, MUTED, BAD))
+    ch = 66 + 52 + len(rows) * 44 + 44
+    s.rect(cx - 2, cy - 2, cw + 4, ch + 4, VIOLET, r=0)
+    s.rect(cx, cy, cw, ch, PANEL, r=0)
+    s.text(cx + 16, cy + 30, "HUB EAST", 20, VIOLET, "bold", spacing=2)
+    s.text(cx + 16, cy + 50, "Choose a destination", 13, MUTED)
+    by = cy + 66
+    s.rect(cx + 16, by, cw - 32, 42, INSET, ACCENT, r=0, sw=2.5)
+    s.text(cx + cw / 2, by + 19, "BACK", 15, ACCENT, "bold", "middle", spacing=3)
+    s.text(cx + cw / 2, by + 34, "where you came from: BSP-Wilds", 12, MUTED, anchor="middle")
+    ry = by + 52
+    for name, detail, key, kc, border, nc, dc in rows:
+        s.rect(cx + 16, ry, cw - 32, 38, INSET, border, r=0)
+        s.text(cx + 26, ry + 17, name, 14, nc, "bold")
+        s.text(cx + 26, ry + 31, detail, 11, dc)
+        s.button(cx + cw - 26, ry + 8, key, kc, key == "down")
+        ry += 44
+    s.button(cx + cw / 2 + 50, ry + 6, "cancel (esc)", GOLD)
+    for i in range(9):
+        s.rect(gx + gw / 2 - 150 + i * 30, gy + gh - 40, 28, 28, "#1c1c1c", "#6a6a6a", r=0)
+    s.rect(gx + gw / 2 - 150 + 9 * 30 + 8, gy + gh - 40, 28, 28, "#0F2A28", ACCENT, r=0)
+    # Right: the warm-up box at the top of the screen.
+    wx, wy, ww, wh = 700, 110, 460, 250
+    s.rect(wx, wy, ww, wh, "#2b3f55", r=0)
+    bx0, bw0 = wx + ww / 2 - 150, 300
+    s.rect(bx0 - 1.5, wy + 18, bw0 + 3, 74, ACCENT, r=0)
+    s.rect(bx0, wy + 19.5, bw0, 71, PANEL, r=0)
+    s.text(bx0 + 14, wy + 44, "HUB EAST", 14, ACCENT, "bold", spacing=2)
+    s.text(bx0 + 14, wy + 64, "Going in 2 s. Step out to stay.", 13, MUTED)
+    s.rect(bx0 + 14, wy + 74, bw0 - 28, 7, INSET, r=0)
+    s.rect(bx0 + 14, wy + 74, (bw0 - 28) * 0.62, 7, ACCENT, r=0)
+    s.text(wx + ww / 2, wy + 160, "+", 22, TEXT, anchor="middle")
+    for k, line in enumerate(wrap("Back is one wide key across the top: it takes you to wherever you came from. Places that are down are greyed with the reason; a server you may not enter names its token.", 50)):
+        s.text(700, 400 + k * 18, line, 14, MUTED)
+    for k, line in enumerate(wrap("A portal with a warm-up shows this box while you wait in the field. Walk about inside the field if you like; step out or take a hit and it is cancelled. After the card you are held still until it ends.", 50)):
+        s.text(700, 490 + k * 18, line, 14, MUTED)
+    s.save("portal-chooser")
 
 
 def access_hud():
@@ -629,9 +704,9 @@ def admin_tokens():
 
 
 def compat():
-    s = Svg(1200, 640)
+    s = Svg(1200, 760)
     s.text(40, 48, "Works with the other BSP mods", 28, TEXT, "bold")
-    s.text(40, 78, "BSP-Core is required. Region Guard, RankUp and the Velocity Additions proxy plugin are optional: with them, more of the mod switches on.", 16, MUTED)
+    s.text(40, 78, "BSP-Core is required. Region Guard, RankUp, InventorySync and the Velocity Additions proxy plugin are optional: with them, more switches on.", 16, MUTED)
     cols = [("BSP-Core (required)", GOLD, ["Your Shatter Totem travels with you on every cross-server move",
                                              "Recall from another server brings you back to your totem through this mod",
                                              "Nothing lands within 150 blocks of a totem being stolen, on any server",
@@ -646,19 +721,24 @@ def compat():
                                                      "Shutdown triggers evacuate everyone; /back brings them home"]),
             ("BSP-RankUp (optional)", VIOLET, ["Rank rules on portals and warps: a LuckPerms group, this or better",
                                                "RankUp ranks are LuckPerms groups, so a rung name is a rule name"]),
+            ("BSP-InventorySync (optional)", GOLD, ["Every server switch starts the inventory save before you leave",
+                                                     "The next server has your inventory ready, so the arrival freeze is short",
+                                                     "BSP-Core takes your totems out first, so a snapshot never holds one"]),
             ("BSP-Velocity Additions (proxy)", OK, ["One join and leave line for the whole network: switch this backend's own lines off",
                                                      "Players sent back to their last server on login; landings wait for them"])]
     for i, (title, color, lines) in enumerate(cols):
-        cx = 40 + i * 285
-        s.rect(cx, 110, 270, 500, PANEL, color, r=10)
-        s.text(cx + 16, 140, title, 15, color, "bold")
-        s.line(cx + 16, 152, cx + 254, 152, LINE, 1)
-        yy = 176
+        cx = 40 + i * 226
+        s.rect(cx, 110, 214, 620, PANEL, color, r=10)
+        for k, chunk in enumerate(wrap(title, 22)):
+            s.text(cx + 14, 138 + k * 18, chunk, 14, color, "bold")
+        top = 138 + 18 * len(wrap(title, 22))
+        s.line(cx + 14, top - 6, cx + 200, top - 6, LINE, 1)
+        yy = top + 18
         for item in lines:
-            s.circle(cx + 22, yy - 5, 4, color)
-            for k, chunk in enumerate(wrap(item, 30)):
-                s.text(cx + 34, yy + k * 17, chunk, 13, MUTED)
-            yy += 17 * len(wrap(item, 30)) + 14
+            s.circle(cx + 20, yy - 5, 4, color)
+            for k, chunk in enumerate(wrap(item, 23)):
+                s.text(cx + 32, yy + k * 17, chunk, 13, MUTED)
+            yy += 17 * len(wrap(item, 23)) + 12
     s.save("compat")
 
 
@@ -741,7 +821,7 @@ def join_leave():
 
 
 def main():
-    for fn in (banner, band_slot, band_screen, band_team, band_more, admin_network, admin_portals, blocks_and_items, portal_views, core_screen, core_doors, access_hud, access_popups, access_board_img, score_board, admin_tokens, join_leave, compat):
+    for fn in (banner, band_slot, band_screen, band_team, band_more, admin_network, admin_portals, blocks_and_items, portal_views, core_screen, portal_chooser, core_doors, access_hud, access_popups, access_board_img, score_board, admin_tokens, join_leave, compat):
         fn()
 
 

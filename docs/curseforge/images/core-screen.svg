@@ -5,7 +5,7 @@
 <rect x="38" y="38" width="704" height="564" rx="0" fill="#B58CFF" opacity="1"/>
 <rect x="40" y="40" width="700" height="560" rx="0" fill="#10151C" opacity="1"/>
 <text x="56" y="70" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#B58CFF" text-anchor="start" letter-spacing="2">PORTAL</text>
-<text x="56" y="90" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Hub East.  One destination per portal. Links are two-way unless Arrive only is on.</text>
+<text x="56" y="90" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Hub East.  Pick on the left, press ADD, edit the label on the right.</text>
 <rect x="654.8" y="52" width="69.19999999999999" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
 <text x="689.4" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">ACCESS</text>
 <rect x="546.8" y="52" width="102.0" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
@@ -15,51 +15,83 @@
 <rect x="371.79999999999995" y="52" width="110.19999999999999" height="24" rx="0" fill="#0C0E12" stroke="#B58CFF" stroke-width="1.5" opacity="1"/>
 <text x="426.9" y="69" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#B58CFF" text-anchor="middle" letter-spacing="1">DESTINATION</text>
 <rect x="56" y="102" width="668" height="26" rx="0" fill="#0C0E12" stroke="#8FE04A" stroke-width="1.5" opacity="1"/>
-<text x="66" y="120" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#8FE04A" text-anchor="start" letter-spacing="1">READY: LINKED TO MARKET GATE ON BSP-SAFEROOM</text>
+<text x="66" y="120" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#8FE04A" text-anchor="start" letter-spacing="1">READY: 3 DESTINATIONS</text>
 <rect x="56" y="140" width="52" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
 <text x="82.0" y="155" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">WARP</text>
 <rect x="114" y="140" width="108" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
 <text x="168.0" y="155" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">PORTAL WARP</text>
 <rect x="228" y="140" width="68" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
-<text x="262.0" y="155" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">RANDOM</text>
-<rect x="302" y="140" width="84" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
-<text x="344.0" y="155" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">POSITION</text>
-<rect x="392" y="140" width="52" height="22" rx="0" fill="#0C0E12" stroke="#B58CFF" stroke-width="1.5" opacity="1"/>
-<text x="418.0" y="155" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#B58CFF" text-anchor="middle" letter-spacing="1">LINK</text>
-<rect x="668.0" y="140" width="56.0" height="22" rx="0" fill="#0C0E12" stroke="#FF6B5C" stroke-width="1.5" opacity="1"/>
-<text x="696.0" y="155" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#FF6B5C" text-anchor="middle" letter-spacing="1">CLEAR</text>
-<text x="66" y="186" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="start">Link id   letters, numbers, _ or -</text>
-<rect x="66" y="196" width="220" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
-<text x="74" y="213" font-family="Menlo, Monaco, monospace" font-size="13" font-weight="normal" fill="#E6EAF2" text-anchor="start">hub-east</text>
-<rect x="309.2" y="197" width="40.8" height="22" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
-<text x="329.59999999999997" y="212" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">SET</text>
-<text x="66" y="244" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#8FE04A" text-anchor="start">Partner: Market Gate (BSP-SafeRoom 4,65,-90)</text>
+<text x="262.0" y="155" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">PORTAL</text>
+<rect x="302" y="140" width="68" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="336.0" y="155" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">RANDOM</text>
+<rect x="376" y="140" width="84" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="418.0" y="155" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">POSITION</text>
+<rect x="466" y="140" width="52" height="22" rx="0" fill="#0C0E12" stroke="#B58CFF" stroke-width="1.5" opacity="1"/>
+<text x="492.0" y="155" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#B58CFF" text-anchor="middle" letter-spacing="1">BACK</text>
+<rect x="56" y="176" width="250" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="66" y="193" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="start">Each player goes back to</text>
+<rect x="56" y="204" width="250" height="24" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="66" y="221" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="start">where they came from.</text>
+<rect x="265.2" y="236" width="40.8" height="22" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="285.59999999999997" y="251" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">ADD</text>
+<text x="324" y="210" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" fill="#19D3B0" text-anchor="start">&gt;</text>
+<text x="348" y="186" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="start" letter-spacing="1.5">DESTINATIONS 3 OF 8</text>
+<rect x="346" y="196" width="378" height="30" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="354" y="216" font-family="Menlo, Monaco, monospace" font-size="12" font-weight="normal" fill="#FFD23A" text-anchor="start">1</text>
+<rect x="370" y="204" width="38" height="15" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="389.0" y="215" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">WARP</text>
+<text x="416" y="216" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" fill="#E6EAF2" text-anchor="start">Market</text>
+<rect x="677.2" y="200" width="40.8" height="22" rx="0" fill="#0C0E12" stroke="#FF6B5C" stroke-width="1.5" opacity="1"/>
+<text x="697.6" y="215" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#FF6B5C" text-anchor="middle" letter-spacing="1">DEL</text>
+<rect x="346" y="232" width="378" height="30" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="354" y="252" font-family="Menlo, Monaco, monospace" font-size="12" font-weight="normal" fill="#FFD23A" text-anchor="start">2</text>
+<rect x="370" y="240" width="52" height="15" rx="0" fill="#0C0E12" stroke="#B58CFF" stroke-width="1.5" opacity="1"/>
+<text x="396.0" y="251" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9" font-weight="bold" fill="#B58CFF" text-anchor="middle" letter-spacing="1">PORTAL</text>
+<text x="430" y="252" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" fill="#E6EAF2" text-anchor="start">Arena Door</text>
+<rect x="677.2" y="236" width="40.8" height="22" rx="0" fill="#0C0E12" stroke="#FF6B5C" stroke-width="1.5" opacity="1"/>
+<text x="697.6" y="251" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#FF6B5C" text-anchor="middle" letter-spacing="1">DEL</text>
+<rect x="640.0" y="236" width="33.2" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="656.6" y="251" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">UP</text>
+<rect x="346" y="268" width="378" height="30" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="354" y="288" font-family="Menlo, Monaco, monospace" font-size="12" font-weight="normal" fill="#FFD23A" text-anchor="start">3</text>
+<rect x="370" y="276" width="38" height="15" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
+<text x="389.0" y="287" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="9" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">BACK</text>
+<text x="416" y="288" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" fill="#E6EAF2" text-anchor="start">Back</text>
+<rect x="677.2" y="272" width="40.8" height="22" rx="0" fill="#0C0E12" stroke="#FF6B5C" stroke-width="1.5" opacity="1"/>
+<text x="697.6" y="287" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#FF6B5C" text-anchor="middle" letter-spacing="1">DEL</text>
+<rect x="640.0" y="272" width="33.2" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
+<text x="656.6" y="287" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">UP</text>
+<text x="348" y="314" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="start">Click a name to type your own label.</text>
 <rect x="56" y="450" width="668" height="40" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
 <text x="66" y="471" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Arrive only</text>
 <text x="66" y="481" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="start">players may arrive here but not leave through it</text>
 <rect x="673.2" y="459" width="40.8" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
 <text x="693.6" y="474" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">OFF</text>
 <rect x="56" y="496" width="668" height="40" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
-<text x="66" y="517" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Close when the destination is down</text>
-<text x="66" y="527" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="start">the doors shut while the partner or its server is away</text>
+<text x="66" y="517" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Close when every destination is down</text>
+<text x="66" y="527" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="start">the doors shut while nothing on the list answers</text>
 <rect x="680.8" y="505" width="33.2" height="22" rx="0" fill="#0C0E12" stroke="#8FE04A" stroke-width="1.5" opacity="1"/>
 <text x="697.4" y="520" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#8FE04A" text-anchor="middle" letter-spacing="1">ON</text>
 <line x1="56" y1="550" x2="724" y2="550" stroke="#2A2F3A" stroke-width="1" stroke-linecap="round"/>
 <text x="56" y="570" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#9AA3B5" text-anchor="start">BSP-Spawn  minecraft:overworld  120, 64, -40      frame 9x6, opening 28 cells</text>
 <text x="724" y="570" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#8FE04A" text-anchor="end">LIT</text>
 <text x="780" y="70" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" fill="#E6EAF2" text-anchor="start">The core screen</text>
-<text x="780" y="100" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">Right-click the core. DESTINATION picks</text>
-<text x="780" y="118" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">where the portal leads: an existing warp, a</text>
-<text x="780" y="136" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">portal warp (a warp only portals can reach),</text>
-<text x="780" y="154" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">a random spot on any server, a position, or</text>
-<text x="780" y="172" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">a link id shared with one other core</text>
-<text x="780" y="190" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">anywhere on the network.</text>
-<text x="780" y="240" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">LOOK sets the colour from 24, the door</text>
-<text x="780" y="258" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">style, which side players arrive on, the</text>
-<text x="780" y="276" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">name and an arrival line. OPEN/CLOSE sets</text>
-<text x="780" y="294" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">the mode and the lock. ACCESS holds the</text>
-<text x="780" y="312" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">rules.</text>
-<text x="780" y="360" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">Moderators see everything and can press</text>
-<text x="780" y="378" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">nothing.</text>
+<text x="780" y="100" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">Right-click the core. DESTINATION holds a</text>
+<text x="780" y="118" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">list of up to eight places: a warp, a portal</text>
+<text x="780" y="136" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">warp (a warp only portals can reach),</text>
+<text x="780" y="154" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">another portal anywhere on the network, a</text>
+<text x="780" y="172" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">random spot on any server, a position, or</text>
+<text x="780" y="190" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">Back.</text>
+<text x="780" y="222" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">Back sends each player to wherever they came</text>
+<text x="780" y="240" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">from, the spot /back would take them to.</text>
+<text x="780" y="258" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">Alone on a portal it is a way home for</text>
+<text x="780" y="276" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">everyone.</text>
+<text x="780" y="326" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">LOOK sets the colour from 24, the door</text>
+<text x="780" y="344" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">style, which side players arrive on, the</text>
+<text x="780" y="362" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">name and an arrival line. OPEN/CLOSE sets</text>
+<text x="780" y="380" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">the mode, the lock, the cooldown and the</text>
+<text x="780" y="398" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">warm-up. ACCESS holds the rules.</text>
+<text x="780" y="448" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">Moderators see everything and can press</text>
+<text x="780" y="466" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">nothing.</text>
 </g>
 </svg>

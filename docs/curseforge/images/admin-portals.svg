@@ -21,7 +21,7 @@
 <text x="64" y="146" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#FFD23A" text-anchor="start" letter-spacing="1.5">BSP-SPAWN  (this server)</text>
 <rect x="56" y="156" width="1088" height="44" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
 <text x="66" y="175" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Hub East</text>
-<text x="66" y="192" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#8FE04A" text-anchor="start">120,64,-40   link hub-east: Market Gate (BSP-SafeRoom)   open</text>
+<text x="66" y="192" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#8FE04A" text-anchor="start">120,64,-40   3 destinations: Market, Arena Door, +1, warm-up 3 s   open</text>
 <rect x="1085.6" y="167" width="48.4" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
 <text x="1109.8" y="182" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">LOCK</text>
 <rect x="1023.5999999999999" y="167" width="56.0" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
@@ -31,8 +31,8 @@
 <rect x="929.9999999999999" y="167" width="33.2" height="22" rx="0" fill="#0C0E12" stroke="#19D3B0" stroke-width="1.5" opacity="1"/>
 <text x="946.5999999999999" y="182" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">GO</text>
 <rect x="56" y="206" width="1088" height="44" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
-<text x="66" y="225" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Wilds Drop</text>
-<text x="66" y="242" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#8FE04A" text-anchor="start">88,70,12   random on BSP-Wilds   open</text>
+<text x="66" y="225" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Return Gate</text>
+<text x="66" y="242" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#8FE04A" text-anchor="start">88,70,12   back   open</text>
 <rect x="1085.6" y="217" width="48.4" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
 <text x="1109.8" y="232" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">LOCK</text>
 <rect x="1023.5999999999999" y="217" width="56.0" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
@@ -55,7 +55,7 @@
 <text x="64" y="322" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="bold" fill="#FFD23A" text-anchor="start" letter-spacing="1.5">BSP-SAFEROOM</text>
 <rect x="56" y="332" width="1088" height="44" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
 <text x="66" y="351" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E6EAF2" text-anchor="start">Market Gate</text>
-<text x="66" y="368" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#FFD23A" text-anchor="start">4,65,-90   link hub-east: Hub East (BSP-Spawn)   real clock, opens 18:00   closed</text>
+<text x="66" y="368" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="12" font-weight="normal" fill="#FFD23A" text-anchor="start">4,65,-90   warp market   real clock, opens 18:00   closed</text>
 <rect x="1085.6" y="343" width="48.4" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
 <text x="1109.8" y="358" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">LOCK</text>
 <rect x="1023.5999999999999" y="343" width="56.0" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
