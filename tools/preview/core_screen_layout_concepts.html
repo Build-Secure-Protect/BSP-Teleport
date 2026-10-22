@@ -1,0 +1,184 @@
+<title>Portal Core Screen Layout</title>
+<style>
+/* Layout: one column of concept sheets; each sheet is the Portal Core screen at the proposed 440 x 270 size drawn at 1.5x, with a toggle for a long portal name. */
+:root {
+  --bg: #0B0F14; --panel: #10151C; --inset: #0C0E12; --line: #2A2F3A;
+  --accent: #19D3B0; --violet: #B58CFF; --gold: #FFD23A; --bad: #FF6B5C; --ok: #8FE04A;
+  --text: #E6EAF2; --muted: #9AA3B5;
+  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif; --mono: Menlo, Monaco, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--sans); margin: 0; padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 28px; margin: 0 0 6px; text-wrap: balance; }
+h2 { font-size: 20px; margin: 40px 0 6px; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; }
+h3 { font-size: 15px; margin: 18px 0 8px; }
+p, li { color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 75ch; }
+.wrap { overflow-x: auto; }
+.hud { position: relative; background: var(--panel); border: 2px solid var(--violet); padding: 12px 14px 10px; font-size: 12px; width: 660px; box-sizing: border-box; }
+.head { display: flex; align-items: center; gap: 10px; }
+.title { font-weight: bold; letter-spacing: 2px; text-transform: uppercase; font-size: 15px; color: var(--violet); }
+.pname { font-weight: bold; color: var(--text); font-size: 13px; }
+.tabs { margin-left: auto; display: flex; gap: 4px; }
+.tab { border: 1px solid var(--line); background: var(--inset); color: var(--muted); font-size: 9px; font-weight: bold; letter-spacing: 1px; padding: 4px 6px; text-transform: uppercase; }
+.tab.on { border-color: var(--violet); color: var(--violet); }
+.help { color: var(--muted); font-size: 10px; margin: 3px 0 6px; }
+.status { border: 1px solid var(--gold); background: var(--inset); color: var(--gold); font-size: 9px; font-weight: bold; letter-spacing: 1px; padding: 4px 7px; text-transform: uppercase; margin-bottom: 6px; }
+.status.ok { border-color: var(--ok); color: var(--ok); }
+.pills { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.pill { border: 1px solid var(--line); background: var(--inset); color: var(--muted); font-size: 9px; font-weight: bold; letter-spacing: 1px; padding: 3px 6px; text-transform: uppercase; }
+.pill.on { border-color: var(--violet); color: var(--violet); }
+.cols { display: flex; gap: 10px; }
+.left { flex: 0 0 280px; min-width: 0; }
+.right { flex: 1 1 auto; min-width: 0; }
+.label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin: 2px 0 4px; }
+.row { border: 1px solid var(--line); background: var(--inset); padding: 3px 6px; margin-bottom: 3px; display: flex; align-items: center; gap: 6px; min-height: 18px; font-size: 11px; }
+.row.sel { border-color: var(--accent); }
+.row .n { color: var(--text); font-weight: bold; flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .s { color: var(--violet); white-space: nowrap; font-size: 10px; }
+.row .s.here { color: var(--muted); }
+.row .c { color: var(--muted); font-family: var(--mono); font-size: 9px; white-space: nowrap; }
+.two { flex-direction: column; align-items: stretch; gap: 1px; }
+.two .top { display: flex; gap: 6px; }
+.two .sub { color: var(--muted); font-size: 9px; }
+.detail { border: 1px dashed var(--accent); background: var(--inset); padding: 4px 6px; font-size: 10px; color: var(--text); margin: 4px 0; }
+.detail b { color: var(--accent); }
+.key { border: 1px solid var(--accent); color: var(--accent); background: var(--inset); font-size: 9px; font-weight: bold; letter-spacing: 1px; padding: 2px 6px; text-transform: uppercase; white-space: nowrap; }
+.key.r { border-color: var(--bad); color: var(--bad); }
+.key.d { border-color: var(--line); color: var(--muted); }
+.key.ok { border-color: var(--ok); color: var(--ok); }
+.chip { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; border: 1px solid var(--accent); color: var(--accent); padding: 0 3px; }
+.chip.v { border-color: var(--violet); color: var(--violet); }
+.num { color: var(--gold); font-family: var(--mono); font-size: 10px; }
+.box { border: 1px solid var(--line); background: #000; color: var(--text); font-family: var(--mono); font-size: 10px; padding: 2px 5px; flex: 1 1 auto; min-width: 0; }
+.namerow { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--inset); padding: 4px 6px; margin-bottom: 6px; }
+.namerow b { font-size: 11px; white-space: nowrap; }
+.namerow span.h { color: var(--muted); font-size: 9px; white-space: nowrap; }
+.switches { display: flex; gap: 6px; margin-top: 6px; }
+.switches .row { flex: 1 1 0; }
+.foot { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 4px; color: var(--muted); font-size: 9px; display: flex; justify-content: space-between; }
+table.t { width: 100%; border-collapse: collapse; font-size: 10px; }
+table.t th { text-align: left; color: var(--muted); font-weight: normal; font-size: 8px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 5px; border-bottom: 1px solid var(--line); }
+table.t td { padding: 3px 5px; border-bottom: 1px solid var(--line); background: var(--inset); white-space: nowrap; }
+table.t tr.sel td { color: var(--accent); }
+.toggles { display: flex; gap: 8px; margin: 10px 0 16px; flex-wrap: wrap; }
+.toggle { border: 1px solid var(--line); background: var(--panel); color: var(--muted); font: inherit; font-size: 12px; padding: 6px 10px; cursor: pointer; }
+.toggle[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.toggle:focus-visible { outline: 2px solid var(--gold); }
+.pick { border: 1px solid var(--gold); color: var(--gold); display: inline-block; padding: 2px 8px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-left: 8px; }
+.size { color: var(--muted); font-size: 12px; }
+</style>
+
+<h1>Portal Core screen: a bigger layout</h1>
+<p>Three options for the core screen at a new size, 440 by 270 GUI units instead of 300 by 214, with the same small text. It fills more of the window and the text comes out smaller next to it. Each option also fixes the three layout points from the report: somewhere obvious to name the portal, picker names that are not cut off, and nothing running past the edge. The text fixes (plain button names, no raw keys, the new help line) are already built and are the same in all three.</p>
+<div class="toggles" role="group" aria-label="States">
+  <button class="toggle" id="t-long" aria-pressed="true">Long portal names</button>
+</div>
+
+<h2>A. Name row on top, detail line under the picker <span class="pick">default</span></h2>
+<p class="size">The DESTINATION tab gains a Name row with a Rename key. Picker rows show the name and the server on one line; the selected one is spelled out in full underneath, with where it is.</p>
+<div class="wrap">
+<div class="hud">
+  <div class="head"><span class="title">Portal</span><div class="tabs"><span class="tab on">Destination</span><span class="tab">Look</span><span class="tab">Open/close</span><span class="tab">Access</span></div></div>
+  <div class="help">Up to eight destinations. Pick on the left, then Add destination.</div>
+  <div class="namerow"><b>Name</b><span class="box" data-name>Frostwarf North Gate</span><span class="h">other portals find it by this</span><span class="key">Rename</span></div>
+  <div class="status ok">Ready: 2 destinations</div>
+  <div class="pills"><span class="pill">Warp</span><span class="pill">Portal warp</span><span class="pill on">Portal link</span><span class="pill">Random</span><span class="pill">Position</span><span class="pill">Back</span></div>
+  <div class="cols">
+    <div class="left">
+      <div class="label">Pick a portal to lead to:</div>
+      <div data-picka></div>
+      <div class="detail" data-detail></div>
+      <div style="display:flex;justify-content:flex-end"><span class="key">Add destination</span></div>
+    </div>
+    <div class="right">
+      <div class="label">Destinations 2 of 8</div>
+      <div class="row"><span class="num">1</span><span class="chip">warp</span><span class="n">Market</span><span class="key r">Remove</span></div>
+      <div class="row"><span class="num">2</span><span class="chip v">portal</span><span class="n" data-dest>SafeRoom Market Gate</span><span class="key d">Move up</span><span class="key r">Remove</span></div>
+      <div class="label" style="text-transform:none;letter-spacing:0">Click a name to give it your own label.</div>
+    </div>
+  </div>
+  <div class="switches"><div class="row"><span class="n">Arrive only</span><span class="key d">Off</span></div><div class="row"><span class="n">Close when every destination is down</span><span class="key ok">On</span></div></div>
+  <div class="foot"><span>BSP-Frostwarf minecraft:overworld 0, 70, 0 &nbsp; frame 9x13, opening 69 cells</span><span>DARK</span></div>
+</div>
+</div>
+
+<h2>B. Name in the title line, two-line picker rows</h2>
+<p class="size">The portal's name sits next to PORTAL on every tab, with a Rename key beside it. Picker rows take two lines: the name in full on top, the server and position underneath, so nothing needs a detail line.</p>
+<div class="wrap">
+<div class="hud">
+  <div class="head"><span class="title">Portal</span><span class="pname" data-name>Frostwarf North Gate</span><span class="key">Rename</span><div class="tabs"><span class="tab on">Destination</span><span class="tab">Look</span><span class="tab">Open/close</span><span class="tab">Access</span></div></div>
+  <div class="help">Up to eight destinations. Pick on the left, then Add destination.</div>
+  <div class="status ok">Ready: 2 destinations</div>
+  <div class="pills"><span class="pill">Warp</span><span class="pill">Portal warp</span><span class="pill on">Portal link</span><span class="pill">Random</span><span class="pill">Position</span><span class="pill">Back</span></div>
+  <div class="cols">
+    <div class="left">
+      <div class="label">Pick a portal to lead to:</div>
+      <div data-pickb></div>
+      <div style="display:flex;justify-content:flex-end"><span class="key">Add destination</span></div>
+    </div>
+    <div class="right">
+      <div class="label">Destinations 2 of 8</div>
+      <div class="row"><span class="num">1</span><span class="chip">warp</span><span class="n">Market</span><span class="key r">Remove</span></div>
+      <div class="row"><span class="num">2</span><span class="chip v">portal</span><span class="n" data-dest>SafeRoom Market Gate</span><span class="key d">Move up</span><span class="key r">Remove</span></div>
+      <div class="label" style="text-transform:none;letter-spacing:0">Click a name to give it your own label.</div>
+    </div>
+  </div>
+  <div class="switches"><div class="row"><span class="n">Arrive only</span><span class="key d">Off</span></div><div class="row"><span class="n">Close when every destination is down</span><span class="key ok">On</span></div></div>
+  <div class="foot"><span>BSP-Frostwarf minecraft:overworld 0, 70, 0 &nbsp; frame 9x13, opening 69 cells</span><span>DARK</span></div>
+</div>
+</div>
+
+<h2>C. Picker as a table across the top, list below</h2>
+<p class="size">The picker takes the full width as a table with Name, Server and Where columns, so long names have room; the destination list moves underneath. The Name row is as in A.</p>
+<div class="wrap">
+<div class="hud">
+  <div class="head"><span class="title">Portal</span><div class="tabs"><span class="tab on">Destination</span><span class="tab">Look</span><span class="tab">Open/close</span><span class="tab">Access</span></div></div>
+  <div class="help">Up to eight destinations. Pick in the table, then Add destination.</div>
+  <div class="namerow"><b>Name</b><span class="box" data-name>Frostwarf North Gate</span><span class="h">other portals find it by this</span><span class="key">Rename</span></div>
+  <div class="pills"><span class="pill">Warp</span><span class="pill">Portal warp</span><span class="pill on">Portal link</span><span class="pill">Random</span><span class="pill">Position</span><span class="pill">Back</span><span style="margin-left:auto" class="key">Add destination</span></div>
+  <table class="t" data-pickc></table>
+  <div class="label" style="margin-top:6px">Destinations 2 of 8</div>
+  <div class="row"><span class="num">1</span><span class="chip">warp</span><span class="n">Market</span><span class="key r">Remove</span></div>
+  <div class="row"><span class="num">2</span><span class="chip v">portal</span><span class="n" data-dest>SafeRoom Market Gate</span><span class="key d">Move up</span><span class="key r">Remove</span></div>
+  <div class="foot"><span>BSP-Frostwarf minecraft:overworld 0, 70, 0 &nbsp; frame 9x13, opening 69 cells</span><span>DARK &nbsp; Arrive only: off &nbsp; Close when every destination is down: on</span></div>
+</div>
+</div>
+<p>C fits fewer picker rows and pushes the two switches into the footer line (they move to the Open/close tab).</p>
+
+<h2>Applies to all three</h2>
+<ul>
+  <li>The panel is 440 by 270 GUI units and takes up to about 90 % of the window; the client setting ui.screenScale (config/bsp_teleport-client.toml, default 1.5) still caps the size, so a smaller number there makes every BSP-Teleport screen smaller.</li>
+  <li>Every text that can be long (portal, warp and server names, labels, help lines) is cut with "..." to the space it has, so nothing runs past a key or the panel's edge; the other tabs get the same check.</li>
+  <li>New Portal Cores are named "Portal 1", "Portal 2" and so on, the next free number on the network, and Rename refuses a name another portal already uses, so /bsptp portal &lt;name&gt; and the pickers always find one portal.</li>
+  <li>Portal pickers show the server in violet when it is another one, and the position, so two portals with similar names can be told apart.</li>
+</ul>
+
+<script>
+(function () {
+  var long = true;
+  var portals = [
+    { n: "SafeRoom Market Gate", ln: "SafeRoom Market Gate (south entrance by the fountain)", s: "BSP-SafeRoom", c: "4, 65, -90" },
+    { n: "Spawn Hub East", ln: "Spawn Hub East", s: "BSP-Spawn", c: "120, 64, -40" },
+    { n: "Spawn Arena Door", ln: "Spawn Arena Door for the weekly tournament", s: "BSP-Spawn", c: "300, 64, 300" },
+    { n: "Boulderfield Mine", ln: "Boulderfield Deep Mine Lift", s: "BSP-Boulderfield", c: "-512, 40, 88" }
+  ];
+  function nm(p) { return long ? p.ln : p.n; }
+  function render() {
+    var a = "", b = "", c = "<tr><th>Name</th><th>Server</th><th>Where</th></tr>";
+    for (var i = 0; i < portals.length; i++) {
+      var p = portals[i], sel = i === 0 ? " sel" : "";
+      a += '<div class="row' + sel + '"><span class="n">' + nm(p) + '</span><span class="s">' + p.s + '</span></div>';
+      b += '<div class="row two' + sel + '"><div class="top"><span class="n" style="white-space:normal">' + nm(p) + '</span></div><div class="sub">' + p.s + ' &nbsp; ' + p.c + '</div></div>';
+      c += '<tr class="' + sel.trim() + '"><td>' + nm(p) + '</td><td style="color:var(--violet)">' + p.s + '</td><td style="color:var(--muted);font-family:var(--mono)">' + p.c + '</td></tr>';
+    }
+    document.querySelector("[data-picka]").innerHTML = a;
+    document.querySelector("[data-pickb]").innerHTML = b;
+    document.querySelector("[data-pickc]").innerHTML = c;
+    document.querySelector("[data-detail]").innerHTML = "<b>" + nm(portals[0]) + "</b><br>" + portals[0].s + " &nbsp; minecraft:overworld &nbsp; " + portals[0].c;
+  }
+  var t = document.getElementById("t-long");
+  t.addEventListener("click", function () { long = !long; t.setAttribute("aria-pressed", long ? "true" : "false"); render(); });
+  render();
+})();
+</script>

@@ -223,6 +223,9 @@ public final class PortalActions {
         if (trimmed.isEmpty() || trimmed.length() > 32) {
             return fail(player, "portal.bad_name");
         }
+        if (Portals.nameTaken(trimmed, core)) {
+            return fail(player, "portal.name_taken", trimmed);
+        }
         core.setName(trimmed);
         Portals.rescan(core);
         return done(player, core, "name " + trimmed);

@@ -57,6 +57,13 @@ public final class TeleportService implements BspTeleportApi {
 
     public static void onPlayerLoggedIn(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
         LOGIN_AT.put(event.getEntity().getUUID(), System.currentTimeMillis());
+        // B11: a player who logs in standing in a portal's field (a switch through it failed and the proxy sent them
+        // back to where they logged out) must not be sent through again until they step off, or they loop forever.
+        if (event.getEntity() instanceof ServerPlayer player
+                && com.mrgregles.bsp_teleport.portal.Portals.markLogin(player)) {
+            BSPTeleport.LOGGER.info("{} logged in inside a portal's field; it will not fire for them until they step off",
+                    player.getGameProfile().getName());
+        }
     }
 
     public static void onPlayerLoggedOut(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {

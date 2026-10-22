@@ -81,7 +81,7 @@ Give the core a destination and the opening fills with a lit field in one of 24 
 
 ![The core screen](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/core-screen.png)
 
-Right-click the core for its screen. **Destination** holds a list of up to eight places; pick on the left and press ADD, and give any entry a label of your own:
+Right-click the core for its screen. The portal's name sits at the top with a Rename key; new portals are named after their server and a number (BSP-Spawn-1, BSP-Frostwarf-2), and no two portals share a name. **Destination** holds a list of up to eight places; pick on the left (the picked one is spelled out in full underneath) and press Add destination, and give any entry a label of your own:
 
 - **Warp**: any existing warp.
 - **Portal warp**: a warp only portals can reach. The band never shows it and `/warp` refuses it, so a portal can lead somewhere a bracelet cannot.
@@ -94,7 +94,7 @@ One destination sends a player straight through. With several, a card opens the 
 
 ![Choosing a destination, and the warm-up](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/portal-chooser.png)
 
-**Look** sets the colour, the door style, the arrival side, the name and an optional arrival line.
+**Look** sets the colour, the door style, the arrival side and an optional arrival line.
 
 ![Open and close](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/core-doors.png)
 

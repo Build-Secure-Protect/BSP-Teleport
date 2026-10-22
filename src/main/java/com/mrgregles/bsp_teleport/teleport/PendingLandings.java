@@ -81,8 +81,10 @@ public final class PendingLandings {
             return;
         }
         PENDING.remove(player.getUUID());
-        if (TeleportService.moveHere(player, raidChecked(player, destination))) {
+        Destination to = raidChecked(player, destination);
+        if (TeleportService.moveHere(player, to)) {
             Storage.deletePending(player.getUUID());
+            BSPTeleport.LOGGER.info("Landed {} at {} {}, {}, {}", name, to.world(), (int) Math.floor(to.x()), (int) Math.floor(to.y()), (int) Math.floor(to.z()));
         }
     }
 

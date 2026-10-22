@@ -10,7 +10,11 @@
 
 **Portal warm-ups.** A portal may make players wait up to 30 seconds in the field before going: set it under the cooldown on the Open/close tab or with `/bsptp portal warmup <seconds>`. A box at the top of the screen counts down. Stepping out of the field or being hurt cancels it; after the chooser the player is held still until it ends. Coins are taken only when the player actually goes. Off by default, and players who may skip warm-ups skip this one too.
 
+**Portal names.** A new Portal Core is named after its server and the next free number on the network (BSP-Spawn-1, BSP-Frostwarf-2, ...), and no two portals may share a name, so pickers and `/bsptp portal <name>` always find the right one. The name and a Rename key now sit at the top of the core screen's DESTINATION tab.
+
 ## Fixed
+
+**The core screen.** Buttons and lines that showed internal names ("screen.bsp_teleport.portal.add" and others) now read in plain English, and so do the keys on the destination card. The screen is larger with smaller text, long names are cut to fit instead of running off the panel, the picked destination is spelled out in full under the picker, and the portal picker scrolls.
 
 **/back after a portal trip.** `/back` used to remember the spot inside the portal you left by, so it could throw you straight back through. It now remembers the spot in front of that portal, and any landing inside a portal's field no longer fires it until you walk off.
 

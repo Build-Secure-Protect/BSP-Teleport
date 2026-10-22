@@ -440,6 +440,9 @@ public final class Portals {
     /** Writes the core's row when it differs from the last one written. */
     public static void publish(PortalCoreBlockEntity core) {
         ServerLevel level = (ServerLevel) core.getLevel();
+        if (core.createdMs() == 0 && PortalCoreBlockEntity.DEFAULT_NAME.equals(core.name())) {
+            core.setName(nextName());
+        }
         core.markCreated(System.currentTimeMillis());
         PortalRow row = rowOf(core);
         if (row.sameAs(core.lastRow())) {
@@ -907,11 +910,25 @@ public final class Portals {
         return Position.of(player);
     }
 
-    /** D112 (B9): a landing inside a portal's field, by any route, is marked so the field does not fire until the player walks off. */
-    public static void markIfInField(ServerPlayer player) {
+    /**
+     * D112 (B9), B11: a landing or a login inside a portal's field is marked so the field does not fire until the player
+     * walks off. Returns whether the player stood in a field.
+     */
+    public static boolean markIfInField(ServerPlayer player) {
         if (fieldAt(player) != null) {
             ARRIVED.put(player.getUUID(), player.blockPosition());
+            return true;
         }
+        return false;
+    }
+
+    /**
+     * B11: every login spot counts as an arrival, so a portal never fires for a player who logs in standing in it
+     * (even before the core's chunk has loaded) until they walk two blocks off. Returns whether a field was found there.
+     */
+    public static boolean markLogin(ServerPlayer player) {
+        ARRIVED.put(player.getUUID(), player.blockPosition());
+        return fieldAt(player) != null;
     }
 
     @Nullable
@@ -1063,6 +1080,36 @@ public final class Portals {
 
     /** A row by name: this server's first, then any; null when none matches (case does not matter). */
     @Nullable
+    /**
+     * D129: a new core's name, {@code <server>-<n>}, with {@code n} one more than the highest trailing number on any
+     * portal name on the network (one counter for every server), so new portals never share a name.
+     */
+    public static String nextName() {
+        int highest = 0;
+        List<String> names = new ArrayList<>();
+        rows().forEach(r -> names.add(r.name()));
+        allCores().forEach(c -> names.add(c.name()));
+        for (String n : names) {
+            highest = Math.max(highest, PortalNames.trailingNumber(n));
+        }
+        return PortalNames.compose(TeleportConfig.serverName(), highest + 1);
+    }
+
+    /** D130: whether another portal on the network (or on this server, before its row is written) already uses this name. */
+    public static boolean nameTaken(String name, PortalCoreBlockEntity self) {
+        for (PortalRow r : rows()) {
+            if (!r.id().equals(self.rowId()) && r.name().equalsIgnoreCase(name)) {
+                return true;
+            }
+        }
+        for (PortalCoreBlockEntity c : allCores()) {
+            if (c != self && c.name().equalsIgnoreCase(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static PortalRow rowByName(String name) {
         PortalRow any = null;
         for (PortalRow r : rows()) {

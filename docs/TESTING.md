@@ -139,3 +139,18 @@ Warm-ups:
 - [ ] Several destinations with a warm-up: pick one on the card; the card closes, the box reads "Going in 3 s." without the hint, and you cannot move until it ends or you are hurt.
 - [ ] An admin (or a player with `bsp_teleport.bypass.warmup`) goes through at once, no box.
 - [ ] Log out or die during the countdown: nothing happens on the next login; the box is gone.
+
+## Core screen fixes (B10, T75, D127 to D131, 2026-10-22)
+
+The text fixes (no raw keys, plain button names), the larger screen in layout A, names `<server>-<n>`, unique names.
+
+Headless, already passing: `LangKeysTest` (every key the code names is in the lang file), `PortalNamesTest`; the build and GameTests.
+
+Needs the owner:
+- [ ] Open a core: nothing reads like `screen.bsp_teleport...`. The help line says "Up to eight destinations. Pick on the left, then Add destination."; the pills read WARP, PORTAL WARP, PORTAL LINK, RANDOM, POSITION, BACK; the keys read ADD DESTINATION, MOVE UP, REMOVE; the switch reads "Close when every destination is down". The ACCESS tab is no longer greyed.
+- [ ] The screen is larger with smaller text and stays inside the window at your usual GUI scale and window size; `ui.screenScale` in `config/bsp_teleport-client.toml` still makes it smaller. Nothing runs past the panel's edge or under a key on any of the four tabs, with long portal, warp and server names.
+- [ ] DESTINATION tab: a Name row at the top. Type a name and press RENAME: the title line and other portals' pickers show it. Rename to a name another portal already uses: "Another portal is already called X. Pick a different name."
+- [ ] LOOK tab: no Name row any more (colour, doors, facing, arrival line only); the name is changed only on DESTINATION.
+- [ ] Place a new core in a frame: it is named `<server>-<n>`, one more than the highest number on any portal name on the network. Existing portals keep their names.
+- [ ] PORTAL LINK picker: rows show the name and the server (violet for another server); click one and the box under the picker shows the full name and the server, world and position. The mouse wheel scrolls the list when there are more portals than fit.
+- [ ] Walk into a portal with several destinations: the card's keys read GO, DOWN, NO ACCESS and CANCEL (ESC), and the help line "Choose a destination. Esc steps back out."

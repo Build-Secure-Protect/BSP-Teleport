@@ -16,12 +16,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The Portal Core screen, Tabs layout (D63, D66): a status line, then DESTINATION, LOOK, OPEN/CLOSE and a greyed
- * ACCESS tab. The server decides everything; this screen only shows the data it was sent and sends actions back.
+ * The Portal Core screen, Tabs layout (D63, D66): a status line, then DESTINATION, LOOK, OPEN/CLOSE and ACCESS. The server decides everything; this screen only shows the data it was sent and sends actions back.
  * Moderators see it read-only.
  */
 public class PortalScreen extends Screen {
-    private static final int W = 300, H = 214, TAB_W = 56;
+    /** D128: 440 by 270 GUI units with small text; the scale fills up to 90 % of the window, capped by ui.screenScale. */
+    private static final int W = 440, H = 270, TAB_W = 62, COL_W = 200;
     private static final int TQ = BandClient.TQ, BG = BandClient.BG, SLOT = BandClient.SLOT, DIM = BandClient.DIM, MUTED = BandClient.MUTED,
             TEXT = BandClient.TEXT, VIO = BandClient.VIO, GOLD = BandClient.GOLD, BAD = BandClient.BAD, OK = BandClient.OK;
 
@@ -50,8 +50,10 @@ public class PortalScreen extends Screen {
     private int left, top;
     private float scale = 1f;
     private final List<Hit> hits = new ArrayList<>();
-    private EditBox box1, box2;
+    private EditBox box1, box2, nameBox;
     private boolean boxesFilled;
+    /** The portal name last put in the DESTINATION tab's name box, so a new name from the server replaces it once. */
+    private String nameShown;
 
     public PortalScreen(PortalScreenData data) {
         super(Component.translatable("screen.bsp_teleport.portal.title"));
@@ -73,7 +75,8 @@ public class PortalScreen extends Screen {
 
     @Override
     protected void init() {
-        scale = ClientConfig.screenScale(width, height, W, H);
+        float fit = (float) Math.min(width * 0.9 / W, height * 0.9 / H);
+        scale = Math.max(0.5f, Math.min(ClientConfig.screenScale(width, height, W, H), fit));
         left = ((int) (width / scale) - W) / 2;
         top = ((int) (height / scale) - H) / 2;
         box1 = new EditBox(font, left + 10, top + 60, 100, 14, Component.literal("a"));
@@ -82,6 +85,10 @@ public class PortalScreen extends Screen {
         box2 = new EditBox(font, left + 10, top + 80, 100, 14, Component.literal("b"));
         box2.setMaxLength(64);
         addRenderableWidget(box2);
+        nameBox = new EditBox(font, left + 44, top + 47, 170, 14, Component.literal("name"));
+        nameBox.setMaxLength(32);
+        addRenderableWidget(nameBox);
+        nameShown = null;
         boxesFilled = false;
     }
 
@@ -116,19 +123,20 @@ public class PortalScreen extends Screen {
         hits.clear();
         box1.visible = false;
         box2.visible = false;
+        nameBox.visible = false;
         g.fill(left - 1, top - 1, left + W + 1, top + H + 1, VIO);
         g.fill(left, top, left + W, top + H, BG);
         g.drawString(font, title.getString().toUpperCase(), left + 10, top + 8, VIO, false);
-        small(g, data.name() + ".  " + Component.translatable(ro() ? "screen.bsp_teleport.portal.readonly" : "screen.bsp_teleport.portal.help").getString(), left + 10, top + 19, ro() ? GOLD : MUTED);
+        small(g, clip(data.name() + ".  " + Component.translatable(ro() ? "screen.bsp_teleport.portal.readonly" : "screen.bsp_teleport.portal.help").getString(), W - 20), left + 10, top + 19, ro() ? GOLD : MUTED);
 
         Tab[] tabs = Tab.values();
         for (int i = 0; i < tabs.length; i++) {
             int tx = left + W - 10 - (tabs.length - i) * (TAB_W + 2);
-            boolean on = tabs[i] == tab, later = tabs[i] == Tab.ACCESS;
+            boolean on = tabs[i] == tab;
             g.fill(tx, top + 5, tx + TAB_W, top + 18, on ? VIO : DIM);
             g.fill(tx + 1, top + 6, tx + TAB_W - 1, top + 17, SLOT);
             String label = Component.translatable("screen.bsp_teleport.portal.tab." + tabs[i].name().toLowerCase()).getString().toUpperCase();
-            small(g, label, tx + (TAB_W - (int) (font.width(label) * 0.75f)) / 2, top + 8, on ? VIO : later ? DIM : MUTED);
+            small(g, label, tx + (TAB_W - (int) (font.width(label) * 0.75f)) / 2, top + 8, on ? VIO : MUTED);
             Tab t = tabs[i];
             hits.add(new Hit(tx, top + 5, TAB_W, 13, () -> {
                 tab = t;
@@ -165,10 +173,15 @@ public class PortalScreen extends Screen {
         small(g, clip(line.toUpperCase(), W - 30), left + 14, top + 32, colour);
     }
 
-    /** The DESTINATION tab in the Split layout (D107): pickers on the left, the list on the right (D94). */
+    /**
+     * The DESTINATION tab in the Split layout (D107) at the D128 size, layout A (D127): the Name row, the kind pills, the
+     * picker on the left with the picked entry spelled out in full under it, the list on the right (D94), the switches.
+     */
     private void drawDestination(GuiGraphics g) {
         int y = top + 46;
-        String cur = pick.isEmpty() ? "WARP" : pick;
+        drawNameRow(g, y);
+        y += 20;
+        String cur = currentPick();
         int px = left + 10;
         for (String kind : new String[]{"WARP", "PORTAL_WARP", "PORTAL", "RANDOM", "POSITION", "BACK"}) {
             boolean on = kind.equals(cur);
@@ -179,10 +192,11 @@ public class PortalScreen extends Screen {
             }) + 3;
         }
         y += 16;
-        int colW = 128;
-        int listX = left + 10 + colW + 8;
-        int bottom = top + H - 64;
-        // Left: the picker for the current kind, then ADD.
+        int listX = left + 10 + COL_W + 10;
+        int sy = top + H - 58;
+        int bottom = sy - 4;
+        // Left: the picker for the current kind, the picked entry in full, then Add destination.
+        int addY = bottom - 13, detailTop = addY - 24;
         int ly = y;
         switch (cur) {
             case "WARP", "PORTAL_WARP" -> {
@@ -190,91 +204,59 @@ public class PortalScreen extends Screen {
                 List<PortalScreenData.WarpEntry> list = data.warps().stream().filter(w -> w.portal() == portal).toList();
                 small(g, Component.translatable(list.isEmpty() ? "screen.bsp_teleport.portal.no_warps" : "screen.bsp_teleport.portal.pick_warp").getString(), left + 12, ly, MUTED);
                 ly += 10;
-                int i = 0;
-                for (PortalScreenData.WarpEntry w : list) {
-                    if (i++ < scroll) {
-                        continue;
-                    }
-                    if (ly + 12 > bottom - 16) {
-                        break;
-                    }
-                    boolean sel = w.name().equals(pickedTarget);
-                    pickRow(g, ly, colW, sel);
-                    small(g, clip(w.name(), colW - 50), left + 14, ly + 2, sel ? TQ : TEXT);
-                    small(g, clip(w.server(), 44), left + 10 + colW - 48, ly + 2, w.server().equals(data.server()) ? MUTED : VIO);
-                    if (!ro()) {
-                        hits.add(new Hit(left + 10, ly, colW, 11, () -> pickedTarget = w.name()));
-                    }
+                for (int i = scroll; i < list.size() && ly + 12 <= detailTop; i++) {
+                    PortalScreenData.WarpEntry w = list.get(i);
+                    pickerRow(g, ly, w.name(), w.server(), w.name().equals(pickedTarget), () -> pickedTarget = w.name());
                     ly += 12;
                 }
+                list.stream().filter(w -> w.name().equals(pickedTarget)).findFirst().ifPresentOrElse(
+                        w -> detail(g, detailTop, w.name(), Component.translatable(portal ? "screen.bsp_teleport.portal.detail_portal_warp" : "screen.bsp_teleport.portal.detail_warp", w.server()).getString()),
+                        () -> detail(g, detailTop, null, null));
             }
             case "PORTAL" -> {
                 small(g, Component.translatable(data.portals().isEmpty() ? "screen.bsp_teleport.portal.no_portals" : "screen.bsp_teleport.portal.pick_portal").getString(), left + 12, ly, MUTED);
                 ly += 10;
-                int i = 0;
-                for (PortalScreenData.PortalEntry e : data.portals()) {
-                    if (i++ < scroll) {
-                        continue;
-                    }
-                    if (ly + 12 > bottom - 16) {
-                        break;
-                    }
-                    boolean sel = e.id().equals(pickedTarget);
-                    pickRow(g, ly, colW, sel);
-                    small(g, clip(e.name(), colW - 50), left + 14, ly + 2, sel ? TQ : TEXT);
-                    small(g, clip(e.server(), 44), left + 10 + colW - 48, ly + 2, e.server().equals(data.server()) ? MUTED : VIO);
-                    if (!ro()) {
-                        hits.add(new Hit(left + 10, ly, colW, 11, () -> pickedTarget = e.id()));
-                    }
+                for (int i = scroll; i < data.portals().size() && ly + 12 <= detailTop; i++) {
+                    PortalScreenData.PortalEntry e = data.portals().get(i);
+                    pickerRow(g, ly, e.name(), e.server(), e.id().equals(pickedTarget), () -> pickedTarget = e.id());
                     ly += 12;
                 }
+                data.portals().stream().filter(e -> e.id().equals(pickedTarget)).findFirst().ifPresentOrElse(
+                        e -> detail(g, detailTop, e.name(), where(e.id())),
+                        () -> detail(g, detailTop, null, null));
             }
             case "RANDOM" -> {
                 small(g, Component.translatable("screen.bsp_teleport.portal.pick_server").getString(), left + 12, ly, MUTED);
                 ly += 10;
-                int i = 0;
-                for (String sv : data.servers()) {
-                    if (i++ < scroll) {
-                        continue;
-                    }
-                    if (ly + 12 > bottom - 16) {
-                        break;
-                    }
+                for (int i = scroll; i < data.servers().size() && ly + 12 <= detailTop; i++) {
+                    String sv = data.servers().get(i);
                     boolean here = sv.equals(data.server());
-                    boolean sel = sv.equals(pickedTarget);
-                    pickRow(g, ly, colW, sel);
-                    small(g, clip(sv + (here ? "  (" + Component.translatable("screen.bsp_teleport.admin.this_server").getString() + ")" : ""), colW - 8), left + 14, ly + 2, sel ? TQ : here ? GOLD : TEXT);
-                    if (!ro()) {
-                        hits.add(new Hit(left + 10, ly, colW, 11, () -> pickedTarget = sv));
-                    }
+                    pickerRow(g, ly, sv, here ? Component.translatable("screen.bsp_teleport.admin.this_server").getString() : "", sv.equals(pickedTarget), () -> pickedTarget = sv);
                     ly += 12;
                 }
+                detail(g, detailTop, pickedTarget.isEmpty() ? null : pickedTarget, pickedTarget.isEmpty() ? null : Component.translatable("screen.bsp_teleport.portal.detail_random").getString());
             }
             case "POSITION" -> {
-                pickRow(g, ly, colW, false);
-                small(g, Component.translatable("screen.bsp_teleport.portal.use_here_help").getString(), left + 14, ly + 2, MUTED);
-                ly += 14;
-                if (!ro()) {
-                    button(g, left + 10 + colW, ly, Component.translatable("screen.bsp_teleport.portal.use_here").getString(), GOLD, GOLD, () -> send(PortalScreenAction.DEST_ADD, "POSITION;"));
-                }
+                pickRow(g, ly, COL_W, false);
+                small(g, clip(Component.translatable("screen.bsp_teleport.portal.use_here_help").getString(), COL_W - 8), left + 14, ly + 2, MUTED);
             }
             case "BACK" -> {
-                // D110, D126 A: nothing to pick, one line of explanation and ADD.
-                pickRow(g, ly, colW, false);
-                small(g, Component.translatable("screen.bsp_teleport.portal.back_help1").getString(), left + 14, ly + 2, MUTED);
+                // D110, D126 A: nothing to pick, one line of explanation and Add destination.
+                pickRow(g, ly, COL_W, false);
+                small(g, clip(Component.translatable("screen.bsp_teleport.portal.back_help1").getString(), COL_W - 8), left + 14, ly + 2, MUTED);
                 ly += 12;
-                pickRow(g, ly, colW, false);
-                small(g, Component.translatable("screen.bsp_teleport.portal.back_help2").getString(), left + 14, ly + 2, MUTED);
+                pickRow(g, ly, COL_W, false);
+                small(g, clip(Component.translatable("screen.bsp_teleport.portal.back_help2").getString(), COL_W - 8), left + 14, ly + 2, MUTED);
             }
             default -> {
             }
         }
-        if (!ro() && !"POSITION".equals(cur)) {
-            boolean back = "BACK".equals(cur);
-            boolean can = (back || !pickedTarget.isEmpty()) && data.dests().size() < data.maxDests();
+        if (!ro()) {
+            boolean free = "POSITION".equals(cur) || "BACK".equals(cur);
+            boolean can = (free || !pickedTarget.isEmpty()) && data.dests().size() < data.maxDests();
             String add = Component.translatable("screen.bsp_teleport.portal.add").getString();
-            button(g, left + 10 + colW, bottom - 13, add, can ? TQ : DIM, can ? TQ : MUTED, can ? () -> {
-                send(PortalScreenAction.DEST_ADD, cur + ";" + pickedTarget);
+            button(g, left + 10 + COL_W, addY, add, can ? TQ : DIM, can ? TQ : MUTED, can ? () -> {
+                send(PortalScreenAction.DEST_ADD, ("POSITION".equals(cur) ? "POSITION;" : cur + ";" + pickedTarget));
                 pickedTarget = "";
             } : null);
         }
@@ -284,7 +266,7 @@ public class PortalScreen extends Screen {
         ry += 10;
         int listW = left + W - 10 - listX;
         if (data.dests().isEmpty()) {
-            small(g, Component.translatable("screen.bsp_teleport.portal.dests_help").getString(), listX + 2, ry, DIM);
+            small(g, clip(Component.translatable("screen.bsp_teleport.portal.dests_help").getString(), listW - 4), listX + 2, ry, DIM);
         }
         for (int i = 0; i < data.dests().size(); i++) {
             PortalScreenData.DestEntry d = data.dests().get(i);
@@ -304,12 +286,14 @@ public class PortalScreen extends Screen {
                 }
             }
             if (editing == i && !ro()) {
+                String set = Component.translatable("screen.bsp_teleport.portal.set").getString();
+                int setW = (int) (font.width(set) * 0.75f) + 8;
                 box1.setX(listX + 14);
-                box1.setY(ry + 1);
-                box1.setWidth(Math.max(40, bx - listX - 44));
+                box1.setY(ry - 1);
+                box1.setWidth(Math.max(30, bx - setW - 4 - listX - 14));
                 box1.visible = true;
                 int idx = i;
-                button(g, bx, ry, Component.translatable("screen.bsp_teleport.portal.set").getString(), TQ, TQ, () -> {
+                button(g, bx, ry, set, TQ, TQ, () -> {
                     send(PortalScreenAction.DEST_LABEL, idx + ";" + box1.getValue().trim());
                     editing = -1;
                     box1.visible = false;
@@ -321,7 +305,7 @@ public class PortalScreen extends Screen {
                     hits.add(new Hit(listX + 12, ry, Math.max(10, bx - listX - 12), 11, () -> {
                         editing = idx;
                         box1.setValue(d.label());
-                        box1.setSuggestion(d.label().isEmpty() ? Component.translatable("screen.bsp_teleport.portal.label_hint").getString() : "");
+                        box1.setSuggestion(d.label().isEmpty() ? d.shown() : "");
                         box1.visible = true;
                         setFocused(box1);
                     }));
@@ -329,14 +313,69 @@ public class PortalScreen extends Screen {
             }
             ry += 12;
         }
+        if (!data.dests().isEmpty() && !ro() && ry + 10 <= bottom) {
+            small(g, clip(Component.translatable("screen.bsp_teleport.portal.label_hint").getString(), listW - 4), listX + 2, ry + 1, DIM);
+        }
         if (editing < 0 || tab != Tab.DESTINATION) {
             box1.visible = false;
         }
-        int sy = top + H - 60;
         switchRow(g, sy, Component.translatable("screen.bsp_teleport.portal.arrive_only").getString(), Component.translatable("screen.bsp_teleport.portal.arrive_only_help").getString(),
                 data.arriveOnly(), v -> send(PortalScreenAction.ARRIVE_ONLY, String.valueOf(v)));
         switchRow(g, sy + 18, Component.translatable("screen.bsp_teleport.portal.close_when_down").getString(), Component.translatable("screen.bsp_teleport.portal.close_when_down_help").getString(),
                 data.closeWhenDown(), v -> send(PortalScreenAction.CLOSE_WHEN_DOWN, String.valueOf(v)));
+    }
+
+    /** D127: the portal's name on the DESTINATION tab, where other portals' pickers and /bsptp portal <name> find it. */
+    private void drawNameRow(GuiGraphics g, int y) {
+        row(g, y, 16, DIM);
+        small(g, Component.translatable("screen.bsp_teleport.portal.name").getString(), left + 14, y + 5, TEXT);
+        if (ro()) {
+            small(g, clip(data.name(), W - 70), left + 44, y + 5, GOLD);
+            return;
+        }
+        if (nameShown == null || !nameShown.equals(data.name())) {
+            nameShown = data.name();
+            if (!nameBox.isFocused()) {
+                nameBox.setValue(data.name());
+            }
+        }
+        nameBox.setX(left + 44);
+        nameBox.setY(y + 1);
+        nameBox.setWidth(170);
+        nameBox.visible = true;
+        String rename = Component.translatable("screen.bsp_teleport.portal.rename").getString();
+        int bx = button(g, left + W - 14, y + 2, rename, TQ, TQ, () -> send(PortalScreenAction.NAME, nameBox.getValue().trim()));
+        small(g, clip(Component.translatable("screen.bsp_teleport.portal.name_help_short").getString(), bx - (left + 222)), left + 222, y + 5, MUTED);
+    }
+
+    /** One picker row: the name on the left, the server (violet when another) on the right, each cut to its space. */
+    private void pickerRow(GuiGraphics g, int y, String name, String server, boolean selected, Runnable pickIt) {
+        pickRow(g, y, COL_W, selected);
+        String sv = clip(server, 80);
+        int svW = (int) (font.width(sv) * 0.75f);
+        small(g, clip(name, COL_W - 12 - svW - 6), left + 14, y + 2, selected ? TQ : TEXT);
+        small(g, sv, left + 10 + COL_W - 4 - svW, y + 2, server.equals(data.server()) || server.isEmpty() ? MUTED : VIO);
+        if (!ro()) {
+            hits.add(new Hit(left + 10, y, COL_W, 11, pickIt));
+        }
+    }
+
+    /** D127: the picked entry spelled out in full under the picker (two lines), or a hint while nothing is picked. */
+    private void detail(GuiGraphics g, int y, @Nullable String name, @Nullable String where) {
+        g.fill(left + 10, y, left + 10 + COL_W, y + 21, name == null ? DIM : TQ);
+        g.fill(left + 11, y + 1, left + 10 + COL_W - 1, y + 20, SLOT);
+        if (name == null) {
+            small(g, clip(Component.translatable("screen.bsp_teleport.portal.detail_hint").getString(), COL_W - 8), left + 14, y + 7, DIM);
+            return;
+        }
+        small(g, clip(name, COL_W - 8), left + 14, y + 3, TQ);
+        small(g, clip(where == null ? "" : where, COL_W - 8), left + 14, y + 12, MUTED);
+    }
+
+    /** "BSP-SafeRoom  minecraft:overworld  4, 65, -90" from a portal row id ({@code server|world|x,y,z}). */
+    private static String where(String rowId) {
+        String[] p = rowId.split("\\|", 3);
+        return p.length < 3 ? rowId : p[0] + "  " + p[1] + "  " + p[2].replace(",", ", ");
     }
 
     /** A picker row in the left column of the DESTINATION tab. */
@@ -365,7 +404,7 @@ public class PortalScreen extends Screen {
         // Doors
         row(g, y, 16, DIM);
         small(g, Component.translatable("screen.bsp_teleport.portal.doors_style").getString(), left + 14, y + 2, TEXT);
-        small(g, Component.translatable("screen.bsp_teleport.portal.doors_help").getString(), left + 14, y + 9, MUTED);
+        small(g, clip(Component.translatable("screen.bsp_teleport.portal.doors_help").getString(), W - 130), left + 14, y + 9, MUTED);
         int bx = left + W - 14;
         bx = button(g, bx, y + 2, Component.translatable("screen.bsp_teleport.portal.rendered").getString(), "RENDERED".equals(data.doorStyle()) ? VIO : DIM, "RENDERED".equals(data.doorStyle()) ? VIO : MUTED,
                 ro() ? null : () -> send(PortalScreenAction.DOORS, "rendered")) - 2;
@@ -375,38 +414,32 @@ public class PortalScreen extends Screen {
         // Facing
         row(g, y, 16, DIM);
         small(g, Component.translatable("screen.bsp_teleport.portal.facing", data.facing()).getString(), left + 14, y + 2, TEXT);
-        small(g, Component.translatable("screen.bsp_teleport.portal.facing_help").getString(), left + 14, y + 9, MUTED);
+        small(g, clip(Component.translatable("screen.bsp_teleport.portal.facing_help").getString(), W - 80), left + 14, y + 9, MUTED);
         if (!ro()) {
             button(g, left + W - 14, y + 2, Component.translatable("screen.bsp_teleport.portal.flip").getString(), TQ, TQ, () -> send(PortalScreenAction.FLIP, ""));
         }
         y += 20;
         if (!boxesFilled) {
-            box1.setValue(data.name());
             box2.setValue(data.arrivalLine());
             boxesFilled = true;
         }
-        // Name
-        row(g, y, 20, DIM);
-        small(g, Component.translatable("screen.bsp_teleport.portal.name").getString(), left + 14, y + 2, TEXT);
-        small(g, Component.translatable("screen.bsp_teleport.portal.name_help").getString(), left + 14, y + 10, MUTED);
-        textRow(g, y, box1, PortalScreenAction.NAME);
-        y += 24;
+        // The name is set on the DESTINATION tab only (D127, D132).
         // Arrival line
         row(g, y, 20, DIM);
         small(g, Component.translatable("screen.bsp_teleport.portal.arrival_line").getString(), left + 14, y + 2, TEXT);
-        small(g, Component.translatable("screen.bsp_teleport.portal.arrival_help").getString(), left + 14, y + 10, MUTED);
+        small(g, clip(Component.translatable("screen.bsp_teleport.portal.arrival_help").getString(), W - 240), left + 14, y + 10, MUTED);
         textRow(g, y, box2, PortalScreenAction.ARRIVAL_LINE);
     }
 
     /** An edit box with a Set button on the right of a row. */
     private void textRow(GuiGraphics g, int y, EditBox box, PortalScreenAction action) {
         if (ro()) {
-            small(g, clip(box.getValue().isEmpty() ? "-" : box.getValue(), 120), left + W - 140, y + 6, GOLD);
+            small(g, clip(box.getValue().isEmpty() ? "-" : box.getValue(), 180), left + W - 200, y + 6, GOLD);
             return;
         }
-        box.setX(left + W - 154);
+        box.setX(left + W - 222);
         box.setY(y + 3);
-        box.setWidth(110);
+        box.setWidth(176);
         box.visible = true;
         button(g, left + W - 14, y + 4, Component.translatable("screen.bsp_teleport.portal.set").getString(), TQ, TQ, () -> send(action, box.getValue().trim()));
     }
@@ -433,7 +466,7 @@ public class PortalScreen extends Screen {
         switch (cur) {
             case "MANUAL" -> {
                 row(g, y, 16, DIM);
-                small(g, Component.translatable("screen.bsp_teleport.portal.manual_help").getString(), left + 14, y + 5, MUTED);
+                small(g, clip(Component.translatable("screen.bsp_teleport.portal.manual_help").getString(), W - 150), left + 14, y + 5, MUTED);
                 if (!ro()) {
                     int bx = left + W - 14;
                     bx = button(g, bx, y + 2, Component.translatable("screen.bsp_teleport.portal.close_now").getString(), BAD, BAD, () -> send(PortalScreenAction.CLOSE_NOW, "")) - 2;
@@ -442,7 +475,7 @@ public class PortalScreen extends Screen {
             }
             case "REDSTONE" -> {
                 row(g, y, 16, DIM);
-                small(g, Component.translatable("screen.bsp_teleport.portal.redstone_help").getString(), left + 14, y + 2, MUTED);
+                small(g, clip(Component.translatable("screen.bsp_teleport.portal.redstone_help").getString(), W - 150), left + 14, y + 2, MUTED);
                 small(g, Component.translatable(data.powered() ? "screen.bsp_teleport.portal.powered" : "screen.bsp_teleport.portal.unpowered").getString(), left + 14, y + 9, data.powered() ? OK : MUTED);
                 button(g, left + W - 14, y + 2, Component.translatable(data.openWhenPowered() ? "screen.bsp_teleport.portal.open_when_powered" : "screen.bsp_teleport.portal.closed_when_powered").getString(),
                         VIO, VIO, ro() ? null : () -> send(PortalScreenAction.MODE_REDSTONE, String.valueOf(!data.openWhenPowered())));
@@ -455,7 +488,7 @@ public class PortalScreen extends Screen {
                     boxesFilled = true;
                 }
                 row(g, y, 22, DIM);
-                small(g, real ? Component.translatable("screen.bsp_teleport.portal.real_help", data.zone()).getString() : Component.translatable("screen.bsp_teleport.portal.game_help").getString(), left + 14, y + 2, MUTED);
+                small(g, clip(real ? Component.translatable("screen.bsp_teleport.portal.real_help", data.zone()).getString() : Component.translatable("screen.bsp_teleport.portal.game_help").getString(), W - 60), left + 14, y + 2, MUTED);
                 if (ro()) {
                     small(g, box1.getValue() + " " + Component.translatable("screen.bsp_teleport.portal.to").getString() + " " + box2.getValue(), left + 14, y + 11, GOLD);
                 } else {
@@ -482,7 +515,7 @@ public class PortalScreen extends Screen {
         y += 18;
         row(g, y, 16, DIM);
         small(g, Component.translatable("screen.bsp_teleport.portal.cooldown").getString(), left + 14, y + 2, TEXT);
-        small(g, Component.translatable("screen.bsp_teleport.portal.cooldown_help").getString(), left + 14, y + 9, MUTED);
+        small(g, clip(Component.translatable("screen.bsp_teleport.portal.cooldown_help").getString(), W - 100), left + 14, y + 9, MUTED);
         int bx = left + W - 14;
         bx = button(g, bx, y + 2, "+", DIM, TQ, ro() ? null : () -> send(PortalScreenAction.COOLDOWN, String.valueOf(data.cooldown() + 1))) - 2;
         String v = data.cooldown() + " s";
@@ -494,7 +527,7 @@ public class PortalScreen extends Screen {
         // D118: the warm-up, the same - / + keys as the cooldown, 0 to 30 s.
         row(g, y, 16, data.warmup() > 0 ? TQ : DIM);
         small(g, Component.translatable("screen.bsp_teleport.portal.warmup").getString(), left + 14, y + 2, TEXT);
-        small(g, Component.translatable("screen.bsp_teleport.portal.warmup_help").getString(), left + 14, y + 9, MUTED);
+        small(g, clip(Component.translatable("screen.bsp_teleport.portal.warmup_help").getString(), W - 100), left + 14, y + 9, MUTED);
         bx = left + W - 14;
         bx = button(g, bx, y + 2, "+", DIM, TQ, ro() ? null : () -> send(PortalScreenAction.WARMUP, String.valueOf(Math.min(30, data.warmup() + 1)))) - 2;
         String wv = data.warmup() + " s";
@@ -503,12 +536,12 @@ public class PortalScreen extends Screen {
         bx -= ww + 2;
         button(g, bx, y + 2, "-", DIM, TQ, ro() ? null : () -> send(PortalScreenAction.WARMUP, String.valueOf(Math.max(0, data.warmup() - 1))));
         y += 20;
-        small(g, Component.translatable("screen.bsp_teleport.portal.doors_now", data.doors().isEmpty() ? "-" : data.doors()).getString(), left + 12, y + 2, MUTED);
+        small(g, clip(Component.translatable("screen.bsp_teleport.portal.doors_now", data.doors().isEmpty() ? "-" : data.doors()).getString(), W - 24), left + 12, y + 2, MUTED);
     }
 
     private void drawAccess(GuiGraphics g) {
         int y = top + 46;
-        small(g, Component.translatable("screen.bsp_teleport.portal.rules_help").getString(), left + 12, y, MUTED);
+        small(g, clip(Component.translatable("screen.bsp_teleport.portal.rules_help").getString(), W - 24), left + 12, y, MUTED);
         y += 10;
         List<com.mrgregles.bsp_teleport.access.AccessRule> rules = com.mrgregles.bsp_teleport.access.AccessRule.parseList(data.rules());
         if (rules.isEmpty()) {
@@ -516,9 +549,15 @@ public class PortalScreen extends Screen {
             y += 14;
         }
         for (int i = 0; i < rules.size(); i++) {
+            if (y + 14 > top + H - 60) {
+                // D131: more rules than fit; the rest stay on the server and show in /bsptp portal <name> info.
+                small(g, "+" + (rules.size() - i), left + 14, y + 3, MUTED);
+                y += 14;
+                break;
+            }
             com.mrgregles.bsp_teleport.access.AccessRule r = rules.get(i);
             row(g, y, 12, DIM);
-            small(g, r.describe(), left + 14, y + 3, TEXT);
+            small(g, clip(r.describe(), W - 70), left + 14, y + 3, TEXT);
             if (!ro()) {
                 int index = i;
                 button(g, left + W - 14, y, Component.translatable("screen.bsp_teleport.admin.del").getString(), BAD, BAD, () -> send(PortalScreenAction.RULE_DEL, String.valueOf(index)));
@@ -571,8 +610,8 @@ public class PortalScreen extends Screen {
                 box2.visible = true;
                 box2.setHint(Component.translatable("screen.bsp_teleport.portal.rule_count"));
             }
-            default -> small(g, data.accessToken() > 0 ? Component.translatable("screen.bsp_teleport.portal.rule_token_hint", "Access Token " + com.mrgregles.bsp_teleport.access.TokenAssignment.roman(data.accessToken())).getString()
-                    : Component.translatable("screen.bsp_teleport.portal.rule_token_none").getString(), left + 12, y + 3, data.accessToken() > 0 ? VIO : GOLD);
+            default -> small(g, clip(data.accessToken() > 0 ? Component.translatable("screen.bsp_teleport.portal.rule_token_hint", "Access Token " + com.mrgregles.bsp_teleport.access.TokenAssignment.roman(data.accessToken())).getString()
+                    : Component.translatable("screen.bsp_teleport.portal.rule_token_none").getString(), W - 90), left + 12, y + 3, data.accessToken() > 0 ? VIO : GOLD);
         }
         button(g, left + W - 14, y + 1, Component.translatable("screen.bsp_teleport.portal.rule_add").getString(), TQ, TQ, () -> {
             send(PortalScreenAction.RULE_ADD, ruleKind + ";" + box1.getValue().trim() + ";" + box2.getValue().trim() + ";" + ruleConsume);
@@ -583,10 +622,10 @@ public class PortalScreen extends Screen {
     private void drawFooter(GuiGraphics g) {
         int y = top + H - 20;
         g.fill(left + 10, y - 2, left + W - 10, y - 1, DIM);
-        small(g, data.server() + "  " + data.world() + "  " + data.pos().getX() + ", " + data.pos().getY() + ", " + data.pos().getZ(), left + 10, y + 2, MUTED);
+        small(g, clip(data.server() + "  " + data.world() + "  " + data.pos().getX() + ", " + data.pos().getY() + ", " + data.pos().getZ(), W - 20), left + 10, y + 2, MUTED);
         String frame = data.width() > 0 ? Component.translatable("screen.bsp_teleport.portal.frame", data.width(), data.height(), data.cells()).getString()
                 : Component.translatable("screen.bsp_teleport.portal.no_frame").getString();
-        small(g, frame, left + 10, y + 10, MUTED);
+        small(g, clip(frame, W - 60), left + 10, y + 10, MUTED);
         String lit = data.lit() ? "LIT" : "DARK";
         small(g, lit, left + W - 10 - (int) (font.width(lit) * 0.75f), y + 10, data.lit() ? OK : MUTED);
     }
@@ -604,8 +643,8 @@ public class PortalScreen extends Screen {
 
     private void switchRow(GuiGraphics g, int y, String label, String help, boolean on, BoolAction action) {
         row(g, y, 16, DIM);
-        small(g, label, left + 14, y + 2, TEXT);
-        small(g, help, left + 14, y + 9, MUTED);
+        small(g, clip(label, W - 70), left + 14, y + 2, TEXT);
+        small(g, clip(help, W - 70), left + 14, y + 9, MUTED);
         button(g, left + W - 14, y + 2, Component.translatable(on ? "screen.bsp_teleport.portal.on" : "screen.bsp_teleport.portal.off").getString(), on ? OK : DIM, on ? OK : MUTED,
                 ro() ? null : () -> action.run(!on));
     }
@@ -687,9 +726,13 @@ public class PortalScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mx, double my, double delta) {
+        if (tab != Tab.DESTINATION) {
+            return super.mouseScrolled(mx / scale, my / scale, delta);
+        }
         int count = switch (currentPick()) {
             case "WARP" -> (int) data.warps().stream().filter(w -> !w.portal()).count();
             case "PORTAL_WARP" -> (int) data.warps().stream().filter(PortalScreenData.WarpEntry::portal).count();
+            case "PORTAL" -> data.portals().size();
             case "RANDOM" -> data.servers().size();
             default -> 0;
         };
@@ -699,7 +742,7 @@ public class PortalScreen extends Screen {
 
     @Override
     public boolean keyPressed(int key, int scan, int mods) {
-        if (!box1.isFocused() && !box2.isFocused() && minecraft.options.keyInventory.matches(key, scan)) {
+        if (!box1.isFocused() && !box2.isFocused() && !nameBox.isFocused() && minecraft.options.keyInventory.matches(key, scan)) {
             onClose();
             return true;
         }

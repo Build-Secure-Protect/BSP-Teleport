@@ -60,7 +60,10 @@ public class PortalCoreBlockEntity extends BlockEntity {
     /** Door animation ticks per cell (D66). */
     public static final int STEP_TICKS = 2;
 
-    private String name = "Portal";
+    /** What a core is called until its first publish gives it {@code <server>-<n>} (D129). */
+    public static final String DEFAULT_NAME = "Portal";
+
+    private String name = DEFAULT_NAME;
     private PortalColour colour = PortalColour.DEFAULT;
     private DoorStyle doorStyle = DoorStyle.BLOCKS;
     private boolean locked;

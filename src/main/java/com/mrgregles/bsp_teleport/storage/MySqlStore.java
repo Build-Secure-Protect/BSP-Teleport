@@ -510,14 +510,17 @@ final class MySqlStore implements AutoCloseable {
         }
     }
 
-    // Pending cross-server landings
+    // Pending cross-server landings. B12: their age is told by the database's clock only, since the server that writes
+    // a row and the server that reads it may run on different machines whose clocks disagree.
+
+    /** The database's own time in milliseconds, as SQL. */
+    private static final String DB_NOW_MS = "FLOOR(UNIX_TIMESTAMP(NOW(3)) * 1000)";
 
     void savePending(UUID uuid, Destination destination) throws SQLException {
-        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("pending") + " (uuid, destination, created_ms) VALUES (?, ?, ?) "
+        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("pending") + " (uuid, destination, created_ms) VALUES (?, ?, " + DB_NOW_MS + ") "
                 + "ON DUPLICATE KEY UPDATE destination = VALUES(destination), created_ms = VALUES(created_ms)")) {
             ps.setString(1, uuid.toString());
             ps.setString(2, destination.serialize());
-            ps.setLong(3, System.currentTimeMillis());
             ps.executeUpdate();
         }
     }
@@ -529,15 +532,21 @@ final class MySqlStore implements AutoCloseable {
      */
     @Nullable
     Destination peekPending(UUID uuid, long maxAgeMs) throws SQLException {
-        try (PreparedStatement ps = conn().prepareStatement("SELECT destination, created_ms FROM " + t("pending") + " WHERE uuid = ?")) {
+        try (PreparedStatement ps = conn().prepareStatement("SELECT destination, " + DB_NOW_MS + " - created_ms FROM " + t("pending") + " WHERE uuid = ?")) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next() && System.currentTimeMillis() - rs.getLong(2) <= maxAgeMs) {
-                    return Destination.parse(rs.getString(1));
+                if (!rs.next()) {
+                    return null;
                 }
+                long age = rs.getLong(2);
+                if (age > maxAgeMs) {
+                    com.mrgregles.bsp_teleport.BSPTeleport.LOGGER.info("Pending landing for {} is {} s old by the database's clock (limit {} s); ignored",
+                            uuid, age / 1000, maxAgeMs / 1000);
+                    return null;
+                }
+                return Destination.parse(rs.getString(1));
             }
         }
-        return null;
     }
 
     void deletePending(UUID uuid) throws SQLException {
@@ -548,8 +557,8 @@ final class MySqlStore implements AutoCloseable {
     }
 
     void deleteOldPending(long maxAgeMs) throws SQLException {
-        try (PreparedStatement ps = conn().prepareStatement("DELETE FROM " + t("pending") + " WHERE created_ms < ?")) {
-            ps.setLong(1, System.currentTimeMillis() - maxAgeMs);
+        try (PreparedStatement ps = conn().prepareStatement("DELETE FROM " + t("pending") + " WHERE created_ms < " + DB_NOW_MS + " - ?")) {
+            ps.setLong(1, maxAgeMs);
             ps.executeUpdate();
         }
     }

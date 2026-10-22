@@ -417,27 +417,33 @@ def portal_views():
 def core_screen():
     s = Svg(1200, 640)
     x, y, w, h = 40, 40, 700, 560
-    s.hud(x, y, w, h, "Portal", VIOLET, "Hub East.  Pick on the left, press ADD, edit the label on the right.", ("Destination", "Look", "Open/close", "Access"), 0)
+    s.hud(x, y, w, h, "Portal", VIOLET, "Hub East.  Up to eight destinations. Pick on the left, then Add destination.", ("Destination", "Look", "Open/close", "Access"), 0)
     s.rect(x + 16, y + 62, w - 32, 26, INSET, OK, r=0)
     s.text(x + 26, y + 80, "READY: 3 DESTINATIONS", 12, OK, "bold", spacing=1)
+    s.rect(x + 16, y + 96, w - 32, 26, INSET, LINE, r=0)
+    s.text(x + 26, y + 114, "Name", 13, TEXT, "bold")
+    s.rect(x + 76, y + 99, 230, 20, "#000000", LINE, r=0)
+    s.text(x + 84, y + 114, "Hub East", 13, TEXT, family=MONO)
+    s.text(x + 320, y + 114, "other portals find it by this name", 12, MUTED)
+    s.button(x + w - 26, y + 98, "rename", ACCENT)
     px = x + 16
-    for label, on in (("warp", False), ("portal warp", False), ("portal", False), ("random", False), ("position", False), ("back", True)):
+    for label, on in (("warp", False), ("portal warp", False), ("portal link", False), ("random", False), ("position", False), ("back", True)):
         tw = len(label) * 8 + 20
-        s.rect(px, y + 100, tw, 22, INSET, VIOLET if on else LINE, r=0)
-        s.text(px + tw / 2, y + 115, label.upper(), 11, VIOLET if on else MUTED, "bold", "middle", spacing=1)
+        s.rect(px, y + 130, tw, 22, INSET, VIOLET if on else LINE, r=0)
+        s.text(px + tw / 2, y + 145, label.upper(), 11, VIOLET if on else MUTED, "bold", "middle", spacing=1)
         px += tw + 6
     # Left: the picker for BACK has nothing to pick.
     lx, lw = x + 16, 250
-    s.rect(lx, y + 136, lw, 24, INSET, LINE, r=0)
-    s.text(lx + 10, y + 153, "Each player goes back to", 12, MUTED)
-    s.rect(lx, y + 164, lw, 24, INSET, LINE, r=0)
-    s.text(lx + 10, y + 181, "where they came from.", 12, MUTED)
-    s.button(lx + lw, y + 196, "add", ACCENT)
-    s.text(lx + lw + 18, y + 170, ">", 22, ACCENT, "bold")
+    s.rect(lx, y + 166, lw, 24, INSET, LINE, r=0)
+    s.text(lx + 10, y + 183, "Each player goes back to", 12, MUTED)
+    s.rect(lx, y + 194, lw, 24, INSET, LINE, r=0)
+    s.text(lx + 10, y + 211, "where they came from.", 12, MUTED)
+    s.button(lx + lw, y + 226, "add destination", ACCENT)
+    s.text(lx + lw + 18, y + 200, ">", 22, ACCENT, "bold")
     # Right: the list.
     rx0, rw = lx + lw + 40, w - 32 - lw - 40
-    s.text(rx0 + 2, y + 146, "DESTINATIONS 3 OF 8", 11, MUTED, "bold", spacing=1.5)
-    ry = y + 156
+    s.text(rx0 + 2, y + 176, "DESTINATIONS 3 OF 8", 11, MUTED, "bold", spacing=1.5)
+    ry = y + 186
     for n, (kind, label, color, ok) in enumerate((("warp", "Market", ACCENT, True), ("portal", "Arena Door", VIOLET, True), ("back", "Back", ACCENT, True)), start=1):
         s.rect(rx0, ry, rw, 30, INSET, LINE if ok else BAD, r=0)
         s.text(rx0 + 8, ry + 20, str(n), 12, GOLD, family=MONO)
@@ -445,11 +451,11 @@ def core_screen():
         s.rect(rx0 + 24, ry + 8, cw, 15, INSET, color, r=0)
         s.text(rx0 + 24 + cw / 2, ry + 19, kind.upper(), 9, color, "bold", "middle", spacing=1)
         s.text(rx0 + 32 + cw, ry + 20, label, 13, TEXT, "bold")
-        bx = s.button(rx0 + rw - 6, ry + 4, "del", BAD) - 4
+        bx = s.button(rx0 + rw - 6, ry + 4, "remove", BAD) - 4
         if n > 1:
-            s.button(bx, ry + 4, "up", LINE, True)
+            s.button(bx, ry + 4, "move up", LINE, True)
         ry += 36
-    s.text(rx0 + 2, ry + 10, "Click a name to type your own label.", 12, MUTED)
+    s.text(rx0 + 2, ry + 10, "Click a name to give it your own label.", 12, MUTED)
     ry = y + h - 150
     s.row(x + 16, ry, w - 32, 40, "Arrive only", "players may arrive here but not leave through it")
     s.switch(x + w - 26, ry + 9, False)
@@ -462,7 +468,7 @@ def core_screen():
         s.text(rx, 100 + k * 18, line, 14, MUTED)
     for k, line in enumerate(wrap("Back sends each player to wherever they came from, the spot /back would take them to. Alone on a portal it is a way home for everyone.", 44)):
         s.text(rx, 222 + k * 18, line, 14, MUTED)
-    for k, line in enumerate(wrap("LOOK sets the colour from 24, the door style, which side players arrive on, the name and an arrival line. OPEN/CLOSE sets the mode, the lock, the cooldown and the warm-up. ACCESS holds the rules.", 44)):
+    for k, line in enumerate(wrap("LOOK sets the colour from 24, the door style, which side players arrive on and an arrival line. OPEN/CLOSE sets the mode, the lock, the cooldown and the warm-up. ACCESS holds the rules.", 44)):
         s.text(rx, 326 + k * 18, line, 14, MUTED)
     for k, line in enumerate(wrap("Moderators see everything and can press nothing.", 44)):
         s.text(rx, 448 + k * 18, line, 14, MUTED)
