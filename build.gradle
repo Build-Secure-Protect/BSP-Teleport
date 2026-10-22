@@ -124,4 +124,26 @@ tasks.named('jar', Jar).configure {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+    // B13: the mixin refmap is written by the annotation processor only when the mixin classes are compiled; an
+    // incremental compile that skips them ships a jar without it, and a real server then crashes on start.
+    options.incremental = false
 }
+
+// B13: fail the build when the jar a server would load has no mixin refmap or the refmap lacks a mixin.
+def checkRefmap = tasks.register('checkRefmap') {
+    dependsOn 'reobfJar'
+    doLast {
+        def jarFile = tasks.named('jar', Jar).get().archiveFile.get().asFile
+        def refmap = zipTree(jarFile).matching { include "${mod_id}.refmap.json" }.files
+        if (refmap.isEmpty()) {
+            throw new GradleException("${jarFile.name} has no ${mod_id}.refmap.json: run ./gradlew clean build")
+        }
+        def text = refmap.iterator().next().text
+        ['ServerGamePacketListenerMixin', 'PlayerListMixin', 'PlayerListAccessor', 'GuiHotbarMixin'].each { name ->
+            if (!text.contains(name)) {
+                throw new GradleException("${mod_id}.refmap.json in ${jarFile.name} has no entry for ${name}")
+            }
+        }
+    }
+}
+tasks.named('build') { dependsOn checkRefmap }
