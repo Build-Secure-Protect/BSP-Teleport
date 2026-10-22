@@ -48,8 +48,8 @@ public class PortalChooserGameTests {
             PortalDestination b = PortalDestination.warp("arena", true).withLabel("Arena");
             List<PortalChooser.Candidate> candidates = List.of(new PortalChooser.Candidate(0, a, PortalChoice.State.OK), new PortalChooser.Candidate(1, b, PortalChoice.State.OK));
             PortalChoice choice = new PortalChoice(Component.literal("Hub"), List.of(
-                    new PortalChoice.Option(0, Component.literal("Market"), Component.literal("warp"), PortalChoice.State.OK),
-                    new PortalChoice.Option(1, Component.literal("Arena"), Component.literal("portal warp"), PortalChoice.State.OK)));
+                    new PortalChoice.Option(0, Component.literal("Market"), Component.literal("warp"), PortalChoice.State.OK, false),
+                    new PortalChoice.Option(1, Component.literal("Arena"), Component.literal("portal warp"), PortalChoice.State.OK, false)));
             PortalChooser.start(player, core, candidates, choice);
             if (!PortalChooser.isChoosing(player)) {
                 h.fail("the player should be choosing");

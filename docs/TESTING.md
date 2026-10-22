@@ -109,3 +109,33 @@ Needs the owner, both mods on two backends behind Velocity:
 - [ ] Switch servers (a warp, a home on the other server, a portal, `/bsptp send`). On the source run `/invsync snapshots <you>`: a transfer snapshot is listed, taken before the logout snapshot.
 - [ ] The arrival has no visible freeze, and the inventory, armour and offhand are as they were. Carry a Shatter Totem across: it arrives through BSP-Core as before and is not duplicated in the synced inventory.
 - [ ] A backend with the sync switched off still switches normally (the call answers false and is ignored).
+
+## Back portals and portal warm-ups (T73, D110 to D126, B9, 2026-10-22)
+
+A portal destination kind **Back** (each player's own `/back` spot), a per-portal **warm-up** (0 to 30 s, off by default) with a countdown box at the top of the screen, and the B9 fix (`/back` after a portal trip lands in front of that portal, never in its field).
+
+Headless, already passing: `PortalWireTest.a_back_entry_round_trips_and_is_one_place`; GameTests `a_held_warmup_counts_down_keeps_the_player_still_then_moves_them`, `stepping_out_or_being_hurt_cancels_a_warmup`, `a_back_entry_takes_the_player_to_their_back_spot_or_says_why_not` (on a core without a frame: the countdown, the chooser's hold through it, the cancels, the Back spot and the refusal with no spot).
+
+Needs the owner, one server first, then two behind Velocity. Client and server both need this build (the network protocol is now "2"; an older client is told to update).
+
+Back portals:
+- [ ] DESTINATION tab: a sixth pill BACK; the left column reads "Each player goes back to / where they came from." and ADD adds a row "Back". A second ADD of Back is refused (already listed).
+- [ ] A portal with only Back: walk through it and you land where you last teleported from (or died). Walk through again from there (another portal or `/back`) and you flip between the two places.
+- [ ] A new player, or one whose `/back` spot is in a world `/back` excludes: "Nowhere to go back to." on the action bar, no move, no re-fire for 3 s.
+- [ ] Two servers: teleport from A to B, then walk into a Back portal on B: you go to A. Stop A first: "BSP-A is not answering."
+- [ ] Mixed list (Back plus two warps): the card shows BACK as one wide turquoise key across the top with "where you came from" (or "where you came from: <server>"), the warps under it. With no spot the wide key is grey with the reason and does nothing.
+- [ ] Back obeys the landing rules: a spot inside a Region Guard region with `teleport-in` denied, or an Anti Totem zone that forbids it, says "You cannot teleport there."; a spot near your totem being stolen is refused with the raid line; a spot on a server you may not enter shows the access popup.
+- [ ] `/bsptp portal dest add back` and `/bsptp portal dest add back Home again` add it from a command; the panel's PORTALS row reads "back" for a Back-only portal.
+
+B9, `/back` after a portal trip:
+- [ ] Walk through portal P (same server or across servers), then type `/back`: you land in front of P, facing away from it, not inside the field, and P does not fire.
+- [ ] Stand inside a portal's opening and `/sethome` there, walk away, then teleport home: you land in the field without being sent on. Walk two blocks off and back in, and it fires as normal.
+
+Warm-ups:
+- [ ] Open/close tab: a "Warm-up" row under "Cooldown per player" with - and +; 0 to 30. `/bsptp portal warmup 3` sets it too. The panel's PORTALS row adds ", warm-up 3 s".
+- [ ] Walk into a portal with a 3 s warm-up: a box at the top of the screen with the portal's name, "Going in 3 s. Step out to stay." and a bar that empties, with the countdown plings; at 0 you go through. Coins on the portal are taken only then.
+- [ ] Walk about inside a large field during the countdown: it keeps counting. Step out: "You stepped out of <portal>.", the box goes, and the field does not restart the countdown at once.
+- [ ] Get hit during the countdown: "You were hurt: <portal> let you go." (with `cancelOnDamage = false` in the server config the countdown carries on).
+- [ ] Several destinations with a warm-up: pick one on the card; the card closes, the box reads "Going in 3 s." without the hint, and you cannot move until it ends or you are hurt.
+- [ ] An admin (or a player with `bsp_teleport.bypass.warmup`) goes through at once, no box.
+- [ ] Log out or die during the countdown: nothing happens on the next login; the box is gone.

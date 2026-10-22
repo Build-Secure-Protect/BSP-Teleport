@@ -12,8 +12,11 @@ import java.util.List;
  */
 public record PortalChoice(Component portal, List<Option> options) {
 
-    /** One entry: its label, a detail line (where it leads, or why it cannot be pressed) and whether it may be pressed. */
-    public record Option(int index, Component label, Component detail, State state) {
+    /**
+     * One entry: its label, a detail line (where it leads, or why it cannot be pressed), whether it may be pressed, and
+     * whether it is the Back entry, which the card draws as one wide key on top (D126).
+     */
+    public record Option(int index, Component label, Component detail, State state, boolean back) {
     }
 
     public enum State { OK, DOWN, DENIED }
@@ -32,6 +35,7 @@ public record PortalChoice(Component portal, List<Option> options) {
             buf.writeComponent(o.label());
             buf.writeComponent(o.detail());
             buf.writeEnum(o.state());
+            buf.writeBoolean(o.back());
         }
     }
 
@@ -40,7 +44,7 @@ public record PortalChoice(Component portal, List<Option> options) {
         int n = buf.readVarInt();
         List<Option> options = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
-            options.add(new Option(buf.readVarInt(), buf.readComponent(), buf.readComponent(), buf.readEnum(State.class)));
+            options.add(new Option(buf.readVarInt(), buf.readComponent(), buf.readComponent(), buf.readEnum(State.class), buf.readBoolean()));
         }
         return new PortalChoice(portal, options);
     }

@@ -111,6 +111,9 @@ public final class PortalActions {
             case "POSITION", "HERE" -> {
                 return PortalDestination.position(Position.of(player));
             }
+            case "BACK" -> {
+                return PortalDestination.back();
+            }
             case "PORTAL" -> {
                 PortalRow row = Portals.rowById(target);
                 if (row == null) {
@@ -247,6 +250,13 @@ public final class PortalActions {
         core.setCooldownSeconds(seconds);
         Portals.rescan(core);
         return done(player, core, "cooldown " + core.cooldownSeconds() + " s");
+    }
+
+    /** The portal's warm-up (D118), 0 to 30 s; 0 sends players through at once. */
+    public static boolean setWarmup(ServerPlayer player, PortalCoreBlockEntity core, int seconds) {
+        core.setWarmupSeconds(seconds);
+        Portals.rescan(core);
+        return done(player, core, core.warmupSeconds() == 0 ? "no warm-up" : "warm-up " + core.warmupSeconds() + " s");
     }
 
     public static boolean setArrivalLine(ServerPlayer player, PortalCoreBlockEntity core, String line) {

@@ -12,13 +12,13 @@ import java.util.List;
 /**
  * One place a portal sends players (D55, D94): a portal holds a list of these, each with a label the admin may set.
  *
- * @param target   the warp name, the server for a random teleport (empty for this server), another portal's row id
+ * @param target   the warp name, the server for a random teleport (empty for this server), empty for {@link Kind#BACK}, another portal's row id
  *                 ({@link Kind#PORTAL}, D95), or a link id (old rows, converted on load)
  * @param position the exact place for {@link Kind#POSITION}, else null
  * @param label    the admin's custom name, or empty for the target's own name (D96)
  */
 public record PortalDestination(Kind kind, String target, @Nullable Position position, String label) {
-    public enum Kind { NONE, WARP, PORTAL_WARP, RANDOM, POSITION, LINK, PORTAL }
+    public enum Kind { NONE, WARP, PORTAL_WARP, RANDOM, POSITION, LINK, PORTAL, BACK }
 
     /** The most entries a portal may hold without the config saying more (D94). */
     public static final int DEFAULT_MAX = 8;
@@ -115,6 +115,15 @@ public record PortalDestination(Kind kind, String target, @Nullable Position pos
         return new PortalDestination(Kind.LINK, id, null);
     }
 
+    /** Back (D110): each player goes to their own {@code /back} spot; nothing to pick. */
+    public static PortalDestination back() {
+        return new PortalDestination(Kind.BACK, "", null);
+    }
+
+    public boolean isBack() {
+        return kind == Kind.BACK;
+    }
+
     public boolean isSet() {
         return kind != Kind.NONE;
     }
@@ -133,6 +142,7 @@ public record PortalDestination(Kind kind, String target, @Nullable Position pos
             case POSITION -> position == null ? "position ?" : "position " + position.describe();
             case LINK -> "link " + target;
             case PORTAL -> "portal " + target;
+            case BACK -> "back";
         };
     }
 

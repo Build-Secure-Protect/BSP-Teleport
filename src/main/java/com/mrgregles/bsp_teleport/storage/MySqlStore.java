@@ -128,6 +128,7 @@ final class MySqlStore implements AutoCloseable {
                     + "colour VARCHAR(16) NOT NULL DEFAULT '', status VARCHAR(24) NOT NULL DEFAULT '', doors VARCHAR(16) NOT NULL DEFAULT '', created_ms BIGINT NOT NULL DEFAULT 0, INDEX (server))");
             addColumn(st, "portals", "doors", "VARCHAR(16) NOT NULL DEFAULT ''");
             addColumn(st, "portals", "destinations", "VARCHAR(4096) NOT NULL DEFAULT ''");
+            addColumn(st, "portals", "warmup", "INT NOT NULL DEFAULT 0");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("access_grants") + " (uuid CHAR(36) NOT NULL, kind VARCHAR(16) NOT NULL, target VARCHAR(128) NOT NULL, "
                     + "tier VARCHAR(8) NOT NULL, expires_ms BIGINT NOT NULL DEFAULT 0, granted_ms BIGINT NOT NULL DEFAULT 0, PRIMARY KEY (uuid, kind, target), INDEX (kind, target, tier))");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("access_tokens") + " (token INT NOT NULL PRIMARY KEY, kind VARCHAR(16) NOT NULL, target VARCHAR(128) NOT NULL, "
@@ -327,7 +328,7 @@ final class MySqlStore implements AutoCloseable {
 
     List<PortalRow> loadPortals() throws SQLException {
         List<PortalRow> rows = new ArrayList<>();
-        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT id, server, world, x, y, z, name, destination, arrive_only, exit_to, frame_ok, colour, status, doors, created_ms, destinations FROM " + t("portals") + " ORDER BY created_ms")) {
+        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT id, server, world, x, y, z, name, destination, arrive_only, exit_to, frame_ok, colour, status, doors, created_ms, destinations, warmup FROM " + t("portals") + " ORDER BY created_ms")) {
             while (rs.next()) {
                 String exit = rs.getString(10);
                 String many = rs.getString(16);
@@ -338,16 +339,16 @@ final class MySqlStore implements AutoCloseable {
                 }
                 rows.add(new PortalRow(rs.getString(1), rs.getString(2), rs.getString(3), rs.getInt(4), rs.getInt(5), rs.getInt(6), rs.getString(7),
                         destinations, rs.getBoolean(9), exit.isEmpty() ? null : Destination.parse(exit), rs.getBoolean(11),
-                        rs.getString(12), rs.getString(13), rs.getString(14), rs.getLong(15)));
+                        rs.getString(12), rs.getString(13), rs.getString(14), rs.getLong(15), rs.getInt(17)));
             }
         }
         return rows;
     }
 
     void savePortal(PortalRow row) throws SQLException {
-        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("portals") + " (id, server, world, x, y, z, name, destination, arrive_only, exit_to, frame_ok, colour, status, doors, created_ms, destinations) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name = VALUES(name), destination = VALUES(destination), arrive_only = VALUES(arrive_only), "
-                + "exit_to = VALUES(exit_to), frame_ok = VALUES(frame_ok), colour = VALUES(colour), status = VALUES(status), doors = VALUES(doors), destinations = VALUES(destinations)")) {
+        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("portals") + " (id, server, world, x, y, z, name, destination, arrive_only, exit_to, frame_ok, colour, status, doors, created_ms, destinations, warmup) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE name = VALUES(name), destination = VALUES(destination), arrive_only = VALUES(arrive_only), "
+                + "exit_to = VALUES(exit_to), frame_ok = VALUES(frame_ok), colour = VALUES(colour), status = VALUES(status), doors = VALUES(doors), destinations = VALUES(destinations), warmup = VALUES(warmup)")) {
             ps.setString(1, row.id());
             ps.setString(2, row.server());
             ps.setString(3, row.world());
@@ -364,6 +365,7 @@ final class MySqlStore implements AutoCloseable {
             ps.setString(14, row.doors());
             ps.setLong(15, row.createdMs());
             ps.setString(16, PortalDestination.serializeAll(row.destinations()));
+            ps.setInt(17, row.warmup());
             ps.executeUpdate();
         }
     }

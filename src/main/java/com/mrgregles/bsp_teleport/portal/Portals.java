@@ -15,11 +15,14 @@ import com.mrgregles.bsp_teleport.data.TeleportData;
 import com.mrgregles.bsp_teleport.data.Warp;
 import com.mrgregles.bsp_teleport.network.Messenger;
 import com.mrgregles.bsp_teleport.network.PlayerDirectory;
+import com.mrgregles.bsp_teleport.perm.Permissions;
 import com.mrgregles.bsp_teleport.registry.ModBlocks;
 import com.mrgregles.bsp_teleport.storage.Storage;
 import com.mrgregles.bsp_teleport.teleport.RandomTeleport;
+import com.mrgregles.bsp_teleport.teleport.Rules;
 import com.mrgregles.bsp_teleport.teleport.TeleportKind;
 import com.mrgregles.bsp_teleport.teleport.TeleportService;
+import com.mrgregles.bsp_teleport.teleport.Teleports;
 import com.mrgregles.bsp_teleport.util.Scheduler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -457,7 +460,7 @@ public final class Portals {
         PortalShape.Result shape = core.shape();
         boolean frameOk = shape != null && shape.status().frameOk();
         return new PortalRow(core.rowId(), TeleportConfig.serverName(), level.dimension().location().toString(), p.getX(), p.getY(), p.getZ(), core.name(),
-                core.destinations(), core.arriveOnly(), frameOk ? exitOf(core) : null, frameOk, core.colour().getSerializedName(), core.status().name(), core.doorWord(), core.createdMs());
+                core.destinations(), core.arriveOnly(), frameOk ? exitOf(core) : null, frameOk, core.colour().getSerializedName(), core.status().name(), core.doorWord(), core.createdMs(), core.warmupSeconds());
     }
 
     /** Where a linked partner lands its players (D56): one block in front of the opening on the core's facing side, feet on the lowest row, facing away. */
@@ -540,6 +543,9 @@ public final class Portals {
                 }
                 return PlayerDirectory.isOnline(other.server()) ? PortalStatus.READY : PortalStatus.DOWN;
             }
+            case BACK:
+                // Each player's own spot (D110): the portal itself is always ready; the player's case is judged on the way in.
+                return PortalStatus.READY;
             case LINK: {
                 if (d.target().isEmpty()) {
                     return PortalStatus.MISSING;
@@ -599,7 +605,7 @@ public final class Portals {
         PortalRow mine = core.lastRow();
         if (mine == null || !mine.linkId().equals(linkId)) {
             long created = core.createdMs() == 0 ? System.currentTimeMillis() : core.createdMs();
-            mine = new PortalRow(core.rowId(), TeleportConfig.serverName(), "", 0, 0, 0, core.name(), core.destinations(), core.arriveOnly(), null, false, "", "", "", created);
+            mine = new PortalRow(core.rowId(), TeleportConfig.serverName(), "", 0, 0, 0, core.name(), core.destinations(), core.arriveOnly(), null, false, "", "", "", created, core.warmupSeconds());
         }
         byId.put(mine.id(), mine);
         List<PortalRow> sorted = new ArrayList<>(byId.values());
@@ -626,6 +632,7 @@ public final class Portals {
                 yield other == null ? Component.translatable("message.bsp_teleport.portal.portal_gone") : Component.literal(other.name());
             }
             case LINK -> Component.literal("link " + d.target());
+            case BACK -> Component.translatable("message.bsp_teleport.portal.back_name");
             default -> Component.literal("-");
         };
     }
@@ -676,7 +683,7 @@ public final class Portals {
     /** A player stands in a field cell. */
     public static void touched(ServerLevel level, BlockPos pos, ServerPlayer player) {
         PortalCoreBlockEntity core = coreFor(level, pos);
-        if (core == null || PortalChooser.isChoosing(player)) {
+        if (core == null || PortalChooser.isChoosing(player) || PortalWarmup.isWarming(player)) {
             return;
         }
         UUID id = player.getUUID();
@@ -729,9 +736,15 @@ public final class Portals {
             PortalChoice.State state;
             Component detail;
             String server = serverOf(d);
-            if (st != PortalStatus.READY) {
+            Component down = st == PortalStatus.READY ? null : Component.translatable(st.key());
+            if (d.isBack()) {
+                // The player's own spot (D111, D113): why it cannot be used, and its server for the access check.
+                down = backRefusal(player);
+                server = backServer(player);
+            }
+            if (down != null) {
                 state = PortalChoice.State.DOWN;
-                detail = Component.translatable(st.key());
+                detail = down;
             } else if (!server.isEmpty() && !com.mrgregles.bsp_teleport.access.AccessService.mayEnter(player, server)) {
                 state = PortalChoice.State.DENIED;
                 com.mrgregles.bsp_teleport.access.TokenAssignment token = com.mrgregles.bsp_teleport.access.AccessService.tokenFor(player.server, com.mrgregles.bsp_teleport.access.AccessGrant.Kind.SERVER, server);
@@ -740,6 +753,12 @@ public final class Portals {
                 if (firstReason == null) {
                     firstReason = detail;
                 }
+            } else if (d.isBack()) {
+                state = PortalChoice.State.OK;
+                detail = server.isEmpty() ? Component.translatable("message.bsp_teleport.portal.back_detail")
+                        : Component.translatable("message.bsp_teleport.portal.back_detail_on", server);
+                usable++;
+                only = d;
             } else {
                 state = PortalChoice.State.OK;
                 detail = server.isEmpty() ? ownName(d) : Component.translatable("message.bsp_teleport.portal.leads_to", ownName(d), server);
@@ -747,7 +766,7 @@ public final class Portals {
                 only = d;
             }
             candidates.add(new PortalChooser.Candidate(i, d, state));
-            options.add(new PortalChoice.Option(i, labelOf(d), detail, state));
+            options.add(new PortalChoice.Option(i, labelOf(d), detail, state, d.isBack()));
         }
         if (usable == 0) {
             if (firstReason != null) {
@@ -767,6 +786,11 @@ public final class Portals {
 
     /** Sends the player to one entry: the last checks of D61, the per-kind lookup, then the forced move. */
     static void travel(PortalCoreBlockEntity core, ServerPlayer player, PortalDestination d) {
+        travel(core, player, d, null);
+    }
+
+    /** As {@link #travel(PortalCoreBlockEntity, ServerPlayer, PortalDestination)}; {@code hold} carries a chooser's hold into the warm-up (D120). */
+    public static void travel(PortalCoreBlockEntity core, ServerPlayer player, PortalDestination d, @Nullable PortalWarmup.Hold hold) {
         switch (d.kind()) {
             case WARP, PORTAL_WARP -> {
                 Warp warp = TeleportData.get(player.server).warp(d.target());
@@ -774,14 +798,14 @@ public final class Portals {
                     tell(player, "portal.not_answering");
                     return;
                 }
-                go(core, player, warp.position().toDestination(""));
+                go(core, player, warp.position().toDestination(""), hold, false);
             }
             case POSITION -> {
                 if (d.position() == null) {
                     tell(player, "portal.not_answering");
                     return;
                 }
-                go(core, player, d.position().toDestination(""));
+                go(core, player, d.position().toDestination(""), hold, false);
             }
             case PORTAL -> {
                 PortalRow other = rowById(d.target());
@@ -789,7 +813,7 @@ public final class Portals {
                     tell(player, "portal.not_answering");
                     return;
                 }
-                go(core, player, other.exit());
+                go(core, player, other.exit(), hold, false);
             }
             case LINK -> {
                 PortalRow partner = partnerOf(core, d.target());
@@ -797,7 +821,7 @@ public final class Portals {
                     tell(player, "portal.not_answering");
                     return;
                 }
-                go(core, player, partner.exit());
+                go(core, player, partner.exit(), hold, false);
             }
             case RANDOM -> {
                 if (d.target().isEmpty() || d.target().equals(TeleportConfig.serverName())) {
@@ -808,7 +832,7 @@ public final class Portals {
                         hold(player, core, 3);
                         return;
                     }
-                    go(core, player, spot.toDestination(""));
+                    go(core, player, spot.toDestination(""), hold, false);
                 } else {
                     if (!Messenger.enabled() || !PlayerDirectory.isOnline(d.target())) {
                         tell(player, "portal.not_answering");
@@ -820,8 +844,81 @@ public final class Portals {
                     tell(player, "rtp.asking", d.target());
                 }
             }
+            case BACK -> {
+                // D111 to D114: the player's own /back spot, with /back's landing checks on top of the portal's.
+                Component why = backRefusal(player);
+                if (why != null) {
+                    player.displayClientMessage(why, true);
+                    hold(player, core, 3);
+                    return;
+                }
+                Destination back = Teleports.back(player).toDestination("");
+                if (!back.crossServer() || back.server().equals(TeleportConfig.serverName())) {
+                    ServerLevel level = TeleportService.levelOf(player.server, back.world());
+                    if (level == null) {
+                        tell(player, "no_world");
+                        hold(player, core, 3);
+                        return;
+                    }
+                    if (!Rules.canTeleportTo(level, BlockPos.containing(back.x(), back.y(), back.z()), player)) {
+                        tell(player, "blocked_in");
+                        hold(player, core, 3);
+                        return;
+                    }
+                }
+                go(core, player, back, hold, false);
+            }
             default -> tell(player, "portal.not_ready");
         }
+    }
+
+    /** Why a Back entry cannot take this player anywhere (D113), or null when it can. */
+    @Nullable
+    public static Component backRefusal(ServerPlayer player) {
+        Position back = Teleports.back(player);
+        if (back == null || TeleportConfig.getOr(TeleportConfig.BACK_RESTRICTED_WORLDS, List.of()).contains(back.world())) {
+            return Component.translatable("message.bsp_teleport.portal.back_none");
+        }
+        if (!back.isLocal() && Messenger.enabled() && !PlayerDirectory.isOnline(back.server())) {
+            return Component.translatable("message.bsp_teleport.portal.back_down", back.server());
+        }
+        return null;
+    }
+
+    /** The server of the player's /back spot when it is another one, else empty. */
+    private static String backServer(ServerPlayer player) {
+        Position back = Teleports.back(player);
+        return back == null || back.isLocal() ? "" : back.server();
+    }
+
+    /**
+     * D112 (B9): where {@code /back} should return a player who stands here. Inside a portal's field that is the
+     * portal's arrival spot in front of it, so {@code /back} and Back portals never land a player in the field they
+     * left by; anywhere else, where they stand.
+     */
+    public static Position backSpot(ServerPlayer player) {
+        PortalCoreBlockEntity core = fieldAt(player);
+        if (core != null) {
+            PortalShape.Result shape = core.shape();
+            if (shape != null && shape.status().frameOk()) {
+                return Position.fromDestination(exitOf(core));
+            }
+        }
+        return Position.of(player);
+    }
+
+    /** D112 (B9): a landing inside a portal's field, by any route, is marked so the field does not fire until the player walks off. */
+    public static void markIfInField(ServerPlayer player) {
+        if (fieldAt(player) != null) {
+            ARRIVED.put(player.getUUID(), player.blockPosition());
+        }
+    }
+
+    @Nullable
+    private static PortalCoreBlockEntity fieldAt(ServerPlayer player) {
+        BlockPos feet = player.blockPosition();
+        PortalCoreBlockEntity core = coreFor(player.serverLevel(), feet);
+        return core != null ? core : coreFor(player.serverLevel(), feet.above());
     }
 
     /** A chooser ended without a move (D99): the cooldown and the arrival mark, so stepping out does not fire the field. */
@@ -836,11 +933,15 @@ public final class Portals {
         if (core == null || player.hasDisconnected()) {
             return;
         }
-        go(core, player, spot.toDestination(""));
+        go(core, player, spot.toDestination(""), null, false);
     }
 
-    /** The last checks of D61 (raid distance, the start event), then the forced move. */
-    private static void go(PortalCoreBlockEntity core, ServerPlayer player, Destination destination) {
+    /**
+     * The last checks of D61 (raid distance, the start event, the portal's rules), then the warm-up when the portal has
+     * one (D118), else the charge and the forced move. The warm-up calls back here with {@code warmed} set, so every
+     * check runs again at the end and the coins are taken only then (D122).
+     */
+    public static void go(PortalCoreBlockEntity core, ServerPlayer player, Destination destination, @Nullable PortalWarmup.Hold hold, boolean warmed) {
         if (!com.mrgregles.bsp_teleport.access.AccessService.mayEnter(player, destination.server())) {
             com.mrgregles.bsp_teleport.access.AccessService.deny(player, com.mrgregles.bsp_teleport.access.AccessGrant.Kind.SERVER, destination.server());
             hold(player, core, 3);
@@ -869,6 +970,11 @@ public final class Portals {
                 player.displayClientMessage(rules.refusal(), true);
             }
             hold(player, core, 3);
+            return;
+        }
+        int warmup = core.warmupSeconds();
+        if (!warmed && warmup > 0 && !Permissions.has(player, Permissions.BYPASS_WARMUP)) {
+            PortalWarmup.start(player, core, destination, warmup, hold);
             return;
         }
         if (!com.mrgregles.bsp_teleport.access.AccessChecks.charge(player, rules)) {
@@ -917,6 +1023,7 @@ public final class Portals {
             }
         }
         PortalChooser.tick(event.getServer());
+        PortalWarmup.tick(event.getServer());
         if (event.getServer().getTickCount() % WATCH_TICKS != 0) {
             return;
         }

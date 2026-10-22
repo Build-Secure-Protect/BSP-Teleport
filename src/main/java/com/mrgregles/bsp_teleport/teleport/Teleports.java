@@ -203,9 +203,12 @@ public final class Teleports {
         }
     }
 
-    /** Saves where the player is now as their {@code /back} target, unless this world is excluded by config. */
+    /**
+     * Saves where the player is now as their {@code /back} target, unless this world is excluded by config. Inside a
+     * portal's field the spot is in front of that portal instead (D112), so going back never lands in the field.
+     */
     public static void recordBack(ServerPlayer player) {
-        Position here = Position.of(player);
+        Position here = com.mrgregles.bsp_teleport.portal.Portals.backSpot(player);
         if (TeleportConfig.getOr(TeleportConfig.BACK_RESTRICTED_WORLDS, java.util.List.of()).contains(here.world())) {
             return;
         }

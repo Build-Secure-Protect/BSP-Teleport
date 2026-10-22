@@ -65,7 +65,7 @@ public final class PortalChooser {
                     return;
                 }
                 BandPackets.sendChoice(player, PortalChoice.CLOSE);
-                Portals.travel(p.core(), player, c.destination());
+                Portals.travel(p.core(), player, c.destination(), new PortalWarmup.Hold(p.at(), p.yaw(), p.pitch()));
                 return;
             }
         }

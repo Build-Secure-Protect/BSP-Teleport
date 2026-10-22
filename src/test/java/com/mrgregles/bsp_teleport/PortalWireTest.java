@@ -25,6 +25,20 @@ class PortalWireTest {
         assertEquals("position 1, 64, -3 (minecraft:overworld on BSP-Spawn)", position.describe());
     }
 
+    /** D110, D116: Back carries no target, keeps its label through the wire form, reads "back", and a portal holds one at most. */
+    @Test
+    void a_back_entry_round_trips_and_is_one_place() {
+        PortalDestination back = PortalDestination.back();
+        assertEquals(back, PortalDestination.parse(back.serialize()));
+        PortalDestination labelled = back.withLabel("Home again");
+        assertEquals("Home again", PortalDestination.parse(labelled.serialize()).label());
+        assertTrue(PortalDestination.parse(labelled.serialize()).isBack());
+        assertEquals("back", back.describe());
+        assertTrue(back.samePlace(labelled));
+        assertFalse(back.samePlace(PortalDestination.random("")));
+        assertEquals(2, PortalDestination.parseAll(PortalDestination.serializeAll(java.util.List.of(back, PortalDestination.warp("market", false)))).size());
+    }
+
     @Test
     void badTextIsNoDestination() {
         assertEquals(PortalDestination.NONE, PortalDestination.parse(""));

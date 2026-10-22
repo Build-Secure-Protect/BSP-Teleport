@@ -76,6 +76,8 @@ public class PortalCoreBlockEntity extends BlockEntity {
     private int doorProgress;
     private boolean closeWhenDown = true;
     private int cooldownSeconds = 5;
+    /** Seconds a player waits in the field before going (D118); 0 for none. */
+    private int warmupSeconds;
     /** Reserved for the later Warp Gate (D53): a player-made portal with the admin tabs hidden. */
     private boolean playerOwned;
     /** The places this portal leads to (D94): empty means no destination; one is "straight through"; more asks the player. */
@@ -139,6 +141,7 @@ public class PortalCoreBlockEntity extends BlockEntity {
         tag.putBoolean("Open", open);
         tag.putBoolean("CloseWhenDown", closeWhenDown);
         tag.putInt("Cooldown", cooldownSeconds);
+        tag.putInt("Warmup", warmupSeconds);
         tag.putBoolean("PlayerOwned", playerOwned);
         tag.put("Destinations", PortalDestination.saveAll(destinations));
         tag.putBoolean("ArriveOnly", arriveOnly);
@@ -168,6 +171,7 @@ public class PortalCoreBlockEntity extends BlockEntity {
         open = !tag.contains("Open") || tag.getBoolean("Open");
         closeWhenDown = !tag.contains("CloseWhenDown") || tag.getBoolean("CloseWhenDown");
         cooldownSeconds = tag.contains("Cooldown") ? tag.getInt("Cooldown") : 5;
+        warmupSeconds = tag.getInt("Warmup");
         playerOwned = tag.getBoolean("PlayerOwned");
         if (tag.contains("Destinations")) {
             destinations = List.copyOf(PortalDestination.loadAll(tag.getList("Destinations", net.minecraft.nbt.Tag.TAG_COMPOUND)));
@@ -321,6 +325,10 @@ public class PortalCoreBlockEntity extends BlockEntity {
         return cooldownSeconds;
     }
 
+    public int warmupSeconds() {
+        return warmupSeconds;
+    }
+
     public boolean playerOwned() {
         return playerOwned;
     }
@@ -461,6 +469,14 @@ public class PortalCoreBlockEntity extends BlockEntity {
 
     public void setCooldownSeconds(int seconds) {
         this.cooldownSeconds = Math.max(0, seconds);
+        setChanged();
+    }
+
+    /** The longest portal warm-up (D118). */
+    public static final int MAX_WARMUP = 30;
+
+    public void setWarmupSeconds(int seconds) {
+        this.warmupSeconds = Math.max(0, Math.min(MAX_WARMUP, seconds));
         setChanged();
     }
 

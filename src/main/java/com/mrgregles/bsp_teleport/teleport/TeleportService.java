@@ -199,6 +199,8 @@ public final class TeleportService implements BspTeleportApi {
         player.fallDistance = 0f;
         player.teleportTo(level, destination.x(), destination.y(), destination.z(), yaw, pitch);
         player.fallDistance = 0f;
+        // D112 (B9): a landing inside a portal's field does not fire it until the player walks off.
+        com.mrgregles.bsp_teleport.portal.Portals.markIfInField(player);
         protect(player, destination.protect());
         com.mrgregles.bsp_teleport.util.Sounds.arrived(player);
         if (!destination.message().isEmpty()) {

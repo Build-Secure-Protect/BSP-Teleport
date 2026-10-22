@@ -316,7 +316,7 @@ public final class AdminService {
                     leads.add(d.target());
                 }
             }
-            portals.add(new AdminData.PortalEntry(r.id(), r.name(), r.server(), r.world(), r.x(), r.y(), r.z(), Portals.summary(r.destinations()) + (r.arriveOnly() ? " (arrive only)" : ""),
+            portals.add(new AdminData.PortalEntry(r.id(), r.name(), r.server(), r.world(), r.x(), r.y(), r.z(), Portals.summary(r.destinations()) + (r.arriveOnly() ? " (arrive only)" : "") + (r.warmup() > 0 ? ", warm-up " + r.warmup() + " s" : ""),
                     r.linkId(), r.status(), r.doors(), leads));
         }
         portals.sort((x, y) -> x.server().equals(y.server()) ? x.name().compareToIgnoreCase(y.name()) : x.server().equals(TeleportConfig.serverName()) ? -1 : y.server().equals(TeleportConfig.serverName()) ? 1 : x.server().compareTo(y.server()));

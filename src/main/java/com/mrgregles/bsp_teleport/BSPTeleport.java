@@ -67,6 +67,8 @@ public class BSPTeleport {
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, Teleports::onHurt);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, com.mrgregles.bsp_teleport.portal.PortalChooser::onHurt);
         MinecraftForge.EVENT_BUS.addListener(com.mrgregles.bsp_teleport.portal.PortalChooser::onLoggedOut);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, com.mrgregles.bsp_teleport.portal.PortalWarmup::onHurt);
+        MinecraftForge.EVENT_BUS.addListener(com.mrgregles.bsp_teleport.portal.PortalWarmup::onLoggedOut);
         MinecraftForge.EVENT_BUS.addListener(Teleports::onDeath);
         MinecraftForge.EVENT_BUS.addListener(Teleports::onLoggedOut);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, TeleportService::onPlayerLoggedIn);

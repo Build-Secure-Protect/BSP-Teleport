@@ -86,7 +86,16 @@ public class PortalChooserScreen extends Screen {
         g.drawString(font, choice.portal().getString().toUpperCase(), left + 10, top + 8, VIO, false);
         small(g, Component.translatable("screen.bsp_teleport.choose.help").getString(), left + 10, top + 19, MUTED);
         int y = top + 32;
+        // D126: the Back entry is one wide key across the top, the other destinations under it.
         for (PortalChoice.Option o : choice.options()) {
+            if (o.back()) {
+                y = drawBack(g, o, y);
+            }
+        }
+        for (PortalChoice.Option o : choice.options()) {
+            if (o.back()) {
+                continue;
+            }
             boolean ok = o.state() == PortalChoice.State.OK, denied = o.state() == PortalChoice.State.DENIED;
             int border = ok ? DIM : denied ? BAD : DIM;
             g.fill(left + 10, y, left + W - 10, y + 18, border);
@@ -100,6 +109,23 @@ public class PortalChooserScreen extends Screen {
         }
         button(g, left + W - 14, y + 4, Component.translatable("screen.bsp_teleport.choose.cancel").getString(), GOLD, GOLD, () -> answer(-1));
         g.pose().popPose();
+    }
+
+    /** The Back entry as a wide turquoise key (D126), greyed with the reason when it cannot be used. */
+    private int drawBack(GuiGraphics g, PortalChoice.Option o, int y) {
+        boolean ok = o.state() == PortalChoice.State.OK, denied = o.state() == PortalChoice.State.DENIED;
+        int x1 = left + 10, x2 = left + W - 10;
+        g.fill(x1, y, x2, y + 18, ok ? TQ : denied ? BAD : DIM);
+        g.fill(x1 + 1, y + 1, x2 - 1, y + 17, SLOT);
+        String label = clip(o.label().getString().toUpperCase(), W - 30);
+        String detail = clip(o.detail().getString(), W - 30);
+        int mid = (x1 + x2) / 2;
+        small(g, label, mid - (int) (font.width(label) * 0.75f) / 2, y + 3, ok ? TQ : MUTED);
+        small(g, detail, mid - (int) (font.width(detail) * 0.75f) / 2, y + 10, ok ? MUTED : denied ? BAD : DIM);
+        if (ok) {
+            hits.add(new Hit(x1, y, x2 - x1, 18, () -> answer(o.index())));
+        }
+        return y + 20;
     }
 
     private void answer(int index) {

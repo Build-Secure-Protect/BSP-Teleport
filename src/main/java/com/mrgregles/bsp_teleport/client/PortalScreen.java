@@ -170,7 +170,7 @@ public class PortalScreen extends Screen {
         int y = top + 46;
         String cur = pick.isEmpty() ? "WARP" : pick;
         int px = left + 10;
-        for (String kind : new String[]{"WARP", "PORTAL_WARP", "PORTAL", "RANDOM", "POSITION"}) {
+        for (String kind : new String[]{"WARP", "PORTAL_WARP", "PORTAL", "RANDOM", "POSITION", "BACK"}) {
             boolean on = kind.equals(cur);
             px = pill(g, px, y, Component.translatable("screen.bsp_teleport.portal.kind." + kind.toLowerCase()).getString(), on, () -> {
                 pick = kind;
@@ -258,11 +258,20 @@ public class PortalScreen extends Screen {
                     button(g, left + 10 + colW, ly, Component.translatable("screen.bsp_teleport.portal.use_here").getString(), GOLD, GOLD, () -> send(PortalScreenAction.DEST_ADD, "POSITION;"));
                 }
             }
+            case "BACK" -> {
+                // D110, D126 A: nothing to pick, one line of explanation and ADD.
+                pickRow(g, ly, colW, false);
+                small(g, Component.translatable("screen.bsp_teleport.portal.back_help1").getString(), left + 14, ly + 2, MUTED);
+                ly += 12;
+                pickRow(g, ly, colW, false);
+                small(g, Component.translatable("screen.bsp_teleport.portal.back_help2").getString(), left + 14, ly + 2, MUTED);
+            }
             default -> {
             }
         }
         if (!ro() && !"POSITION".equals(cur)) {
-            boolean can = !pickedTarget.isEmpty() && data.dests().size() < data.maxDests();
+            boolean back = "BACK".equals(cur);
+            boolean can = (back || !pickedTarget.isEmpty()) && data.dests().size() < data.maxDests();
             String add = Component.translatable("screen.bsp_teleport.portal.add").getString();
             button(g, left + 10 + colW, bottom - 13, add, can ? TQ : DIM, can ? TQ : MUTED, can ? () -> {
                 send(PortalScreenAction.DEST_ADD, cur + ";" + pickedTarget);
@@ -481,6 +490,18 @@ public class PortalScreen extends Screen {
         small(g, v, bx - tw + 3, y + 5, GOLD);
         bx -= tw + 2;
         button(g, bx, y + 2, "-", DIM, TQ, ro() ? null : () -> send(PortalScreenAction.COOLDOWN, String.valueOf(Math.max(0, data.cooldown() - 1))));
+        y += 18;
+        // D118: the warm-up, the same - / + keys as the cooldown, 0 to 30 s.
+        row(g, y, 16, data.warmup() > 0 ? TQ : DIM);
+        small(g, Component.translatable("screen.bsp_teleport.portal.warmup").getString(), left + 14, y + 2, TEXT);
+        small(g, Component.translatable("screen.bsp_teleport.portal.warmup_help").getString(), left + 14, y + 9, MUTED);
+        bx = left + W - 14;
+        bx = button(g, bx, y + 2, "+", DIM, TQ, ro() ? null : () -> send(PortalScreenAction.WARMUP, String.valueOf(Math.min(30, data.warmup() + 1)))) - 2;
+        String wv = data.warmup() + " s";
+        int ww = (int) (font.width(wv) * 0.75f) + 6;
+        small(g, wv, bx - ww + 3, y + 5, GOLD);
+        bx -= ww + 2;
+        button(g, bx, y + 2, "-", DIM, TQ, ro() ? null : () -> send(PortalScreenAction.WARMUP, String.valueOf(Math.max(0, data.warmup() - 1))));
         y += 20;
         small(g, Component.translatable("screen.bsp_teleport.portal.doors_now", data.doors().isEmpty() ? "-" : data.doors()).getString(), left + 12, y + 2, MUTED);
     }

@@ -82,6 +82,7 @@ public final class PortalScreenService {
             case LOCK -> PortalActions.setLocked(player, core, Boolean.parseBoolean(a));
             case CLOSE_WHEN_DOWN -> PortalActions.setCloseWhenDown(player, core, Boolean.parseBoolean(a));
             case COOLDOWN -> PortalActions.setCooldown(player, core, parseInt(a));
+            case WARMUP -> PortalActions.setWarmup(player, core, parseInt(a));
             case RULE_ADD -> {
                 String c = parts.length > 2 ? parts[2] : "", d = parts.length > 3 ? parts[3] : "";
                 PortalActions.addRule(player, core, com.mrgregles.bsp_teleport.access.AccessRule.of(a, b, parseInt(c), Boolean.parseBoolean(d)));
@@ -137,7 +138,7 @@ public final class PortalScreenService {
                 core.getBlockState().getValue(PortalCoreBlock.FACING).getName(), core.arrivalLine(), core.mode().name(), core.openWhenPowered(), core.powered(),
                 core.openAtMinute(), core.closeAtMinute(), core.gameOpenAt(), core.gameCloseAt(), PortalCoreBlockEntity.zone().getId(), core.isLocked(),
                 core.closeWhenDown(), core.cooldownSeconds(), core.doorWord(), core.lit(), warps, servers,
-                com.mrgregles.bsp_teleport.access.AccessRule.serializeList(core.rules()), tokenFor(player, core), dests, portals, PortalActions.maxDestinations());
+                com.mrgregles.bsp_teleport.access.AccessRule.serializeList(core.rules()), tokenFor(player, core), dests, portals, PortalActions.maxDestinations(), core.warmupSeconds());
     }
 
     /** The token that sells access to this portal (D86, TOKEN rule), or 0. */

@@ -1,0 +1,388 @@
+<title>Back Portals and Warm-ups</title>
+<style>
+/* Layout: one column of concept sheets, each sheet a Holo HUD panel drawn at 1.5x GUI scale, with state toggles above the screens that change. */
+:root {
+  --bg: #0B0F14; --panel: #10151C; --inset: #0C0E12; --line: #2A2F3A;
+  --accent: #19D3B0; --violet: #B58CFF; --gold: #FFD23A; --bad: #FF6B5C; --ok: #8FE04A;
+  --text: #E6EAF2; --muted: #9AA3B5; --sky: #2b3f55; --shade: rgba(0,0,0,.6);
+  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif; --mono: Menlo, Monaco, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--sans); margin: 0; padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 28px; margin: 0 0 6px; text-wrap: balance; }
+h2 { font-size: 20px; margin: 40px 0 6px; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; }
+h3 { font-size: 15px; margin: 18px 0 8px; color: var(--text); }
+p, li { color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 70ch; }
+.lead { max-width: 90ch; }
+.sheets { display: flex; flex-wrap: wrap; gap: 24px; }
+.sheet { flex: 1 1 360px; min-width: 0; }
+.hud { position: relative; background: var(--panel); border: 2px solid var(--violet); padding: 14px 16px 18px; font-size: 13px; }
+.title { font-weight: bold; letter-spacing: 2px; text-transform: uppercase; font-size: 16px; color: var(--violet); }
+.help { color: var(--muted); font-size: 11px; margin-top: 2px; }
+.tabs { position: absolute; right: 14px; top: 10px; display: flex; gap: 5px; flex-wrap: wrap; }
+.tab { border: 1px solid var(--line); background: var(--inset); color: var(--muted); font-size: 10px; font-weight: bold; letter-spacing: 1px; padding: 5px 7px; text-transform: uppercase; }
+.tab.on { border-color: var(--violet); color: var(--violet); }
+.status { margin: 10px 0; border: 1px solid var(--ok); background: var(--inset); color: var(--ok); font-size: 10px; font-weight: bold; letter-spacing: 1px; padding: 5px 8px; text-transform: uppercase; }
+.status.tq { border-color: var(--accent); color: var(--accent); }
+.cols { display: flex; gap: 12px; }
+.cols > div { flex: 1 1 0; min-width: 0; }
+.pills { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
+.pill { border: 1px solid var(--line); background: var(--inset); color: var(--muted); font-size: 10px; font-weight: bold; letter-spacing: 1px; padding: 4px 7px; text-transform: uppercase; }
+.pill.on { border-color: var(--violet); color: var(--violet); }
+.pill.new { border-color: var(--accent); color: var(--accent); }
+.row { border: 1px solid var(--line); background: var(--inset); padding: 6px 8px; margin: 4px 0; display: flex; align-items: center; gap: 8px; min-height: 30px; }
+.row .name { font-weight: bold; color: var(--text); flex: 1 1 auto; min-width: 0; }
+.row .sub { color: var(--muted); font-size: 11px; font-weight: normal; }
+.row.dim { opacity: .55; }
+.row.back { border-color: var(--accent); }
+.row.flat { border: none; background: none; padding: 6px 0 0; }
+.explain { border: 1px dashed var(--accent); background: var(--inset); color: var(--muted); font-size: 11px; padding: 8px; line-height: 1.45; }
+.key { border: 1px solid var(--accent); color: var(--accent); background: var(--inset); font-size: 10px; font-weight: bold; letter-spacing: 1px; padding: 3px 7px; text-transform: uppercase; white-space: nowrap; }
+.key.v { border-color: var(--violet); color: var(--violet); }
+.key.g { border-color: var(--gold); color: var(--gold); }
+.key.r { border-color: var(--bad); color: var(--bad); }
+.key.d { border-color: var(--line); color: var(--muted); }
+.key.ok { border-color: var(--ok); color: var(--ok); }
+.box { border: 1px solid var(--line); background: var(--inset); color: var(--text); font-family: var(--mono); font-size: 11px; padding: 4px 6px; min-width: 0; }
+.num { color: var(--gold); font-family: var(--mono); font-size: 11px; width: 14px; }
+.chip { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--violet); border: 1px solid var(--violet); padding: 1px 4px; }
+.chip.w { color: var(--accent); border-color: var(--accent); }
+.chip.b { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+.foot { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 6px; color: var(--ok); font-size: 11px; }
+.label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 8px 0 4px; }
+.arrowcol { flex: 0 0 24px !important; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 18px; }
+.big { border: 1px solid var(--accent); background: var(--inset); padding: 14px 12px; text-align: center; }
+.big .name { font-size: 15px; font-weight: bold; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
+.big .sub { color: var(--muted); font-size: 11px; margin-top: 4px; }
+.val { font-family: var(--mono); font-size: 12px; color: var(--gold); min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; }
+.setrow { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--inset); padding: 6px 8px; margin: 4px 0; }
+.setrow .txt { flex: 1 1 auto; min-width: 0; }
+.setrow .txt b { display: block; font-size: 12px; color: var(--text); }
+.setrow .txt span { font-size: 10px; color: var(--muted); }
+.setrow.new { border-color: var(--accent); }
+.toggles { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 16px; }
+.toggle { border: 1px solid var(--line); background: var(--panel); color: var(--muted); font: inherit; font-size: 12px; padding: 6px 10px; cursor: pointer; }
+.toggle[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.toggle:focus-visible { outline: 2px solid var(--gold); }
+.screen { background: var(--sky); padding: 18px; position: relative; min-height: 320px; overflow: hidden; }
+.card { background: var(--panel); border: 2px solid var(--violet); padding: 14px 16px; max-width: 420px; margin: 8px auto 0; }
+.sep { border-top: 1px solid var(--line); margin: 8px 0 4px; }
+.hotbar { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; }
+.slot { width: 26px; height: 26px; border: 1px solid #6a6a6a; background: #1c1c1c; }
+.slot.band { margin-left: 8px; border-color: var(--accent); background: #0F2A28; }
+.actionbar { position: absolute; left: 0; right: 0; bottom: 48px; text-align: center; font-size: 13px; color: var(--text); text-shadow: 0 1px 0 #000; }
+.actionbar b { color: var(--gold); }
+.straight { position: absolute; left: 18px; top: 18px; right: 18px; color: var(--text); font-size: 13px; background: var(--shade); padding: 10px 12px; }
+.ring { position: absolute; left: 50%; top: 46%; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%;
+  background: conic-gradient(var(--accent) var(--p, 66%), transparent 0); -webkit-mask: radial-gradient(circle, transparent 17px, #000 18px); mask: radial-gradient(circle, transparent 17px, #000 18px); }
+.cross { position: absolute; left: 50%; top: 46%; color: var(--text); transform: translate(-50%, -50%); font-size: 14px; }
+.hudbox { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); width: 220px; max-width: 80%; background: var(--panel); border: 1px solid var(--accent); padding: 6px 10px; }
+.hudbox .t { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); font-weight: bold; }
+.hudbox .s { font-size: 11px; color: var(--muted); }
+.bar { height: 4px; background: var(--inset); border: 1px solid var(--line); margin-top: 5px; }
+.bar i { display: block; height: 100%; width: 66%; background: var(--accent); }
+.note { font-size: 11px; color: var(--muted); margin-top: 8px; }
+.pick { border: 1px solid var(--gold); color: var(--gold); display: inline-block; padding: 2px 8px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-left: 8px; }
+.decisions { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.decisions div { border-left: 2px solid var(--line); padding: 2px 10px; font-size: 13px; color: var(--muted); }
+.decisions b { color: var(--text); }
+ol.rules li { margin-bottom: 4px; }
+@media (max-width: 700px) { .cols { flex-direction: column; } .tabs { position: static; margin-top: 8px; } .arrowcol { display: none !important; } }
+</style>
+
+<h1>Back portals and portal warm-ups</h1>
+<p class="lead">Three options each for adding a Back destination on the core screen, for the Back row on the chooser card, and for how a portal warm-up counts down. The warm-up setting itself sits under the cooldown on the Open/close tab in every option. Decisions D110 to D125 are at the foot. Colours and sizes are the Holo HUD look at 1.5x, drawn against the screens as built in T69.</p>
+
+<h2>1. Adding Back on the DESTINATION tab</h2>
+<p>Back has nothing to pick: it goes wherever each player came from. The options differ in where the admin finds it and how back mode reads when Back is the only entry.</p>
+<div class="toggles" role="group" aria-label="Destination tab states">
+  <button class="toggle" id="t-only" aria-pressed="false">Back is the only destination</button>
+</div>
+
+<div class="sheets">
+  <div class="sheet">
+    <h3>A. A sixth pill <span class="pick">default</span></h3>
+    <div class="hud">
+      <div class="title">Portal</div>
+      <div class="help">Return Gate. Pick on the left, press ADD, edit the label on the right.</div>
+      <div class="tabs"><span class="tab on">Destination</span><span class="tab">Look</span><span class="tab">Open/close</span><span class="tab">Access</span></div>
+      <div class="status" data-status>Ready: 3 destinations</div>
+      <div class="cols">
+        <div>
+          <div class="pills"><span class="pill">Warp</span><span class="pill">Portal warp</span><span class="pill">Portal</span><span class="pill">Random</span><span class="pill">Position</span><span class="pill on">Back</span></div>
+          <div class="explain">Back takes each player to where they came from: the spot /back would take them to. Nothing to pick.</div>
+          <div class="row flat" style="justify-content:flex-end"><span class="key">Add</span></div>
+        </div>
+        <div class="arrowcol">&gt;</div>
+        <div>
+          <div class="label" data-count>Destinations 3 of 8</div>
+          <div data-mixed>
+            <div class="row"><span class="num">1</span><span class="chip w">warp</span><span class="box">Market</span><span class="key d">Up</span><span class="key r">Del</span></div>
+            <div class="row"><span class="num">2</span><span class="chip">portal</span><span class="box">Arena Door</span><span class="key d">Up</span><span class="key r">Del</span></div>
+          </div>
+          <div class="row back"><span class="num" data-n>3</span><span class="chip w">back</span><span class="box">Back</span><span class="key d">Up</span><span class="key r">Del</span></div>
+        </div>
+      </div>
+      <div class="foot">BSP-Spawn minecraft:overworld 120, 64, -40 &nbsp; frame 5x6, opening 12 cells</div>
+    </div>
+    <p>Added the same way as every other kind, so nothing new to learn. The picker column shows one line of explanation and ADD. In the list Back is a normal row with a label box, Up and Del.</p>
+  </div>
+
+  <div class="sheet">
+    <h3>B. A key under the list</h3>
+    <div class="hud">
+      <div class="title">Portal</div>
+      <div class="help">Return Gate. Pick on the left, press ADD, edit the label on the right.</div>
+      <div class="tabs"><span class="tab on">Destination</span><span class="tab">Look</span><span class="tab">Open/close</span><span class="tab">Access</span></div>
+      <div class="status" data-status>Ready: 3 destinations</div>
+      <div class="cols">
+        <div>
+          <div class="pills"><span class="pill on">Warp</span><span class="pill">Portal warp</span><span class="pill">Portal</span><span class="pill">Random</span><span class="pill">Position</span></div>
+          <div class="row"><span class="name">market</span><span class="sub">BSP-Spawn</span></div>
+          <div class="row"><span class="name">farm</span><span class="sub">BSP-Forest</span></div>
+          <div class="row flat" style="justify-content:flex-end"><span class="key">Add</span></div>
+        </div>
+        <div class="arrowcol">&gt;</div>
+        <div>
+          <div class="label" data-count>Destinations 3 of 8</div>
+          <div data-mixed>
+            <div class="row"><span class="num">1</span><span class="chip w">warp</span><span class="box">Market</span><span class="key d">Up</span><span class="key r">Del</span></div>
+            <div class="row"><span class="num">2</span><span class="chip">portal</span><span class="box">Arena Door</span><span class="key d">Up</span><span class="key r">Del</span></div>
+          </div>
+          <div class="row back"><span class="num" data-n>3</span><span class="chip w">back</span><span class="box">Back</span><span class="key d">Up</span><span class="key r">Del</span></div>
+          <div class="row flat" style="justify-content:flex-end"><span class="key d">Back added</span></div>
+        </div>
+      </div>
+      <div class="foot">BSP-Spawn minecraft:overworld 120, 64, -40 &nbsp; frame 5x6, opening 12 cells</div>
+    </div>
+    <p>The pills stay as they are. One "+ Back" key under the list adds it in one click and reads "Back added" while the list holds it, since a portal needs only one. Quicker, but a second way of adding things.</p>
+  </div>
+
+  <div class="sheet">
+    <h3>C. Pill, with back mode called out</h3>
+    <div class="hud">
+      <div class="title">Portal</div>
+      <div class="help">Return Gate. Pick on the left, press ADD, edit the label on the right.</div>
+      <div class="tabs"><span class="tab on">Destination</span><span class="tab">Look</span><span class="tab">Open/close</span><span class="tab">Access</span></div>
+      <div class="status" data-status data-c>Ready: 3 destinations</div>
+      <div class="cols">
+        <div>
+          <div class="pills"><span class="pill">Warp</span><span class="pill">Portal warp</span><span class="pill">Portal</span><span class="pill">Random</span><span class="pill">Position</span><span class="pill on">Back</span></div>
+          <div class="explain">Back takes each player to where they came from. Nothing to pick.</div>
+          <div class="row flat" style="justify-content:flex-end"><span class="key">Add</span></div>
+        </div>
+        <div class="arrowcol">&gt;</div>
+        <div>
+          <div class="label" data-count>Destinations 3 of 8</div>
+          <div data-mixed>
+            <div class="row"><span class="num">1</span><span class="chip w">warp</span><span class="box">Market</span><span class="key d">Up</span><span class="key r">Del</span></div>
+            <div class="row"><span class="num">2</span><span class="chip">portal</span><span class="box">Arena Door</span><span class="key d">Up</span><span class="key r">Del</span></div>
+            <div class="row back"><span class="num">3</span><span class="chip b">back</span><span class="box">Back</span><span class="key d">Up</span><span class="key r">Del</span></div>
+          </div>
+          <div class="big" data-bigback hidden><div class="name">Back mode</div><div class="sub">Every player goes back to where they came from.</div><div class="row flat" style="justify-content:center"><span class="box">Back</span><span class="key r">Del</span></div></div>
+        </div>
+      </div>
+      <div class="foot">BSP-Spawn minecraft:overworld 120, 64, -40 &nbsp; frame 5x6, opening 12 cells</div>
+    </div>
+    <p>Added like A, with a filled chip so a Back row stands out in a mixed list. When Back is the only entry the list turns into one large "Back mode" panel and the status line says so. Toggle "Back is the only destination" to compare.</p>
+  </div>
+</div>
+
+<h2>2. The Back row on the chooser card</h2>
+<p>The card is the centred card built in T69 (D107). With Back as the only destination there is no card: the player goes straight through. Toggle the states to see the greyed reasons.</p>
+<div class="toggles" role="group" aria-label="Chooser states">
+  <button class="toggle" id="t-spot" aria-pressed="true">Player has a back spot</button>
+  <button class="toggle" id="t-far" aria-pressed="true">The spot is on another server</button>
+  <button class="toggle" id="t-down" aria-pressed="false">That server is down</button>
+</div>
+
+<div class="sheets">
+  <div class="sheet">
+    <h3>A. A row like the others <span class="pick">default</span></h3>
+    <div class="screen">
+      <div class="card">
+        <div class="title">Return Gate</div>
+        <div class="help">Choose a destination</div>
+        <div class="row"><span class="num">1</span><span class="name">Market<br><span class="sub">warp on BSP-Spawn</span></span><span class="key">Go</span></div>
+        <div class="row"><span class="num">2</span><span class="name">Arena Door<br><span class="sub">portal on BSP-SafeRoom</span></span><span class="key v">Go</span></div>
+        <div data-backrow="a"></div>
+        <div class="row flat" style="justify-content:center"><span class="key d">Cancel (Esc)</span></div>
+      </div>
+      <div class="hotbar"><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot band"></span></div>
+    </div>
+    <p>Back sits in its place in the list with the detail "where you came from", naming the server when it is another. With no spot, or the server down, it is greyed with the reason and a DOWN key, like any down entry.</p>
+  </div>
+
+  <div class="sheet">
+    <h3>B. Pinned above Cancel</h3>
+    <div class="screen">
+      <div class="card">
+        <div class="title">Return Gate</div>
+        <div class="help">Choose a destination</div>
+        <div class="row"><span class="num">1</span><span class="name">Market<br><span class="sub">warp on BSP-Spawn</span></span><span class="key">Go</span></div>
+        <div class="row"><span class="num">2</span><span class="name">Arena Door<br><span class="sub">portal on BSP-SafeRoom</span></span><span class="key v">Go</span></div>
+        <div class="sep"></div>
+        <div data-backrow="b"></div>
+        <div class="row flat" style="justify-content:center"><span class="key d">Cancel (Esc)</span></div>
+      </div>
+      <div class="hotbar"><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot band"></span></div>
+    </div>
+    <p>Back is always the last row, under a dividing line, next to Cancel, wherever the admin put it in the list: "go back" and "stay" sit together. The detail shows the server and the world.</p>
+  </div>
+
+  <div class="sheet">
+    <h3>C. A wide key at the top</h3>
+    <div class="screen">
+      <div class="card">
+        <div class="title">Return Gate</div>
+        <div class="help">Choose a destination</div>
+        <div data-backrow="c"></div>
+        <div class="row"><span class="num">1</span><span class="name">Market<br><span class="sub">warp on BSP-Spawn</span></span><span class="key">Go</span></div>
+        <div class="row"><span class="num">2</span><span class="name">Arena Door<br><span class="sub">portal on BSP-SafeRoom</span></span><span class="key v">Go</span></div>
+        <div class="row flat" style="justify-content:center"><span class="key d">Cancel (Esc)</span></div>
+      </div>
+      <div class="hotbar"><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot band"></span></div>
+    </div>
+    <p>Back is one wide turquoise key across the top of the card, the other destinations under it. The quickest way home, but it puts one choice above the rest whatever order the admin set.</p>
+  </div>
+</div>
+
+<h2>3. Portal warm-up</h2>
+<p>The setting is a new row under the cooldown on the Open/close tab, in every option. The options differ in how the countdown shows while the player stands in the field. Toggle the warm-up off to see the tab as it is today.</p>
+<div class="toggles" role="group" aria-label="Warm-up states">
+  <button class="toggle" id="t-warm" aria-pressed="true">Warm-up 3 s</button>
+</div>
+
+<div class="sheets">
+  <div class="sheet">
+    <h3>The setting (all options)</h3>
+    <div class="hud">
+      <div class="title">Portal</div>
+      <div class="help">Return Gate. How and when the doors open, and who may use it how often.</div>
+      <div class="tabs"><span class="tab">Destination</span><span class="tab">Look</span><span class="tab on">Open/close</span><span class="tab">Access</span></div>
+      <div class="pills"><span class="pill on">Manual</span><span class="pill">Redstone</span><span class="pill">Real clock</span><span class="pill">Game clock</span></div>
+      <div class="setrow"><div class="txt"><b>Lock</b><span>closed to everyone until unlocked</span></div><span class="key d">Off</span></div>
+      <div class="setrow"><div class="txt"><b>Cooldown per player</b><span>seconds before the same player may use it again</span></div><span class="key d">-</span><span class="val">5 s</span><span class="key d">+</span></div>
+      <div class="setrow new"><div class="txt"><b>Warm-up</b><span>seconds a player waits in the field before going; 0 for none</span></div><span class="key d">-</span><span class="val" data-warmval>3 s</span><span class="key d">+</span></div>
+      <div class="foot">Doors now: open</div>
+    </div>
+    <p>0 to 30 seconds, 0 by default. The admin panel's PORTALS row adds "warm-up 3 s" when it is on. Command: /bsptp portal warmup &lt;seconds&gt;.</p>
+  </div>
+
+  <div class="sheet">
+    <h3>A. Action bar <span class="pick">default</span></h3>
+    <div class="screen">
+      <div class="cross">+</div>
+      <div class="actionbar" data-bar>Through Return Gate in <b>2 s</b></div>
+      <div class="straight" data-off hidden>Warm-up 0: the player goes through at once, as today.</div>
+      <div class="hotbar"><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot band"></span></div>
+    </div>
+    <p>The same line and plings as the band's warm-up, so a countdown looks the same everywhere. Stepping out of the field or being hurt replaces it with the reason.</p>
+  </div>
+
+  <div class="sheet">
+    <h3>B. Action bar and a ring</h3>
+    <div class="screen">
+      <div class="ring" data-ring></div>
+      <div class="cross">+</div>
+      <div class="actionbar" data-bar>Through Return Gate in <b>2 s</b></div>
+      <div class="straight" data-off hidden>Warm-up 0: the player goes through at once, as today.</div>
+      <div class="hotbar"><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot band"></span></div>
+    </div>
+    <p>A thin turquoise ring fills round the crosshair as the seconds pass, plus the action-bar line. Easier to read at a glance, but a new piece of HUD only portals have.</p>
+  </div>
+
+  <div class="sheet">
+    <h3>C. A box at the top</h3>
+    <div class="screen">
+      <div class="hudbox" data-box><div class="t">Return Gate</div><div class="s">Going in 2 s. Step out to stay.</div><div class="bar"><i></i></div></div>
+      <div class="cross">+</div>
+      <div class="straight" data-off hidden>Warm-up 0: the player goes through at once, as today.</div>
+      <div class="hotbar"><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot"></span><span class="slot band"></span></div>
+    </div>
+    <p>A small Holo HUD box at the top of the screen with the portal's name, the seconds and a bar, and a hint that stepping out cancels. Clear, but it covers the view while the player stands in the portal.</p>
+  </div>
+</div>
+
+<h2>4. The rules behind all three</h2>
+<ol class="rules">
+  <li>Back goes to the player's /back spot: where they last teleported from, or where they died, whichever is newer. It survives server switches and relogs.</li>
+  <li>A trip that starts inside a portal saves /back at that portal's arrival spot in front of it, and any landing inside a portal field is marked so the field does not fire until the player walks off (B9). Plain /back gains this too.</li>
+  <li>No spot, a spot in a world /back excludes, or a server that is down: the player stays and is told why; in the chooser the row is greyed with that reason.</li>
+  <li>Back checks the portal's own rules and also /back's: Region Guard teleport-in, Anti Totem zones, server access. The band's /back cooldown is not touched.</li>
+  <li>After the trip /back points at the Back portal, so two trips flip between the two places.</li>
+  <li>Warm-up: the player may move about inside the field; stepping out, being hurt, dying or logging out cancels and applies the portal cooldown. With the chooser it counts after GO, with the player held still.</li>
+  <li>Coins and rules are checked when the countdown starts and taken when the move happens. bsp_teleport.bypass.warmup skips it; Swift Travel does not shorten it.</li>
+</ol>
+
+<h2>5. Decisions (D110 to D125)</h2>
+<div class="decisions">
+  <div><b>D110</b> Back is a destination kind in the list; alone it is back mode.</div>
+  <div><b>D111</b> The spot is the shared /back spot, death spots included.</div>
+  <div><b>D112</b> B9: /back saved in front of a portal, and every landing in a field is marked.</div>
+  <div><b>D113</b> Nothing to go back to: stay, a line saying why, the row greyed in the chooser.</div>
+  <div><b>D114</b> Portal rules plus /back's checks; the band's /back cooldown untouched.</div>
+  <div><b>D115</b> /back points at the Back portal afterwards.</div>
+  <div><b>D116</b> Label "Back", detail "where you came from", panel "back", /bsptp portal dest add back.</div>
+  <div><b>D117</b> Mock-ups first, then the build.</div>
+  <div><b>D118</b> Per-portal warm-up 0 to 30 s, off by default, under the cooldown; /bsptp portal warmup.</div>
+  <div><b>D119</b> Countdown in the field; out, hurt, death or logout cancels; moving inside is fine.</div>
+  <div><b>D120</b> With the chooser: after GO, held still.</div>
+  <div><b>D121</b> A cancel is a chooser cancel: cooldown and arrival mark.</div>
+  <div><b>D122</b> Checked at the start, charged on the move.</div>
+  <div><b>D123</b> The bypass node skips it; Swift Travel does not shorten it.</div>
+  <div><b>D124</b> Back portals take the warm-up too.</div>
+  <div><b>D125</b> The warm-up joins this mock-up page.</div>
+</div>
+
+<script>
+(function () {
+  var s = { only: false, spot: true, far: true, down: false, warm: true };
+  function backRow(kind) {
+    var reason = !s.spot ? "Nowhere to go back to" : (s.far && s.down) ? "BSP-Wilds is not answering" : null;
+    var detail = s.far ? (kind === "b" ? "where you came from: BSP-Wilds, overworld" : "where you came from: BSP-Wilds") : (kind === "b" ? "where you came from: this server, overworld" : "where you came from");
+    if (kind === "c") {
+      if (reason) return '<div class="row dim" style="justify-content:center"><span class="name" style="text-align:center">BACK<br><span class="sub">' + reason + '</span></span></div>';
+      return '<div class="row back" style="justify-content:center;border-width:2px"><span class="name" style="text-align:center;color:var(--accent);letter-spacing:2px">BACK<br><span class="sub">' + detail + '</span></span></div>';
+    }
+    var num = kind === "a" ? '<span class="num">3</span>' : '<span class="num"></span>';
+    if (reason) return '<div class="row dim">' + num + '<span class="name">Back<br><span class="sub">' + reason + '</span></span><span class="key d">Down</span></div>';
+    return '<div class="row' + (kind === "b" ? " back" : "") + '">' + num + '<span class="name">Back<br><span class="sub">' + detail + '</span></span><span class="key">Go</span></div>';
+  }
+  function render() {
+    var mixed = document.querySelectorAll("[data-mixed]");
+    for (var i = 0; i < mixed.length; i++) mixed[i].hidden = s.only;
+    var counts = document.querySelectorAll("[data-count]");
+    for (var j = 0; j < counts.length; j++) counts[j].textContent = "Destinations " + (s.only ? 1 : 3) + " of 8";
+    var ns = document.querySelectorAll("[data-n]");
+    for (var k = 0; k < ns.length; k++) ns[k].textContent = s.only ? "1" : "3";
+    var st = document.querySelectorAll("[data-status]");
+    for (var m = 0; m < st.length; m++) {
+      var c = st[m].hasAttribute("data-c");
+      st[m].textContent = s.only ? (c ? "Back mode: each player goes back to where they came from" : "Ready: 1 destination") : "Ready: 3 destinations";
+      st[m].className = "status" + (s.only && c ? " tq" : "");
+    }
+    document.querySelector("[data-bigback]").hidden = !s.only;
+    var rows = document.querySelectorAll("[data-backrow]");
+    for (var r = 0; r < rows.length; r++) rows[r].innerHTML = backRow(rows[r].getAttribute("data-backrow"));
+    document.getElementById("t-down").disabled = !s.far || !s.spot;
+    document.getElementById("t-far").disabled = !s.spot;
+    document.querySelector("[data-warmval]").textContent = s.warm ? "3 s" : "0 s";
+    var offs = document.querySelectorAll("[data-off]");
+    for (var o = 0; o < offs.length; o++) offs[o].hidden = s.warm;
+    var hide = document.querySelectorAll("[data-bar],[data-ring],[data-box]");
+    for (var h = 0; h < hide.length; h++) hide[h].hidden = !s.warm;
+  }
+  function bind(id, key) {
+    var b = document.getElementById(id);
+    b.addEventListener("click", function () {
+      s[key] = !s[key];
+      b.setAttribute("aria-pressed", s[key] ? "true" : "false");
+      render();
+    });
+  }
+  bind("t-only", "only"); bind("t-spot", "spot"); bind("t-far", "far"); bind("t-down", "down"); bind("t-warm", "warm");
+  render();
+})();
+</script>

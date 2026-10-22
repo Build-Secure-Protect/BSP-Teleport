@@ -12,7 +12,7 @@ public record PortalScreenData(BlockPos pos, boolean readOnly, String server, St
                                String colour, String doorStyle, String facing, String arrivalLine, String mode, boolean openWhenPowered, boolean powered,
                                int openAt, int closeAt, int gameOpenAt, int gameCloseAt, String zone, boolean locked, boolean closeWhenDown, int cooldown,
                                String doors, boolean lit, List<WarpEntry> warps, List<String> servers, String rules, int accessToken,
-                               List<DestEntry> dests, List<PortalEntry> portals, int maxDests) {
+                               List<DestEntry> dests, List<PortalEntry> portals, int maxDests, int warmup) {
 
     public record WarpEntry(String name, String server, boolean portal) {
     }
@@ -70,6 +70,7 @@ public record PortalScreenData(BlockPos pos, boolean readOnly, String server, St
             buf.writeUtf(e.id()).writeUtf(e.name()).writeUtf(e.server());
         }
         buf.writeVarInt(maxDests);
+        buf.writeVarInt(warmup);
     }
 
     public static PortalScreenData decode(FriendlyByteBuf buf) {
@@ -100,7 +101,7 @@ public record PortalScreenData(BlockPos pos, boolean readOnly, String server, St
         }
         return new PortalScreenData(pos, readOnly, server, world, name, status, maxSize, maxOpening, width, height, cells, destKind, destTarget, destText, partner,
                 arriveOnly, colour, doorStyle, facing, arrivalLine, mode, openWhenPowered, powered, openAt, closeAt, gameOpenAt, gameCloseAt, zone, locked,
-                closeWhenDown, cooldown, doors, lit, warps, servers, buf.readUtf(), buf.readVarInt(), readDests(buf), readPortals(buf), buf.readVarInt());
+                closeWhenDown, cooldown, doors, lit, warps, servers, buf.readUtf(), buf.readVarInt(), readDests(buf), readPortals(buf), buf.readVarInt(), buf.readVarInt());
     }
 
     private static List<DestEntry> readDests(FriendlyByteBuf buf) {

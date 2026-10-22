@@ -27,7 +27,11 @@ public final class ClientSetup {
         BandClient.onClientSetup(event);
         HomeServersBoard.register();
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(AccessHud::onOverlay);
-        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut e) -> ClientAccess.clear());
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(PortalWarmupHud::onOverlay);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut e) -> {
+            ClientAccess.clear();
+            PortalWarmupHud.clear();
+        });
     }
 
     /** The Rendered door style (D60) is drawn by a block entity renderer on the core. */

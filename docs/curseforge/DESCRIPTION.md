@@ -77,7 +77,7 @@ Two admin blocks make a portal: **Portal Frame** and **Portal Core**. Build a ri
 
 ![A portal, open and closed](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/portal-open-closed.png)
 
-Give the core a destination and the opening fills with a lit field in one of 24 colours. Walk in and you are through: no warm-up, no cooldown, and the portal you land beside will not fire again until you walk away. Five seconds before the same player may use the same portal twice, so nobody bounces back and forth. The raid rules above still apply.
+Give the core a destination and the opening fills with a lit field in one of 24 colours. Walk in and you are through: no warm-up unless the admin sets one, no band cooldown, and the portal you land beside will not fire again until you walk away. Five seconds before the same player may use the same portal twice, so nobody bounces back and forth. The raid rules above still apply.
 
 ![The core screen](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/core-screen.png)
 
@@ -88,14 +88,15 @@ Right-click the core for its screen. **Destination** holds a list of up to eight
 - **Portal**: another portal anywhere on the network, one way. Two portals that list each other are a two-way pair.
 - **Random**: a random spot on this or any other server, with that server's rules.
 - **Position**: where you stand.
+- **Back**: wherever each player came from, the same spot `/back` would take them to. A portal with only Back on it is a way home for everyone.
 
-One destination sends a player straight through. With several, a card opens the moment they step in, naming the portal and its destinations: they pick one and go, or cancel and step back out. While the card shows they are held still and cannot open the inventory or act; a hit or 30 seconds of silence ends it. Destinations that are down, or on a server the player may not enter, are listed greyed with the reason.
+One destination sends a player straight through. With several, a card opens the moment they step in, naming the portal and its destinations: they pick one and go, or cancel and step back out. Back sits across the top of the card as one wide key. While the card shows they are held still and cannot open the inventory or act; a hit or 30 seconds of silence ends it. Destinations that are down, or on a server the player may not enter, are listed greyed with the reason.
 
 **Look** sets the colour, the door style, the arrival side, the name and an optional arrival line.
 
 ![Open and close](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/core-doors.png)
 
-**Open/close** picks how the portal opens: by hand, by a redstone signal into the core, on a real-time clock in the server's time zone, or on the game clock. A Lock forces it closed in any mode. With "close when the destination is down" on, the doors shut by themselves while the partner portal or its server is away, and reopen when it is back.
+**Open/close** picks how the portal opens: by hand, by a redstone signal into the core, on a real-time clock in the server's time zone, or on the game clock. A Lock forces it closed in any mode. With "close when the destination is down" on, the doors shut by themselves while the partner portal or its server is away, and reopen when it is back. A **warm-up** of up to 30 seconds makes players wait in the field first, with a countdown box at the top of the screen; stepping out or being hurt cancels it.
 
 Closed portals grow hangar doors that slide in from both ends of every row and meet in the middle, hazard stripes facing each other. Two styles: solid **blocks** that fill in cell by cell, or smooth **rendered** panels. Either way the wall is real.
 

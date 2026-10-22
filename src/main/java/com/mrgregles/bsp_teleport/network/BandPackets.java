@@ -31,7 +31,8 @@ import java.util.function.Supplier;
 
 /** The mod's own channel: the band screen's data down, its actions up. */
 public final class BandPackets {
-    private static final String PROTOCOL = "1";
+    /** "2" since T69 and T73 changed packets 2, 11 and added 13: an older client is told to update instead of misreading them. */
+    private static final String PROTOCOL = "2";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(new ResourceLocation(BSPTeleport.MODID, "main"), () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
 
     private BandPackets() {
@@ -58,6 +59,8 @@ public final class BandPackets {
         }, buf -> new BoardConfig(buf.readBlockPos(), buf.readVarInt(), buf.readVarInt(), buf.readUtf()), BoardConfig::handle);
         CHANNEL.registerMessage(11, Choice.class, (m, buf) -> m.choice().encode(buf), buf -> new Choice(PortalChoice.decode(buf)), Choice::handle);
         CHANNEL.registerMessage(12, Choose.class, (m, buf) -> buf.writeVarInt(m.index()), buf -> new Choose(buf.readVarInt()), Choose::handle);
+        CHANNEL.registerMessage(13, Warmup.class, (m, buf) -> buf.writeUtf(m.portal()).writeVarInt(m.totalTicks()).writeVarInt(m.ticksLeft()).writeBoolean(m.held()),
+                buf -> new Warmup(buf.readUtf(), buf.readVarInt(), buf.readVarInt(), buf.readBoolean()), Warmup::handle);
         CHANNEL.registerMessage(3, AdminDo.class, (m, buf) -> buf.writeEnum(m.action()).writeUtf(m.arg()), buf -> new AdminDo(buf.readEnum(AdminAction.class), buf.readUtf()), AdminDo::handle);
     }
 
@@ -202,6 +205,20 @@ public final class BandPackets {
                 }
             });
             ctx.get().setPacketHandled(true);
+        }
+    }
+
+    /** Packet 13: a portal warm-up's box at the top of the screen (D126); an empty portal name hides it. */
+    public record Warmup(String portal, int totalTicks, int ticksLeft, boolean held) {
+        void handle(Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> com.mrgregles.bsp_teleport.client.PortalWarmupHud.show(portal, totalTicks, ticksLeft, held)));
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    public static void sendWarmup(ServerPlayer player, String portal, int totalTicks, int ticksLeft, boolean held) {
+        if (player.connection != null && player.connection.isAcceptingMessages()) {
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Warmup(portal, totalTicks, ticksLeft, held));
         }
     }
 

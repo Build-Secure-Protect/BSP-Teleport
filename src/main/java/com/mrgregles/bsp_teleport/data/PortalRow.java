@@ -17,9 +17,10 @@ import java.util.List;
  * @param status      the core's last status name, for the panel
  * @param doors       open, closed, opening, closing, locked, or empty when the portal has no doors
  * @param createdMs   when the core was first published; the two oldest rows own a link id (D55)
+ * @param warmup      the portal's warm-up in seconds (D118), for the panel; 0 for none
  */
 public record PortalRow(String id, String server, String world, int x, int y, int z, String name, List<PortalDestination> destinations,
-                        boolean arriveOnly, @Nullable Destination exit, boolean frameOk, String colour, String status, String doors, long createdMs) {
+                        boolean arriveOnly, @Nullable Destination exit, boolean frameOk, String colour, String status, String doors, long createdMs, int warmup) {
 
     public static String idOf(String server, String world, int x, int y, int z) {
         return server + "|" + world + "|" + x + "," + y + "," + z;
@@ -51,11 +52,11 @@ public record PortalRow(String id, String server, String world, int x, int y, in
     }
 
     public PortalRow withCreated(long createdMs) {
-        return new PortalRow(id, server, world, x, y, z, name, destinations, arriveOnly, exit, frameOk, colour, status, doors, createdMs);
+        return new PortalRow(id, server, world, x, y, z, name, destinations, arriveOnly, exit, frameOk, colour, status, doors, createdMs, warmup);
     }
 
     public PortalRow withDestinations(List<PortalDestination> list) {
-        return new PortalRow(id, server, world, x, y, z, name, List.copyOf(list), arriveOnly, exit, frameOk, colour, status, doors, createdMs);
+        return new PortalRow(id, server, world, x, y, z, name, List.copyOf(list), arriveOnly, exit, frameOk, colour, status, doors, createdMs, warmup);
     }
 
     /** Everything but the creation time: whether a republish is needed. */
@@ -80,6 +81,7 @@ public record PortalRow(String id, String server, String world, int x, int y, in
         tag.putString("Status", status);
         tag.putString("Doors", doors);
         tag.putLong("Created", createdMs);
+        tag.putInt("Warmup", warmup);
         return tag;
     }
 
@@ -95,6 +97,6 @@ public record PortalRow(String id, String server, String world, int x, int y, in
         String exit = tag.getString("Exit");
         return new PortalRow(tag.getString("Id"), tag.getString("Server"), tag.getString("World"), tag.getInt("X"), tag.getInt("Y"), tag.getInt("Z"),
                 tag.getString("Name"), destinationsOf(tag), tag.getBoolean("ArriveOnly"),
-                exit.isEmpty() ? null : Destination.parse(exit), tag.getBoolean("FrameOk"), tag.getString("Colour"), tag.getString("Status"), tag.getString("Doors"), tag.getLong("Created"));
+                exit.isEmpty() ? null : Destination.parse(exit), tag.getBoolean("FrameOk"), tag.getString("Colour"), tag.getString("Status"), tag.getString("Doors"), tag.getLong("Created"), tag.getInt("Warmup"));
     }
 }

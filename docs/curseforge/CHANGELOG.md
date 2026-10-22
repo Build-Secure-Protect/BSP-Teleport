@@ -6,7 +6,13 @@
 
 **Faster inventory sync on server switches.** With BSP-InventorySync installed, a player leaving for another server has their inventory save started just before the switch instead of at the logout, so the arriving server has it ready and the arrival freeze is shorter. Optional: without BSP-InventorySync nothing changes.
 
+**Back portals.** A new destination kind, Back, sends each player to the spot `/back` would take them to: where they last teleported from, or where they died. Alone on a portal it makes a way home for everyone; among other destinations it is one wide key across the top of the chooser card. A player with nowhere to go back to, or whose spot is on a server that is down, stays and is told why. Back also checks the landing like `/back` does (Region Guard flags, Anti Totem zones, server access). Command: `/bsptp portal dest add back [label]`.
+
+**Portal warm-ups.** A portal may make players wait up to 30 seconds in the field before going: set it under the cooldown on the Open/close tab or with `/bsptp portal warmup <seconds>`. A box at the top of the screen counts down. Stepping out of the field or being hurt cancels it; after the chooser the player is held still until it ends. Coins are taken only when the player actually goes. Off by default, and players who may skip warm-ups skip this one too.
+
 ## Fixed
+
+**/back after a portal trip.** `/back` used to remember the spot inside the portal you left by, so it could throw you straight back through. It now remembers the spot in front of that portal, and any landing inside a portal's field no longer fires it until you walk off.
 
 **MySQL on plain Forge servers.** On a Forge server (not Mohist) the shared storage could not find a MySQL driver, so homes, warps and cross-server landings stayed on each server. It now uses the driver inside BSP-Core's full jar. Mohist servers are unchanged.
 
