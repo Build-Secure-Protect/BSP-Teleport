@@ -73,6 +73,9 @@ dependencies {
     // Optional at runtime: only compat/RegionGuard touches it, and only when the mod is loaded.
     compileOnly fg.deobf("blank:bsp-region-guard:${region_guard_version}")
 
+    // LuckPerms API: compile only, never shipped. compat/LuckPerms checks at runtime whether the Forge edition is there (T70).
+    compileOnly "net.luckperms:api:${luckperms_api_version}"
+
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'

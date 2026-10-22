@@ -8,11 +8,9 @@ import java.lang.reflect.Method;
 import java.util.Optional;
 
 /**
- * Permission nodes, answered by LuckPerms through Bukkit on Mohist.
- *
- * <p>Mohist gives every entity a {@code getBukkitEntity()}; the Bukkit player's {@code hasPermission} is what
- * LuckPerms answers. On a server without Bukkit there is no permission plugin to ask, so BSP-Core's admin list
- * stands in: admins may do everything, everyone else only what needs no node.
+ * Permission nodes, asked in this order (D109): LuckPerms' own API when its Forge edition is loaded (plain Forge
+ * servers, T70), then Bukkit's {@code hasPermission} on Mohist (which the LuckPerms Bukkit plugin answers), then
+ * BSP-Core's admin list when neither is there: admins may do everything, everyone else only what needs no node.
  */
 public final class Permissions {
     public static final String ADMIN = "bsp_teleport.admin";
@@ -42,6 +40,10 @@ public final class Permissions {
 
     /** The plugin's answer, or empty when there is no plugin to ask. */
     public static Optional<Boolean> node(ServerPlayer player, String node) {
+        Optional<Boolean> luckPerms = com.mrgregles.bsp_teleport.compat.LuckPerms.check(player, node);
+        if (luckPerms.isPresent()) {
+            return luckPerms;
+        }
         probe(player);
         if (hasPermission == null) {
             return Optional.empty();
@@ -69,7 +71,8 @@ public final class Permissions {
             hasPermission = has;
             BSPTeleport.LOGGER.info("Permissions are answered by Bukkit ({})", bukkitPlayer.getClass().getName());
         } catch (ReflectiveOperationException | RuntimeException e) {
-            BSPTeleport.LOGGER.info("No Bukkit on this server: permission nodes fall back to BSP-Core's admin list");
+            BSPTeleport.LOGGER.info(com.mrgregles.bsp_teleport.compat.LuckPerms.isPresent() ? "No Bukkit on this server: LuckPerms answers permission nodes"
+                    : "No Bukkit and no LuckPerms on this server: permission nodes fall back to BSP-Core's admin list");
         }
     }
 }

@@ -154,3 +154,17 @@ Needs the owner:
 - [ ] Place a new core in a frame: it is named `<server>-<n>`, one more than the highest number on any portal name on the network. Existing portals keep their names.
 - [ ] PORTAL LINK picker: rows show the name and the server (violet for another server); click one and the box under the picker shows the full name and the server, world and position. The mouse wheel scrolls the list when there are more portals than fit.
 - [ ] Walk into a portal with several destinations: the card's keys read GO, DOWN, NO ACCESS and CANCEL (ESC), and the help line "Choose a destination. Esc steps back out."
+
+## Permissions on plain Forge servers (T70, D108, D109, 2026-10-22)
+
+Permission nodes are asked of LuckPerms' own API first (its Forge edition, the BSP build 5.5.88-bsp.2), then Bukkit (Mohist), then BSP-Core's admin list. A `group.<name>` rule also counts inherited groups.
+
+Headless, already passing: GameTest `without_luckperms_or_bukkit_nodes_fall_back_to_the_admin_list`. The LuckPerms route needs the LuckPerms Forge mod and is only testable in game.
+
+Needs the owner, on a plain Forge server with the LuckPerms Forge mod:
+- [ ] Start-up log: "Permissions are answered by LuckPerms (Forge edition)" on the first permission check, and "No Bukkit on this server: LuckPerms answers permission nodes".
+- [ ] A non-admin player: mark a warp restricted; it is hidden and refused. `/lp user <name> permission set bsp_teleport.warp.<warp> true`: the warp shows and works.
+- [ ] `/lp user <name> permission set bsp_teleport.bypass.warmup true`: band teleports and portal warm-ups go at once.
+- [ ] A portal or warp with a rank rule for group `vip`: refused; `/lp user <name> parent add vip`: passes. A group that inherits `vip` passes too.
+- [ ] `/lp user <name> permission set bsp_teleport.admin true`: `/bsptp admin` opens for them.
+- [ ] On a Mohist server nothing changes (the Bukkit plugin still answers).

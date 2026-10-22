@@ -16,6 +16,8 @@
 
 **The core screen.** Buttons and lines that showed internal names ("screen.bsp_teleport.portal.add" and others) now read in plain English, and so do the keys on the destination card. The screen is larger with smaller text, long names are cut to fit instead of running off the panel, the picked destination is spelled out in full under the picker, and the portal picker scrolls.
 
+**Permissions on plain Forge servers.** Permission nodes (restricted warps, the bypass nodes, rank and permission rules on portals and warps) are now asked of LuckPerms' Forge edition directly. Before, they were only asked through Bukkit, so on a Forge server only admins passed them. Mohist servers are unchanged.
+
 **/back after a portal trip.** `/back` used to remember the spot inside the portal you left by, so it could throw you straight back through. It now remembers the spot in front of that portal, and any landing inside a portal's field no longer fires it until you walk off.
 
 **MySQL on plain Forge servers.** On a Forge server (not Mohist) the shared storage could not find a MySQL driver, so homes, warps and cross-server landings stayed on each server. It now uses the driver inside BSP-Core's full jar. Mohist servers are unchanged.

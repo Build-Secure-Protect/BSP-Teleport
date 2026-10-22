@@ -187,4 +187,4 @@ Behind a proxy, every server switch looks to a backend like a leave and a join, 
 | `/bsptp portal ...`, `/bsptp portal <name> ...`, `/bsptp portalwarp set\|del\|list` | portals |
 | `/bsptp access servers\|server\|list\|grant\|revoke\|main\|token\|tokens\|stack` | access |
 
-Permission nodes `bsp_teleport.admin`, `bsp_teleport.bypass.cooldown`, `bsp_teleport.bypass.warmup` and `bsp_teleport.warp.<name>` are answered by LuckPerms on Mohist. Other mods can move players and talk over the mod's Redis link through `BspTeleportApi`; see `docs/API.md` in the repository.
+Permission nodes `bsp_teleport.admin`, `bsp_teleport.bypass.cooldown`, `bsp_teleport.bypass.warmup` and `bsp_teleport.warp.<name>` are answered by LuckPerms: the Forge edition on plain Forge servers, the Bukkit plugin on Mohist. Other mods can move players and talk over the mod's Redis link through `BspTeleportApi`; see `docs/API.md` in the repository.
