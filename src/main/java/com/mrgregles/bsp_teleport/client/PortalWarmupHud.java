@@ -7,15 +7,14 @@ import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 
 /**
- * A portal warm-up's box at the top of the screen (D126): the portal's name, "Going in N s." with the hint that stepping
- * out cancels (left out while a chooser's hold keeps the player still), and a bar that empties. The server sends the
- * start and once a second (packet 13); between those the client counts its own ticks so the bar runs smoothly.
+ * A portal warm-up's box at the top of the screen (D126, D139): the portal's name, "Going in N s. Crouch to stay." and a
+ * bar that empties. The server sends the start and once a second (packet 13); between those the client counts its own
+ * ticks so the bar runs smoothly.
  */
 public final class PortalWarmupHud {
     private static final int W = 160, H = 30;
     private static String portal = "";
     private static int totalTicks, ticksLeft;
-    private static boolean held;
     private static long shownAt;
 
     private PortalWarmupHud() {
@@ -27,7 +26,6 @@ public final class PortalWarmupHud {
         portal = name;
         totalTicks = Math.max(1, total);
         ticksLeft = left;
-        held = isHeld;
         shownAt = mc.level == null ? 0 : mc.level.getGameTime();
     }
 
@@ -50,7 +48,7 @@ public final class PortalWarmupHud {
         g.fill(x, y, x + W, y + H, BandClient.BG);
         small(g, mc, portal.toUpperCase(), x + 6, y + 4, BandClient.TQ);
         int seconds = (left + 19) / 20;
-        String line = Component.translatable(held ? "screen.bsp_teleport.portal.warmup_going_held" : "screen.bsp_teleport.portal.warmup_going", seconds).getString();
+        String line = Component.translatable("screen.bsp_teleport.portal.warmup_going", seconds).getString();
         small(g, mc, line, x + 6, y + 13, BandClient.MUTED);
         int barX = x + 6, barY = y + H - 7, barW = W - 12;
         g.fill(barX, barY, barX + barW, barY + 3, BandClient.SLOT);

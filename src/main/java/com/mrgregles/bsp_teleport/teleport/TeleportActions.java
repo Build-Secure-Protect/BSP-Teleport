@@ -198,6 +198,9 @@ public final class TeleportActions {
     /** {@code /rtp [server]}: here, or asked of another server over Redis. */
     public static boolean rtp(ServerPlayer player, @Nullable String server) {
         if (server != null && !server.isEmpty() && !server.equals(TeleportConfig.serverName())) {
+            if (TeleportConfig.singlePlayer()) {
+                return fail(player, "single_player");
+            }
             if (!com.mrgregles.bsp_teleport.access.AccessService.checkServer(player, server)) {
                 return false;
             }

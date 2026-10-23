@@ -102,7 +102,7 @@ public class PortalWarmupGameTests {
     }
 
     @GameTest(template = EMPTY)
-    public static void stepping_out_or_being_hurt_cancels_a_warmup(GameTestHelper h) {
+    public static void a_walk_in_is_held_and_a_crouch_or_a_hit_cancels_the_warmup(GameTestHelper h) {
         MinecraftServer server = h.getLevel().getServer();
         PortalCoreBlockEntity core = core(h, 3);
         ServerPlayer player = TestPlayers.mockServerPlayer(h);
@@ -111,19 +111,31 @@ public class PortalWarmupGameTests {
         writable(server).add(player);
         try {
             Destination to = here(h, 4, 4);
-            // Not held, and not standing in an opening (this core has none): the first tick counts as stepping out.
+            // B17, D139: a walk-in (no chooser hold) is held where it touched the field, not cancelled on the first tick.
             Portals.go(core, player, to, null, false);
-            if (!PortalWarmup.isWarming(player)) {
-                h.fail("the warm-up should have started");
+            player.setPos(start.add(0, 0, 1)); // the walk carries on through the plane
+            PortalWarmup.tick(server);
+            if (!PortalWarmup.isWarming(player) || player.position().distanceTo(start) > 0.01) {
+                h.fail("a walk-in should be held where it touched the field, got warming=" + PortalWarmup.isWarming(player) + " at " + player.position());
                 return;
             }
+            // Crouching cancels, without a move.
+            player.setShiftKeyDown(true);
             PortalWarmup.tick(server);
             if (PortalWarmup.isWarming(player) || at(player, to)) {
-                h.fail("stepping out should cancel without a move");
+                h.fail("a crouch should cancel without a move");
                 return;
             }
-            // Held this time, then hurt: the warm-up ends and the player stays (D119, cancelOnDamage on by default).
-            Portals.go(core, player, to, new PortalWarmup.Hold(start, 0f, 0f), false);
+            // Walking in already crouched does not cancel until the player has stood up and crouched again.
+            Portals.go(core, player, to, null, false);
+            PortalWarmup.tick(server);
+            if (!PortalWarmup.isWarming(player)) {
+                h.fail("a player who was crouching when the warm-up began should not be cancelled by it");
+                return;
+            }
+            player.setShiftKeyDown(false);
+            PortalWarmup.tick(server);
+            // Held this time by a hit: the warm-up ends and the player stays (D119, cancelOnDamage on by default).
             MinecraftForge.EVENT_BUS.post(new LivingHurtEvent(player, h.getLevel().damageSources().generic(), 1f));
             if (PortalWarmup.isWarming(player) || at(player, to)) {
                 h.fail("being hurt should cancel without a move");

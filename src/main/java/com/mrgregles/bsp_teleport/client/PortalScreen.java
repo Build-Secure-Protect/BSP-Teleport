@@ -651,7 +651,7 @@ public class PortalScreen extends Screen {
 
     /** A left-aligned pill; returns its right edge. */
     private int pill(GuiGraphics g, int x, int y, String label, boolean on, Runnable action) {
-        int w = (int) (font.width(label) * 0.75f) + 8;
+        int w = (int) (font.width(label.toUpperCase()) * 0.75f) + 8;
         g.fill(x, y, x + w, y + 12, on ? VIO : DIM);
         g.fill(x + 1, y + 1, x + w - 1, y + 11, SLOT);
         small(g, label.toUpperCase(), x + 4, y + 3, on ? VIO : MUTED);
@@ -660,7 +660,7 @@ public class PortalScreen extends Screen {
     }
 
     private int button(GuiGraphics g, int rightX, int y, String label, int border, int colour, @Nullable Runnable action) {
-        int w = (int) (font.width(label) * 0.75f) + 8;
+        int w = (int) (font.width(label.toUpperCase()) * 0.75f) + 8;
         int x = rightX - w;
         g.fill(x, y, x + w, y + 12, border);
         g.fill(x + 1, y + 1, x + w - 1, y + 11, SLOT);

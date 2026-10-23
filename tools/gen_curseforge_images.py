@@ -500,7 +500,7 @@ def core_doors():
     bx = s.button(x + w - 26, y + 251, "+", ACCENT) - 8
     s.text(bx, y + 267, "5 s", 14, GOLD, anchor="end")
     s.button(bx - 36, y + 251, "-", ACCENT)
-    s.row(x + 16, y + 288, w - 32, 40, "Warm-up", "seconds a player waits in the field; 0 for none", border=ACCENT)
+    s.row(x + 16, y + 288, w - 32, 40, "Warm-up", "seconds a player is held in the field; 0 for none", border=ACCENT)
     bx = s.button(x + w - 26, y + 297, "+", ACCENT) - 8
     s.text(bx, y + 313, "3 s", 14, GOLD, anchor="end")
     s.button(bx - 36, y + 297, "-", ACCENT)
@@ -514,7 +514,7 @@ def core_doors():
                  ("Real clock", "open from one time of day to another on the server's clock, wrapping past midnight"),
                  ("Game clock", "the same in world time, 0 to 24000"),
                  ("Close when down", "the doors shut by themselves while every destination is away and reopen when one is back"),
-                 ("Warm-up", "up to 30 s waiting in the field first, with a countdown box; stepping out or a hit cancels it")):
+                 ("Warm-up", "up to 30 s held in the field first, with a countdown box; crouching or a hit cancels it")):
         s.text(rx, yy, t, 14, VIOLET, "bold", spacing=1.5)
         for k, chunk in enumerate(wrap(d, 44)):
             s.text(rx, yy + 20 + k * 18, chunk, 14, MUTED)
@@ -561,13 +561,13 @@ def portal_chooser():
     s.rect(bx0 - 1.5, wy + 18, bw0 + 3, 74, ACCENT, r=0)
     s.rect(bx0, wy + 19.5, bw0, 71, PANEL, r=0)
     s.text(bx0 + 14, wy + 44, "HUB EAST", 14, ACCENT, "bold", spacing=2)
-    s.text(bx0 + 14, wy + 64, "Going in 2 s. Step out to stay.", 13, MUTED)
+    s.text(bx0 + 14, wy + 64, "Going in 2 s. Crouch to stay.", 13, MUTED)
     s.rect(bx0 + 14, wy + 74, bw0 - 28, 7, INSET, r=0)
     s.rect(bx0 + 14, wy + 74, (bw0 - 28) * 0.62, 7, ACCENT, r=0)
     s.text(wx + ww / 2, wy + 160, "+", 22, TEXT, anchor="middle")
     for k, line in enumerate(wrap("Back is one wide key across the top: it takes you to wherever you came from. Places that are down are greyed with the reason; a server you may not enter names its token.", 50)):
         s.text(700, 400 + k * 18, line, 14, MUTED)
-    for k, line in enumerate(wrap("A portal with a warm-up shows this box while you wait in the field. Walk about inside the field if you like; step out or take a hit and it is cancelled. After the card you are held still until it ends.", 50)):
+    for k, line in enumerate(wrap("A portal with a warm-up shows this box while you wait in the field. You are held where you stepped in until it ends; crouch or take a hit and it is cancelled.", 50)):
         s.text(700, 490 + k * 18, line, 14, MUTED)
     s.save("portal-chooser")
 

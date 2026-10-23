@@ -19,11 +19,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A portal's warm-up (D118 to D124): the player waits in the field for the portal's seconds before going. The box at
- * the top of the screen counts down (D126, packet 13). Stepping out of the field, being hurt (per
- * {@code cancelOnDamage}), dying or logging out cancels, with the portal's cooldown and the arrival mark (D121). After
- * a chooser the player is held still where they chose instead (D120). At the end the portal's checks run again and the
- * coins are taken only then (D122).
+ * A portal's warm-up (D118 to D124, D139): the player is held still where they touched the field (or where the chooser
+ * held them) for the portal's seconds, then goes. The box at the top of the screen counts down (D126, packet 13).
+ * Crouching, being hurt (per {@code cancelOnDamage}), dying or logging out cancels, with the portal's cooldown and the
+ * arrival mark (D121). At the end the portal's checks run again and the coins are taken only then (D122).
  */
 public final class PortalWarmup {
     /** Where the chooser held the player, so the hold carries on through the countdown (D120); null to let them move in the field. */
@@ -35,17 +34,19 @@ public final class PortalWarmup {
         final PortalCoreBlockEntity core;
         final Destination destination;
         final int totalTicks;
-        @Nullable
         final Hold hold;
         int ticksLeft;
+        /** D139: a crouch cancels only once the player has stood up after the start, so walking in crouched does not. */
+        boolean armed;
 
-        Pending(ServerPlayer player, PortalCoreBlockEntity core, Destination destination, int totalTicks, @Nullable Hold hold) {
+        Pending(ServerPlayer player, PortalCoreBlockEntity core, Destination destination, int totalTicks, Hold hold) {
             this.player = player;
             this.core = core;
             this.destination = destination;
             this.totalTicks = totalTicks;
             this.hold = hold;
             this.ticksLeft = totalTicks;
+            this.armed = !player.isShiftKeyDown();
         }
     }
 
@@ -60,16 +61,17 @@ public final class PortalWarmup {
 
     /** Starts the countdown; the portal's checks have passed and nothing has been charged yet. */
     static void start(ServerPlayer player, PortalCoreBlockEntity core, Destination destination, int seconds, @Nullable Hold hold) {
-        Pending p = new Pending(player, core, destination, seconds * 20, hold);
+        // B17, D139: a portal is one block thick, so a walking player would be through it at once: hold them where they
+        // touched the field (or where the chooser held them).
+        Hold at = hold != null ? hold : new Hold(player.position(), player.getYRot(), player.getXRot());
+        Pending p = new Pending(player, core, destination, seconds * 20, at);
         PENDING.put(player.getUUID(), p);
-        if (hold != null) {
-            player.setDeltaMovement(Vec3.ZERO);
-        }
-        BandPackets.sendWarmup(player, core.name(), p.totalTicks, p.ticksLeft, hold != null);
+        player.setDeltaMovement(Vec3.ZERO);
+        BandPackets.sendWarmup(player, core.name(), p.totalTicks, p.ticksLeft, true);
         Sounds.countdown(player, seconds, seconds);
     }
 
-    /** Every server tick: count down, keep a chosen player still, cancel one who stepped out, and send the rest on. */
+    /** Every server tick: count down, keep each player still, cancel one who crouched, and send the rest on. */
     public static void tick(MinecraftServer server) {
         if (PENDING.isEmpty()) {
             return;
@@ -86,17 +88,20 @@ public final class PortalWarmup {
                 BandPackets.sendWarmup(player, "", 0, 0, false);
                 continue;
             }
-            if (p.hold != null) {
-                Vec3 at = p.hold.at();
-                if (player.position().distanceToSqr(at) > 1.0E-4 || player.level() != p.core.getLevel()) {
-                    player.connection.teleport(at.x, at.y, at.z, p.hold.yaw(), p.hold.pitch());
-                    player.setDeltaMovement(Vec3.ZERO);
-                    player.fallDistance = 0f;
-                }
-            } else if (!inField(p.core, player)) {
+            boolean crouching = player.isShiftKeyDown();
+            if (!p.armed && !crouching) {
+                p.armed = true;
+            } else if (p.armed && crouching) {
                 PENDING.remove(e.getKey());
                 cancelled(player, p, "portal.warmup_left");
                 continue;
+            }
+            Vec3 at = p.hold.at();
+            if (player.position().distanceToSqr(at) > 1.0E-4 || player.level() != p.core.getLevel()) {
+                // The player keeps looking where they like; only their place is held.
+                player.connection.teleport(at.x, at.y, at.z, player.getYRot(), player.getXRot());
+                player.setDeltaMovement(Vec3.ZERO);
+                player.fallDistance = 0f;
             }
             p.ticksLeft--;
             if (p.ticksLeft <= 0) {
@@ -107,19 +112,10 @@ public final class PortalWarmup {
             }
             if (p.ticksLeft % 20 == 0) {
                 int secondsLeft = p.ticksLeft / 20;
-                BandPackets.sendWarmup(player, p.core.name(), p.totalTicks, p.ticksLeft, p.hold != null);
+                BandPackets.sendWarmup(player, p.core.name(), p.totalTicks, p.ticksLeft, true);
                 Sounds.countdown(player, secondsLeft, p.totalTicks / 20);
             }
         }
-    }
-
-    /** Whether the player still stands in the portal's opening, feet or head. */
-    static boolean inField(PortalCoreBlockEntity core, ServerPlayer player) {
-        if (player.level() != core.getLevel()) {
-            return false;
-        }
-        BlockPos feet = player.blockPosition();
-        return core.opening().contains(feet) || core.opening().contains(feet.above());
     }
 
     /** Damage ends the warm-up when the config says so (D119). Registered at LOWEST so a cancelled hurt does not count. */

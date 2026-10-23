@@ -98,7 +98,7 @@ One destination sends a player straight through. With several, a card opens the 
 
 ![Open and close](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/core-doors.png)
 
-**Open/close** picks how the portal opens: by hand, by a redstone signal into the core, on a real-time clock in the server's time zone, or on the game clock. A Lock forces it closed in any mode. With "close when every destination is down" on, the doors shut by themselves while nothing on the list answers, and reopen when something does. A **warm-up** of up to 30 seconds makes players wait in the field first, with a countdown box at the top of the screen; stepping out or being hurt cancels it.
+**Open/close** picks how the portal opens: by hand, by a redstone signal into the core, on a real-time clock in the server's time zone, or on the game clock. A Lock forces it closed in any mode. With "close when every destination is down" on, the doors shut by themselves while nothing on the list answers, and reopen when something does. A **warm-up** of up to 30 seconds holds players still in the field first, with a countdown box at the top of the screen; crouching or being hurt cancels it.
 
 Closed portals grow hangar doors that slide in from both ends of every row and meet in the middle, hazard stripes facing each other. Two styles: solid **blocks** that fill in cell by cell, or smooth **rendered** panels. Either way the wall is real.
 

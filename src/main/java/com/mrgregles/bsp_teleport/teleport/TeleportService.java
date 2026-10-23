@@ -107,7 +107,7 @@ public final class TeleportService implements BspTeleportApi {
         }
         // Every move, forced ones included, is a place /back can return to (an evacuated player comes home with it).
         Teleports.recordBack(player);
-        if (!destination.crossServer() || destination.server().equals(serverName())) {
+        if (!destination.crossServer() || destination.server().equals(serverName()) || TeleportConfig.singlePlayer()) {
             return moveHere(player, destination);
         }
         if (player.connection == null) {
@@ -130,7 +130,7 @@ public final class TeleportService implements BspTeleportApi {
 
     @Override
     public boolean sendToServer(ServerPlayer player, String server) {
-        if (player.connection == null || server.isEmpty() || player.hasDisconnected()) {
+        if (player.connection == null || server.isEmpty() || player.hasDisconnected() || TeleportConfig.singlePlayer()) {
             return false;
         }
         Teleports.recordBack(player);

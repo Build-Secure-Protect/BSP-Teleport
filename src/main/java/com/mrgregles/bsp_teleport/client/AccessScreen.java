@@ -174,7 +174,7 @@ public class AccessScreen extends Screen {
     }
 
     private int button(GuiGraphics g, int rightX, int y, String label, int border, int colour, Runnable action) {
-        int w = (int) (font.width(label) * 0.75f) + 8;
+        int w = (int) (font.width(label.toUpperCase()) * 0.75f) + 8;
         int x = rightX - w;
         g.fill(x, y, x + w, y + 12, border);
         g.fill(x + 1, y + 1, x + w - 1, y + 11, SLOT);

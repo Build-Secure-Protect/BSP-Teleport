@@ -33,6 +33,14 @@ public final class AdminActions {
                 }
             }
         }
+        if (!scope.equals("here") && TeleportConfig.singlePlayer()) {
+            // D136: "every server" is just this world; one other server is refused.
+            if (!scope.equals("all")) {
+                return fail(admin, "single_player");
+            }
+            tell(admin, "admin.moved_all", moved);
+            return true;
+        }
         if (!scope.equals("here")) {
             String server = scope.equals("all") ? null : scope;
             if (!Messenger.enabled()) {
@@ -52,6 +60,9 @@ public final class AdminActions {
     public static boolean sendAll(ServerPlayer admin, String from, String to) {
         if (to.isEmpty() || to.equals(from)) {
             return false;
+        }
+        if (TeleportConfig.singlePlayer()) {
+            return fail(admin, "single_player");
         }
         if (!PlayerDirectory.isOnline(to) && Messenger.enabled()) {
             return fail(admin, "admin.server_offline", to);

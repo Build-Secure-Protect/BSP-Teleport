@@ -62,6 +62,9 @@ public class AdminScreen extends Screen {
         super(Component.translatable("screen.bsp_teleport.admin.title"));
         this.data = data;
         this.selectedServer = data.server();
+        if (data.singlePlayer()) {
+            tab = Tab.SETTINGS; // D135: no NETWORK tab in single player
+        }
     }
 
     public static void show(AdminData data) {
@@ -75,6 +78,9 @@ public class AdminScreen extends Screen {
 
     public void update(AdminData data) {
         this.data = data;
+        if (data.singlePlayer() && tab == Tab.NETWORK) {
+            tab = Tab.SETTINGS;
+        }
         if (data.servers().stream().noneMatch(s -> s.name().equals(selectedServer))) {
             selectedServer = data.server();
         }
@@ -139,10 +145,15 @@ public class AdminScreen extends Screen {
         for (int i = 0; i < tabs.length; i++) {
             int tx = left + W - 10 - (tabs.length - i) * (TAB_W + 2);
             boolean on = tabs[i] == tab;
+            // D135: in single player the NETWORK tab is greyed and cannot be clicked.
+            boolean off = tabs[i] == Tab.NETWORK && data.singlePlayer();
             g.fill(tx, top + 5, tx + TAB_W, top + 18, on ? VIO : DIM);
             g.fill(tx + 1, top + 6, tx + TAB_W - 1, top + 17, SLOT);
             String label = Component.translatable("screen.bsp_teleport.admin.tab." + tabs[i].name().toLowerCase()).getString().toUpperCase();
-            small(g, label, tx + (TAB_W - (int) (font.width(label) * 0.75f)) / 2, top + 8, on ? VIO : MUTED);
+            small(g, label, tx + (TAB_W - (int) (font.width(label) * 0.75f)) / 2, top + 8, on ? VIO : off ? DIM : MUTED);
+            if (off) {
+                continue;
+            }
             Tab t = tabs[i];
             hits.add(new Hit(tx, top + 5, TAB_W, 13, () -> {
                 tab = t;
@@ -230,22 +241,36 @@ public class AdminScreen extends Screen {
         small(g, clip(who, 150), sx + 4, y + 13, MUTED);
         if (!data.readOnly()) {
             int bx = sx + sw - 4;
+            // B16: Send only when another server is up; its picker always has a way back.
+            boolean anotherUp = data.servers().stream().anyMatch(o -> !o.name().equals(sel.name()) && o.up());
             if (pickingTarget) {
+                bx = button(g, bx, y + 5, Component.translatable("screen.bsp_teleport.admin.cancel").getString(), DIM, MUTED, () -> pickingTarget = false) - 2;
+                if (!anotherUp) {
+                    String none = Component.translatable("screen.bsp_teleport.admin.no_other_server").getString();
+                    small(g, none, bx - (int) (font.width(none) * 0.75f) - 4, y + 8, MUTED);
+                }
                 for (AdminData.ServerRow other : data.servers()) {
                     if (!other.name().equals(sel.name()) && other.up()) {
                         String label = Component.translatable("screen.bsp_teleport.admin.send_to", other.name()).getString();
+                        if (bx - (int) (font.width(label.toUpperCase()) * 0.75f) - 8 < sx + 4 + (int) (font.width(sel.name())) + 4) {
+                            break; // no room left on the row: the rest are reached with /bsptp send
+                        }
                         bx = button(g, bx, y + 5, label, VIO, VIO, () -> ask(
                                 Component.translatable("screen.bsp_teleport.admin.confirm_send", sel.players().size(), sel.name(), other.name()).getString(),
                                 () -> go(AdminAction.SEND_ALL, sel.name() + ";" + other.name()))) - 2;
                     }
                 }
             } else if (sel.here()) {
-                bx = button(g, bx, y + 5, Component.translatable("screen.bsp_teleport.admin.send_all").getString(), VIO, VIO, () -> pickingTarget = true) - 2;
+                if (anotherUp) {
+                    bx = button(g, bx, y + 5, Component.translatable("screen.bsp_teleport.admin.send_all").getString(), VIO, VIO, () -> pickingTarget = true) - 2;
+                }
                 button(g, bx, y + 5, Component.translatable("screen.bsp_teleport.admin.bring_everyone").getString(), VIO, VIO, () -> ask(
                         Component.translatable("screen.bsp_teleport.admin.confirm_bring_all").getString(), () -> go(AdminAction.BRING_ALL, "*")));
             } else if (sel.up()) {
                 bx = button(g, bx, y + 5, Component.translatable("screen.bsp_teleport.admin.go").getString(), TQ, TQ, () -> go(AdminAction.GO_SERVER, sel.name())) - 2;
-                bx = button(g, bx, y + 5, Component.translatable("screen.bsp_teleport.admin.send_all").getString(), DIM, MUTED, () -> pickingTarget = true) - 2;
+                if (anotherUp) {
+                    bx = button(g, bx, y + 5, Component.translatable("screen.bsp_teleport.admin.send_all").getString(), DIM, MUTED, () -> pickingTarget = true) - 2;
+                }
                 button(g, bx, y + 5, Component.translatable("screen.bsp_teleport.admin.bring_all").getString(), VIO, VIO, () -> ask(
                         Component.translatable("screen.bsp_teleport.admin.confirm_bring", sel.players().size(), sel.name()).getString(),
                         () -> go(AdminAction.BRING_ALL, sel.name())));
@@ -417,7 +442,7 @@ public class AdminScreen extends Screen {
         for (String kind : new String[]{"RANK", "ITEM", "NODE", "COINS", "TOKEN"}) {
             boolean on = kind.equals(warpRuleKind);
             String label = Component.translatable("screen.bsp_teleport.portal.rule." + kind.toLowerCase()).getString();
-            int pw = (int) (font.width(label) * 0.75f) + 8;
+            int pw = (int) (font.width(label.toUpperCase()) * 0.75f) + 8;
             g.fill(px, y, px + pw, y + 12, on ? VIO : DIM);
             g.fill(px + 1, y + 1, px + pw - 1, y + 11, SLOT);
             small(g, label.toUpperCase(), px + 4, y + 3, on ? VIO : MUTED);
@@ -700,8 +725,13 @@ public class AdminScreen extends Screen {
     private void drawFooter(GuiGraphics g) {
         int y = top + H - 20;
         g.fill(left + 10, y - 2, left + W - 10, y - 1, DIM);
-        small(g, data.server() + "   " + data.storage(), left + 10, y + 2, MUTED);
-        small(g, data.messaging(), left + 10, y + 10, data.messaging().contains("listening") ? OK : MUTED);
+        if (data.singlePlayer()) {
+            small(g, clip(Component.translatable("screen.bsp_teleport.admin.single_player").getString(), W - 20), left + 10, y + 2, MUTED);
+            return;
+        }
+        small(g, clip(data.server() + "   " + data.storage(), W - 20), left + 10, y + 2, MUTED);
+        boolean listening = data.messaging().contains("listening") && !data.messaging().contains("not listening");
+        small(g, clip(data.messaging(), W - 20), left + 10, y + 10, listening ? OK : MUTED);
     }
 
     private void drawConfirm(GuiGraphics g) {
@@ -733,7 +763,7 @@ public class AdminScreen extends Screen {
     // Pieces
 
     private int button(GuiGraphics g, int rightX, int y, String label, int border, int colour, @Nullable Runnable action) {
-        int w = (int) (font.width(label) * 0.75f) + 8;
+        int w = (int) (font.width(label.toUpperCase()) * 0.75f) + 8;
         int x = rightX - w;
         g.fill(x, y, x + w, y + 12, border);
         g.fill(x + 1, y + 1, x + w - 1, y + 11, SLOT);

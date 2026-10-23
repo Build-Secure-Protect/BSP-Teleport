@@ -183,8 +183,19 @@ public final class TeleportConfig {
         SPEC.setConfig(file);
     }
 
+    /**
+     * D133: Minecraft's integrated server (single player, or a world opened to LAN). Network features are off there
+     * whatever the config says (D134): a modpack's defaultconfigs carry a network server's settings into every world.
+     */
+    public static boolean singlePlayer() {
+        // A server running inside the game client is always the integrated one. Not isDedicatedServer(): the GameTest
+        // server answers false to that too, and it is a dedicated server for this purpose.
+        net.minecraftforge.api.distmarker.Dist dist = net.minecraftforge.fml.loading.FMLEnvironment.dist;
+        return dist != null && dist.isClient() && net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer() != null;
+    }
+
     public static boolean mysql() {
-        return "mysql".equalsIgnoreCase(getOr(STORAGE_MODE, "local"));
+        return !singlePlayer() && "mysql".equalsIgnoreCase(getOr(STORAGE_MODE, "local"));
     }
 
     public static boolean redis() {

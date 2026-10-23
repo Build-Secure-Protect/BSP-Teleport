@@ -48,7 +48,7 @@
 <rect x="778.5" y="128" width="303" height="74" rx="0" fill="#19D3B0" opacity="1"/>
 <rect x="780.0" y="129.5" width="300" height="71" rx="0" fill="#10151C" opacity="1"/>
 <text x="794.0" y="154" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#19D3B0" text-anchor="start" letter-spacing="2">HUB EAST</text>
-<text x="794.0" y="174" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Going in 2 s. Step out to stay.</text>
+<text x="794.0" y="174" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="13" font-weight="normal" fill="#9AA3B5" text-anchor="start">Going in 2 s. Crouch to stay.</text>
 <rect x="794.0" y="184" width="272" height="7" rx="0" fill="#0C0E12" opacity="1"/>
 <rect x="794.0" y="184" width="168.64" height="7" rx="0" fill="#19D3B0" opacity="1"/>
 <text x="930.0" y="270" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="normal" fill="#E6EAF2" text-anchor="middle">+</text>
@@ -57,9 +57,8 @@
 <text x="700" y="436" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">are greyed with the reason; a server you may not</text>
 <text x="700" y="454" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">enter names its token.</text>
 <text x="700" y="490" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">A portal with a warm-up shows this box while you</text>
-<text x="700" y="508" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">wait in the field. Walk about inside the field if</text>
-<text x="700" y="526" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">you like; step out or take a hit and it is</text>
-<text x="700" y="544" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">cancelled. After the card you are held still until</text>
-<text x="700" y="562" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">it ends.</text>
+<text x="700" y="508" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">wait in the field. You are held where you stepped</text>
+<text x="700" y="526" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">in until it ends; crouch or take a hit and it is</text>
+<text x="700" y="544" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" font-weight="normal" fill="#9AA3B5" text-anchor="start">cancelled.</text>
 </g>
 </svg>

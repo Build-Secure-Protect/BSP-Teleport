@@ -76,6 +76,9 @@ public final class PlayerDirectory {
     }
 
     public static List<String> servers() {
+        if (TeleportConfig.singlePlayer()) {
+            return new ArrayList<>(List.of(TeleportConfig.serverName())); // D136: no other servers in single player
+        }
         prune();
         List<String> servers = new ArrayList<>(SERVERS.keySet());
         if (!servers.contains(TeleportConfig.serverName())) {

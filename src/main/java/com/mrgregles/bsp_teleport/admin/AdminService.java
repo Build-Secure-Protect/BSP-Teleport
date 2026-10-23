@@ -327,7 +327,7 @@ public final class AdminService {
             tokens.add(t == null ? new AdminData.TokenRow(n, "", "", 0, "") : new AdminData.TokenRow(n, t.kind().name().toLowerCase(java.util.Locale.ROOT), t.target(), t.rentHours(), t.hint()));
         }
         return new AdminData(TeleportConfig.serverName(), !Permissions.isAdmin(player), Storage.status(player.server), Messenger.status(), settings, warps, servers, portals,
-                tokens, new ArrayList<>(AccessService.restricted(player.server)), AccessService.enabled());
+                tokens, new ArrayList<>(AccessService.restricted(player.server)), AccessService.enabled(), TeleportConfig.singlePlayer());
     }
 
     private static int parseInt(String s, int fallback) {

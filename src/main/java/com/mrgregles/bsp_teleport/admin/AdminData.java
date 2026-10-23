@@ -8,7 +8,7 @@ import java.util.List;
 /** Everything the admin panel shows, built on the server and sent whole. */
 public record AdminData(String server, boolean readOnly, String storage, String messaging,
                         List<Setting> settings, List<WarpRow> warps, List<ServerRow> servers, List<PortalEntry> portals,
-                        List<TokenRow> tokens, List<String> restricted, boolean accessOn) {
+                        List<TokenRow> tokens, List<String> restricted, boolean accessOn, boolean singlePlayer) {
 
     /** One config value. {@code kind} is INT, BOOL or TEXT; INT values carry min, max and step. */
     public record Setting(String id, String value, String kind, int min, int max, int step) {
@@ -76,6 +76,7 @@ public record AdminData(String server, boolean readOnly, String storage, String 
         buf.writeVarInt(restricted.size());
         restricted.forEach(buf::writeUtf);
         buf.writeBoolean(accessOn);
+        buf.writeBoolean(singlePlayer);
     }
 
     public static AdminData decode(FriendlyByteBuf buf) {
@@ -133,6 +134,7 @@ public record AdminData(String server, boolean readOnly, String storage, String 
             restricted.add(buf.readUtf());
         }
         boolean accessOn = buf.readBoolean();
-        return new AdminData(server, readOnly, storage, messaging, settings, warps, servers, portals, tokens, restricted, accessOn);
+        boolean singlePlayer = buf.readBoolean();
+        return new AdminData(server, readOnly, storage, messaging, settings, warps, servers, portals, tokens, restricted, accessOn, singlePlayer);
     }
 }

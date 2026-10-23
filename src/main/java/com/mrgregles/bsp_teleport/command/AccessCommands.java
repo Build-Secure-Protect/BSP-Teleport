@@ -36,7 +36,13 @@ public final class AccessCommands {
         return Commands.literal("mainserver")
                 .requires(src -> src.getEntity() instanceof ServerPlayer)
                 .then(Commands.argument("server", StringArgumentType.word()).suggests(RESTRICTED)
-                        .executes(ctx -> AccessService.chooseMain(ctx.getSource().getPlayerOrException(), StringArgumentType.getString(ctx, "server")) ? 1 : 0));
+                        .executes(ctx -> {
+                            if (com.mrgregles.bsp_teleport.TeleportConfig.singlePlayer()) {
+                                ctx.getSource().sendFailure(Component.translatable("message.bsp_teleport.single_player"));
+                                return 0;
+                            }
+                            return AccessService.chooseMain(ctx.getSource().getPlayerOrException(), StringArgumentType.getString(ctx, "server")) ? 1 : 0;
+                        }));
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> access() {

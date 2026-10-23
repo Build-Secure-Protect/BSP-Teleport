@@ -133,8 +133,8 @@ B9, `/back` after a portal trip:
 
 Warm-ups:
 - [ ] Open/close tab: a "Warm-up" row under "Cooldown per player" with - and +; 0 to 30. `/bsptp portal warmup 3` sets it too. The panel's PORTALS row adds ", warm-up 3 s".
-- [ ] Walk into a portal with a 3 s warm-up: a box at the top of the screen with the portal's name, "Going in 3 s. Step out to stay." and a bar that empties, with the countdown plings; at 0 you go through. Coins on the portal are taken only then.
-- [ ] Walk about inside a large field during the countdown: it keeps counting. Step out: "You stepped out of <portal>.", the box goes, and the field does not restart the countdown at once.
+- [ ] Walk into a portal with a 3 s warm-up: a box at the top of the screen with the portal's name, "Going in 3 s. Crouch to stay." and a bar that empties, with the countdown plings; at 0 you go through. Coins on the portal are taken only then.
+- [ ] Walk into the field at normal speed: you stop where you touched it and stay there until the countdown ends (B17; you can look around). Crouch during the countdown: "You stepped back from <portal>.", the box goes, and the field does not restart the countdown at once. Walking in already crouched does not cancel until you stand up and crouch again.
 - [ ] Get hit during the countdown: "You were hurt: <portal> let you go." (with `cancelOnDamage = false` in the server config the countdown carries on).
 - [ ] Several destinations with a warm-up: pick one on the card; the card closes, the box reads "Going in 3 s." without the hint, and you cannot move until it ends or you are hurt.
 - [ ] An admin (or a player with `bsp_teleport.bypass.warmup`) goes through at once, no box.
@@ -168,3 +168,15 @@ Needs the owner, on a plain Forge server with the LuckPerms Forge mod:
 - [ ] A portal or warp with a rank rule for group `vip`: refused; `/lp user <name> parent add vip`: passes. A group that inherits `vip` passes too.
 - [ ] `/lp user <name> permission set bsp_teleport.admin true`: `/bsptp admin` opens for them.
 - [ ] On a Mohist server nothing changes (the Bukkit plugin still answers).
+
+## Single player, Redis freezes, the Send picker (B14 to B16, T76, D133 to D138, 2026-10-23)
+
+Not testable headless (the GameTest server is a dedicated server). Needs the owner:
+
+- [ ] A new single-player world with the modpack's defaultconfigs (Frostwarf's network settings): the log says "Single player: network features off" once; no MySQL or Redis lines, no timeouts.
+- [ ] `/bsptp admin`: opens on SETTINGS; the NETWORK tab is greyed and does nothing; the footer reads "This world (single player): network features are off."; SETTINGS, WARPS, PORTALS, TOKENS work.
+- [ ] Homes, warps, `/back`, portals and random teleport work as normal in the world, including homes saved before this build.
+- [ ] `/mainserver x`, `/bsptp send <player> x`, `/rtp <other server>`: "Not available in single player." `/tpall all`: moves this world's players only.
+- [ ] Open to LAN: the same as single player.
+- [ ] Dedicated server with Redis stopped: no freeze when using the panel or commands; the footer's Redis line is not green while it says "not listening"; after Redis comes back, messages flow again within about 8 s.
+- [ ] Dedicated server, NETWORK tab: with no other server up there is no "Send everyone to..."; with one up, it opens a picker with Cancel; no key text spills out of its box anywhere (portal screen FLIP, admin keys).

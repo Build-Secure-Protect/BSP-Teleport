@@ -83,7 +83,7 @@ public class AccessBoardScreen extends Screen {
         String[] styles = {"bars", "tiles", "columns"};
         for (int i = 0; i < styles.length; i++) {
             String label = Component.translatable("screen.bsp_teleport.board.style." + styles[i]).getString();
-            int w = (int) (font.width(label) * 0.75f) + 8;
+            int w = (int) (font.width(label.toUpperCase()) * 0.75f) + 8;
             boolean on = style == i;
             g.fill(x, y, x + w, y + 12, on ? VIO : DIM);
             g.fill(x + 1, y + 1, x + w - 1, y + 11, SLOT);
@@ -123,7 +123,7 @@ public class AccessBoardScreen extends Screen {
 
     /** Draws a button whose right edge is at {@code rightX}; returns its left edge. */
     private int button(GuiGraphics g, int rightX, int y, String label, int border, int colour, Runnable action) {
-        int w = (int) (font.width(label) * 0.75f) + 8;
+        int w = (int) (font.width(label.toUpperCase()) * 0.75f) + 8;
         int x = rightX - w;
         g.fill(x, y, x + w, y + 12, border);
         g.fill(x + 1, y + 1, x + w - 1, y + 11, SLOT);

@@ -22,7 +22,8 @@ public record Position(String server, String world, double x, double y, double z
     }
 
     public boolean isLocal() {
-        return server.equals(TeleportConfig.serverName());
+        // D134: in single player every saved place is in this world, whatever server name it was saved under.
+        return TeleportConfig.singlePlayer() || server.equals(TeleportConfig.serverName());
     }
 
     public BlockPos blockPos() {

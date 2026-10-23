@@ -51,6 +51,9 @@ public final class Messenger {
 
     public static String status() {
         RedisLink l = link;
+        if (TeleportConfig.singlePlayer()) {
+            return "redis: off (single player)";
+        }
         return l == null ? (TeleportConfig.redis() ? "redis: not started" : "redis: off") : "redis: " + l.describe();
     }
 

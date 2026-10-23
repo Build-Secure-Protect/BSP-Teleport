@@ -8,7 +8,7 @@
 
 **Back portals.** A new destination kind, Back, sends each player to the spot `/back` would take them to: where they last teleported from, or where they died. Alone on a portal it makes a way home for everyone; among other destinations it is one wide key across the top of the chooser card. A player with nowhere to go back to, or whose spot is on a server that is down, stays and is told why. Back also checks the landing like `/back` does (Region Guard flags, Anti Totem zones, server access). Command: `/bsptp portal dest add back [label]`.
 
-**Portal warm-ups.** A portal may make players wait up to 30 seconds in the field before going: set it under the cooldown on the Open/close tab or with `/bsptp portal warmup <seconds>`. A box at the top of the screen counts down. Stepping out of the field or being hurt cancels it; after the chooser the player is held still until it ends. Coins are taken only when the player actually goes. Off by default, and players who may skip warm-ups skip this one too.
+**Portal warm-ups.** A portal may make players wait up to 30 seconds in the field before going: set it under the cooldown on the Open/close tab or with `/bsptp portal warmup <seconds>`. The player is held still where they stepped in while a box at the top of the screen counts down; crouching or being hurt cancels it. Coins are taken only when the player actually goes. Off by default, and players who may skip warm-ups skip this one too.
 
 **Portal names.** A new Portal Core is named after its server and the next free number on the network (BSP-Spawn-1, BSP-Frostwarf-2, ...), and no two portals may share a name, so pickers and `/bsptp portal <name>` always find the right one. The name and a Rename key now sit at the top of the core screen's DESTINATION tab.
 
@@ -18,6 +18,11 @@
 
 **Permissions on plain Forge servers.** Permission nodes (restricted warps, the bypass nodes, rank and permission rules on portals and warps) are now asked of LuckPerms' Forge edition directly. Before, they were only asked through Bukkit, so on a Forge server only admins passed them. Mohist servers are unchanged.
 
+**Single player.** In a single-player or LAN world the mod no longer tries to reach the network the modpack's config names: no MySQL, Redis or proxy, the admin panel's NETWORK tab is greyed out, and commands that need another server say so. Before, the world borrowed a network server's name and froze for seconds at a time trying to connect.
+
+**No freezes while Redis is away.** Sending a network message no longer waits for Redis on the game's thread; the connection is retried in the background and messages are kept for a few seconds meanwhile.
+
+**Admin panel and screens.** "Send everyone to..." only shows when another server is up and always has Cancel; keys are sized to their capital-letter labels so text no longer spills out of them; the panel's status lines are cut to fit.
 **/back after a portal trip.** `/back` used to remember the spot inside the portal you left by, so it could throw you straight back through. It now remembers the spot in front of that portal, and any landing inside a portal's field no longer fires it until you walk off.
 
 **MySQL on plain Forge servers.** On a Forge server (not Mohist) the shared storage could not find a MySQL driver, so homes, warps and cross-server landings stayed on each server. It now uses the driver inside BSP-Core's full jar. Mohist servers are unchanged.

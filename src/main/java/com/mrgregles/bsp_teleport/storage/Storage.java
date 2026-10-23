@@ -75,6 +75,10 @@ public final class Storage {
     public static void onServerStarted(ServerStartedEvent event) {
         if (!TeleportConfig.mysql()) {
             status = "local (world save)";
+            if (TeleportConfig.singlePlayer()) {
+                status = "this world's save (single player)";
+                BSPTeleport.LOGGER.info("Single player: network features off (no MySQL, Redis or proxy, whatever the config says)");
+            }
             return;
         }
         MySqlStore s = new MySqlStore(TeleportConfig.STORAGE_HOST.get(), TeleportConfig.STORAGE_PORT.get(), TeleportConfig.STORAGE_DATABASE.get(),

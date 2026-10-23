@@ -74,6 +74,10 @@ public final class AdminCommands {
     private static int send(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         ServerPlayer player = EntityArgument.getPlayer(ctx, "player");
         String server = StringArgumentType.getString(ctx, "server");
+        if (com.mrgregles.bsp_teleport.TeleportConfig.singlePlayer()) {
+            ctx.getSource().sendFailure(Component.translatable("message.bsp_teleport.single_player"));
+            return 0;
+        }
         boolean ok = BspTeleportApi.get().sendToServer(player, server);
         ctx.getSource().sendSuccess(() -> Component.literal((ok ? "Sent " : "Could not send ") + player.getGameProfile().getName() + " to " + server), true);
         return ok ? 1 : 0;
