@@ -100,8 +100,8 @@ public class PortalChooserScreen extends Screen {
             int border = ok ? DIM : denied ? BAD : DIM;
             g.fill(left + 10, y, left + W - 10, y + 18, border);
             g.fill(left + 11, y + 1, left + W - 11, y + 17, SLOT);
-            small(g, clip(o.label().getString(), W - 70), left + 14, y + 3, ok ? TEXT : MUTED);
-            small(g, clip(o.detail().getString(), W - 70), left + 14, y + 10, ok ? MUTED : denied ? BAD : DIM);
+            small(g, clip(o.label().getString(), W - 80), left + 14, y + 3, ok ? TEXT : MUTED);
+            small(g, clip(o.detail().getString(), W - 80), left + 14, y + 10, ok ? MUTED : denied ? BAD : DIM);
             String key = Component.translatable(ok ? "screen.bsp_teleport.choose.go" : denied ? "screen.bsp_teleport.choose.no_access" : "screen.bsp_teleport.choose.down").getString();
             int colour = ok ? TQ : denied ? BAD : DIM;
             button(g, left + W - 14, y + 3, key, colour, ok ? TQ : MUTED, ok ? () -> answer(o.index()) : null);

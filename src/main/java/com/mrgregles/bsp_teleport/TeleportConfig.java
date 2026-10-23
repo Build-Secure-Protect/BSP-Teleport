@@ -109,8 +109,9 @@ public final class TeleportConfig {
         b.pop();
 
         b.push("spawn");
-        GLOBAL_SPAWN_WARP = b.comment("Name of a warp that /spawn uses on every server, or empty to use each server's own /setspawn point.")
-                .define("globalWarp", "");
+        GLOBAL_SPAWN_WARP = b.comment("Name of a warp that /spawn uses on every server, or empty to use each server's own /setspawn point.",
+                        "It is also the network spawn new players start at (/bsptp setnetworkspawn); when empty, the warp named 'spawn' is.")
+                .define("globalWarp", "spawn");
         b.pop();
 
         b.push("homes");

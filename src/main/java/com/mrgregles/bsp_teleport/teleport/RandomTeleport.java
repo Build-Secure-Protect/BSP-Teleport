@@ -17,6 +17,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /** Picks a random safe spot around the world spawn, within the config's radii. */
 public final class RandomTeleport {
+    /** T80: the most chunks one search may load or generate on the server thread. */
+    static final int MAX_NEW_CHUNKS = 4;
+
     private RandomTeleport() {
     }
 
@@ -129,6 +132,7 @@ public final class RandomTeleport {
         // Region Guard's border, shrunk so nobody arrives next to its warning line (RG-T3).
         double[] box = shrunkBorder(level, BORDER_MARGIN);
         boolean ringMissesBox = box != null && !ringTouches(box, centre.getX(), centre.getZ(), min, max);
+        int newChunks = 0;
         for (int i = 0; i < tries; i++) {
             int x, z;
             if (ringMissesBox) {
@@ -146,6 +150,14 @@ public final class RandomTeleport {
             }
             if (!level.getWorldBorder().isWithinBounds(new BlockPos(x, 0, z))) {
                 continue;
+            }
+            // T80: each try in an unloaded chunk loads (and may generate) it on the server thread; a search loads at most
+            // MAX_NEW_CHUNKS of them, so a random teleport cannot freeze the server for seconds.
+            if (!level.hasChunk(x >> 4, z >> 4)) {
+                if (newChunks >= MAX_NEW_CHUNKS) {
+                    continue;
+                }
+                newChunks++;
             }
             level.getChunk(x >> 4, z >> 4);
             int y = landingY(level, x, z, unsafe);

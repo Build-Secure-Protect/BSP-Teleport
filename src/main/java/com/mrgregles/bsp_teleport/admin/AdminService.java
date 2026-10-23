@@ -62,7 +62,9 @@ public final class AdminService {
             }
             case SET_WARP -> {
                 if (TeleportData.validName(a)) {
-                    Warp warp = new Warp(TeleportData.normalise(a), Position.of(player), parseInt(b, 0), Boolean.parseBoolean(c));
+                    Warp old = TeleportData.get(player.server).warp(TeleportData.normalise(a));
+                    Warp warp = old == null ? new Warp(TeleportData.normalise(a), Position.of(player), parseInt(b, 0), Boolean.parseBoolean(c))
+                            : old.withPosition(Position.of(player)).withCost(parseInt(b, 0)).withRestricted(Boolean.parseBoolean(c));
                     TeleportData.get(player.server).setWarp(warp);
                     Storage.warpSaved(warp);
                     tell(player, "warp.set", warp.name(), warp.restricted() ? Permissions.warpNode(warp.name()) : "-", warp.cost());

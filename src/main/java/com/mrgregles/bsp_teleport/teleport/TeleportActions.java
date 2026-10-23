@@ -150,15 +150,40 @@ public final class TeleportActions {
             }
             return false;
         }
+        // Audit: the warp's cost and its COINS rules are one price; checking them apart let a player pay the cost and then be refused.
+        if (warp.cost() + rules.coins() > 0 && BspCore.coins(player) < warp.cost() + rules.coins()) {
+            return fail(player, "warp.cannot_afford", warp.cost() + rules.coins());
+        }
+        String warpName = warp.name();
         return Teleports.start(player, warp.position().toDestination(""), Component.literal(warp.name()), TeleportKind.WARP, () -> {
-            if (!BspCore.pay(player, warp.cost())) {
-                tell(player, "warp.cannot_afford", warp.cost());
+            // Audit: the warp and its rules are read again when the warm-up ends, so an item swapped out meanwhile or a
+            // changed warp is not charged from the old answer; nothing is paid unless all of it can be.
+            Warp now = TeleportData.get(player.server).warp(warpName);
+            if (now == null) {
+                tell(player, "warp.unknown", warpName);
                 return false;
             }
-            if (warp.cost() > 0) {
-                tell(player, "warp.paid", warp.cost());
+            com.mrgregles.bsp_teleport.access.AccessChecks.Result fresh = com.mrgregles.bsp_teleport.access.AccessChecks.evaluate(player,
+                    com.mrgregles.bsp_teleport.access.AccessRule.parseList(now.rules()), com.mrgregles.bsp_teleport.access.AccessGrant.Kind.WARP, now.name());
+            if (!fresh.ok()) {
+                if (!fresh.refusal().getString().isEmpty()) {
+                    player.displayClientMessage(fresh.refusal(), false);
+                }
+                return false;
             }
-            return com.mrgregles.bsp_teleport.access.AccessChecks.charge(player, rules);
+            int total = now.cost() + fresh.coins();
+            if (total > 0 && BspCore.coins(player) < total) {
+                tell(player, "warp.cannot_afford", total);
+                return false;
+            }
+            if (now.cost() > 0 && !BspCore.pay(player, now.cost())) {
+                tell(player, "warp.cannot_afford", now.cost());
+                return false;
+            }
+            if (now.cost() > 0) {
+                tell(player, "warp.paid", now.cost());
+            }
+            return com.mrgregles.bsp_teleport.access.AccessChecks.charge(player, fresh);
         });
     }
 
@@ -170,7 +195,10 @@ public final class TeleportActions {
         String globalWarp = TeleportConfig.getOr(TeleportConfig.GLOBAL_SPAWN_WARP, "");
         if (!globalWarp.isEmpty()) {
             Warp warp = TeleportData.get(player.server).warp(globalWarp);
-            return warp == null ? null : warp.position();
+            if (warp != null) {
+                return warp.position();
+            }
+            // T77: a named warp that does not exist yet (the default "spawn" on a fresh server) falls back to this server's own spawn.
         }
         return TeleportData.get(player.server).spawn();
     }

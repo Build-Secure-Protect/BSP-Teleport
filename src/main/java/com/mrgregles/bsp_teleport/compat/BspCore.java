@@ -49,9 +49,30 @@ import java.util.function.Supplier;
 public final class BspCore {
     /**
      * The MySQL driver inside BSP-Core's full jar, which relocates MySQL Connector/J so it never clashes with Mohist's
-     * copy (RG-C4). On plain Forge it is the only driver there is (B8). Not part of BSP-Core's api: R9 asks for one.
+     * copy (RG-C4). On plain Forge it is the only driver there is (B8). Since BSP-Core 1.4.5 it is reached through
+     * {@link #jdbcDriver()} (R9); this name stays as the fallback for an older BSP-Core.
      */
     public static final String MYSQL_DRIVER = "com.mrgregles.bsp_core.shaded.mysql.cj.jdbc.Driver";
+
+    /**
+     * R9: the JDBC driver BSP-Core ships, from its api ({@code BspStorage.jdbcDriver()}, BSP-Core 1.4.5), or null when
+     * this BSP-Core has none (the slim jar) or is older than 1.4.5 (the caller then tries {@link #MYSQL_DRIVER} by name).
+     */
+    @Nullable
+    public static java.sql.Driver jdbcDriver() {
+        try {
+            return StorageApi.driver();
+        } catch (LinkageError e) {
+            return null; // BSP-Core before 1.4.5: no BspStorage
+        }
+    }
+
+    /** The only class naming {@code BspStorage}, loaded only when {@link #jdbcDriver()} runs, so an older BSP-Core never fails here. */
+    private static final class StorageApi {
+        static java.sql.Driver driver() {
+            return com.mrgregles.bsp_core.api.BspStorage.jdbcDriver().orElse(null);
+        }
+    }
 
     /** Thieves who just took a totem, and when their invincibility (and teleport block) ends. */
     private static final Map<UUID, Long> THIEF_UNTIL = new ConcurrentHashMap<>();

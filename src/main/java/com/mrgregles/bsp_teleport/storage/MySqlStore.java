@@ -72,9 +72,14 @@ final class MySqlStore implements AutoCloseable {
         props.setProperty("password", password);
         SQLException last = null;
         for (String[] d : DRIVERS) {
-            Driver driver;
+            Driver driver = null;
+            if (d[0].equals(BspCore.MYSQL_DRIVER)) {
+                driver = BspCore.jdbcDriver(); // R9: BSP-Core's api first (1.4.5), its class name below for an older one
+            }
             try {
-                driver = (Driver) Class.forName(d[0]).getDeclaredConstructor().newInstance();
+                if (driver == null) {
+                    driver = (Driver) Class.forName(d[0]).getDeclaredConstructor().newInstance();
+                }
             } catch (ReflectiveOperationException | LinkageError notInstalled) {
                 continue;
             }
@@ -92,11 +97,16 @@ final class MySqlStore implements AutoCloseable {
         throw last != null ? last : new SQLException("No MySQL or MariaDB JDBC driver is available to BSP-Teleport");
     }
 
+    /** Audit: when the connection was last used; it is only checked with a round trip after 30 s idle. */
+    private long lastUsedMs;
+
     private Connection conn() throws SQLException {
-        if (connection == null || !connection.isValid(2)) {
+        long now = System.currentTimeMillis();
+        if (connection == null || connection.isClosed() || (now - lastUsedMs > 30_000L && !connection.isValid(2))) {
             close();
             connection = open();
         }
+        lastUsedMs = now;
         return connection;
     }
 

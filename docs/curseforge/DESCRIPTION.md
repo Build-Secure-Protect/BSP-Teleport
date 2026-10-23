@@ -65,7 +65,7 @@ The whole pack is built on one promise: nobody can make a Shatter Totem impossib
 
 `/bsptp admin`, or the ADMIN tab on the band. Moderators see everything and can press nothing. NETWORK draws the servers as a map with their players: bring everyone here before a restart, send everyone to another server, go there, bring one player or go to them, and switch "needs access" on for a server (section 6). SETTINGS edits the config values you change often and saves them to the file at once. WARPS sets a warp where you stand, moves it, prices it, restricts it, gives it an icon, turns it into a portal warp, or opens its rules. PORTALS and TOKENS are below.
 
-Admin commands cover the same ground: `/tpall`, `/tpall all` and `/tpall from <server>` for restart evacuations; `/tphere`, `/tpto`, `/tppos`, `/tpoffline`; `/setwarp`, `/delwarp`, `/setspawn`; `/bsptp status|players|send|reload`.
+Admin commands cover the same ground: `/tpall`, `/tpall all` and `/tpall from <server>` for restart evacuations; `/tphere`, `/tpto`, `/tppos`, `/tpoffline`; `/setwarp`, `/delwarp`, `/setspawn`, `/bsptp setnetworkspawn` (where new players start); `/bsptp status|players|send|reload`.
 
 ---
 
@@ -104,7 +104,7 @@ Closed portals grow hangar doors that slide in from both ends of every row and m
 
 ![Portals on the panel](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/admin-portals.png)
 
-The panel's PORTALS tab lists every portal on the network under its server, or draws them as a map with the links between them. Go to any of them, open, close, lock or unlock it, even on another server. `/bsptp portal <name> open|close|lock|unlock|tp|info` does the same from a command block, and `/bsptp portal dest add|del|label|clear|list` edits the looked-at core's destinations (`dest add back` adds Back); `/bsptp portal warmup <seconds>` sets its warm-up.
+The panel's PORTALS tab lists every portal on the network under its server, or draws them as a map with the links between them. Go to any of them, open, close, lock or unlock it, even on another server. `/bsptp portal <name> open|close|lock|unlock|tp|info|forget` does the same from a command block (forget removes a portal that is gone from the list), and `/bsptp portal dest add|del|label|clear|list` edits the looked-at core's destinations (`dest add back` adds Back); `/bsptp portal warmup <seconds>` sets its warm-up.
 
 ---
 
@@ -183,6 +183,7 @@ Behind a proxy, every server switch looks to a backend like a leave and a join, 
 |---|---|
 | `/bsptp admin`, `/bsptp status`, `/bsptp players`, `/bsptp reload`, `/bsptp send <player> <server>` | the panel and the network |
 | `/setwarp <name> [cost] [restricted]`, `/delwarp`, `/setspawn` | warps and spawn |
+| `/bsptp setnetworkspawn` | the network spawn: where new players start, and where first visits and respawns without a bed go on that server |
 | `/tpall [all\|from <server>]`, `/tphere`, `/tpto`, `/tppos`, `/tpoffline` | forced moves and evacuation |
 | `/bsptp portal ...`, `/bsptp portal <name> ...`, `/bsptp portalwarp set\|del\|list` | portals |
 | `/bsptp access servers\|server\|list\|grant\|revoke\|main\|token\|tokens\|stack` | access |

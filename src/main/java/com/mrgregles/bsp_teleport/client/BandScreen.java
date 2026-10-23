@@ -100,8 +100,11 @@ public class BandScreen extends Screen {
         if (left + 10 + font.width(heading) > firstTab - 4) {
             heading = Component.translatable("screen.bsp_teleport.band.title_short").getString().toUpperCase();
         }
-        g.drawString(font, heading, left + 10, top + 8, TQ, false);
-        small(g, Component.translatable(tab == Tab.TEAM ? "screen.bsp_teleport.band.team_help" : "screen.bsp_teleport.band.help").getString(), left + 10, top + 19, MUTED);
+        // Audit: with six tabs even the short title would sit under the first one, so it is left out.
+        if (left + 10 + font.width(heading) <= firstTab - 4) {
+            g.drawString(font, heading, left + 10, top + 8, TQ, false);
+        }
+        small(g, clip(Component.translatable(tab == Tab.TEAM ? "screen.bsp_teleport.band.team_help" : "screen.bsp_teleport.band.help").getString(), W - 20), left + 10, top + 19, MUTED);
 
         for (int i = 0; i < tabs.length; i++) {
             int tx = left + W - 10 - (tabs.length - i) * (tabW + 2);
@@ -126,7 +129,7 @@ public class BandScreen extends Screen {
 
         int listBottom = top + H - FOOT_H - (tab == Tab.HOMES ? 24 : 4);
         if (data.raid()) {
-            small(g, Component.translatable("screen.bsp_teleport.band.raid", data.raidDistance()).getString(), left + 10, top + LIST_TOP - 4, BAD);
+            small(g, clip(Component.translatable("screen.bsp_teleport.band.raid", data.raidDistance()).getString(), W - 20), left + 10, top + LIST_TOP - 4, BAD);
         }
         int y = top + LIST_TOP + (data.raid() ? 8 : 0);
         switch (tab) {
@@ -157,7 +160,9 @@ public class BandScreen extends Screen {
             }
             String sub = where(h.server(), h.world(), h.x(), h.y(), h.z());
             int nameColour = h.locked() ? MUTED : h.nearRaid() ? BAD : TEXT;
-            row(g, y, h.name(), sub, nameColour, h.server().equals(data.server()) ? MUTED : VIO);
+            String state = Component.translatable(h.locked() ? "screen.bsp_teleport.band.locked" : h.nearRaid() ? "screen.bsp_teleport.band.near_raid" : "screen.bsp_teleport.band.go").getString();
+            int keysLeft = left + W - 10 - keyW(Component.translatable("screen.bsp_teleport.band.del").getString()) - 2 - keyW(state) - 4;
+            row(g, y, h.name(), sub, nameColour, h.server().equals(data.server()) ? MUTED : VIO, keysLeft);
             icon(g, y, h.icon(), com.mrgregles.bsp_teleport.util.Icons.DEFAULT_HOME, () -> send(BandAction.HOME_ICON, h.name()));
             int bx = left + W - 10;
             bx = button(g, bx, y + 4, Component.translatable("screen.bsp_teleport.band.del").getString(), DIM, MUTED, () -> send(BandAction.DEL_HOME, h.name()));
@@ -195,7 +200,8 @@ public class BandScreen extends Screen {
             if (w.cost() > 0) {
                 sub += "  " + Component.translatable("screen.bsp_teleport.band.coins", w.cost()).getString();
             }
-            row(g, y, w.name(), sub, w.nearRaid() ? BAD : TEXT, w.server().equals(data.server()) ? MUTED : VIO);
+            String wkey = Component.translatable(w.nearRaid() ? "screen.bsp_teleport.band.near_raid" : "screen.bsp_teleport.band.go").getString();
+            row(g, y, w.name(), sub, w.nearRaid() ? BAD : TEXT, w.server().equals(data.server()) ? MUTED : VIO, left + W - 10 - keyW(wkey) - 4);
             icon(g, y, w.icon(), com.mrgregles.bsp_teleport.util.Icons.DEFAULT_WARP, null);
             if (w.nearRaid()) {
                 button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.near_raid").getString(), BAD, BAD, null);
@@ -214,10 +220,11 @@ public class BandScreen extends Screen {
             g.fill(left + 10, y, left + W - 10, y + ROW_H, VIO);
             g.fill(left + 11, y + 1, left + W - 11, y + ROW_H - 1, SLOT);
             String head = Component.translatable(r.here() ? "screen.bsp_teleport.band.request_to" : "screen.bsp_teleport.band.request", r.from()).getString();
-            g.drawString(font, head, left + 14, y + 3, VIO, false);
-            small(g, Component.translatable("screen.bsp_teleport.band.request_left", r.server(), r.secondsLeft()).getString(), left + 14, y + 12, MUTED);
             int bx = button(g, left + W - 14, y + 4, Component.translatable("screen.bsp_teleport.band.deny").getString(), BAD, BAD, () -> send(BandAction.DENY, ""));
-            button(g, bx - 2, y + 4, Component.translatable("screen.bsp_teleport.band.accept").getString(), OK, OK, () -> go(BandAction.ACCEPT, ""));
+            int ax = button(g, bx - 2, y + 4, Component.translatable("screen.bsp_teleport.band.accept").getString(), OK, OK, () -> go(BandAction.ACCEPT, ""));
+            // Audit: the request line is small and cut before the keys.
+            small(g, clip(head, ax - (left + 14) - 4), left + 14, y + 3, VIO);
+            small(g, clip(Component.translatable("screen.bsp_teleport.band.request_left", r.server(), r.secondsLeft()).getString(), ax - (left + 14) - 4), left + 14, y + 12, MUTED);
             y += ROW_H + 4;
         }
         if (data.players().isEmpty()) {
@@ -297,8 +304,11 @@ public class BandScreen extends Screen {
         y = wide(g, x, y, Component.translatable("screen.bsp_teleport.band.spawn").getString(), data.hasSpawn() ? TQ : DIM, data.hasSpawn() ? () -> go(BandAction.SPAWN, "") : null);
         y = wide(g, x, y, Component.translatable("screen.bsp_teleport.band.back").getString(), data.hasBack() ? TQ : DIM, data.hasBack() ? () -> go(BandAction.BACK, "") : null);
         y = wide(g, x, y, Component.translatable("screen.bsp_teleport.band.rtp_here").getString(), TQ, () -> go(BandAction.RTP, ""));
+        // Audit: room is kept for the ignore and pay-to-skip rows, so a long server list never pushes them past the footer.
+        boolean skip = data.skipCoins() > 0 && data.cooldownLeft() > 0;
+        int reserve = 4 + 16 + (skip ? 16 : 0);
         for (String server : data.rtpServers()) {
-            if (y + 16 > bottom) {
+            if (y + 16 > bottom - reserve) {
                 break;
             }
             y = wide(g, x, y, Component.translatable("screen.bsp_teleport.band.rtp_on", server).getString(), VIO, () -> go(BandAction.RTP, server));
@@ -306,10 +316,10 @@ public class BandScreen extends Screen {
         y += 4;
         y = wide(g, x, y, Component.translatable(data.ignoring() ? "screen.bsp_teleport.band.ignore_on" : "screen.bsp_teleport.band.ignore_off").getString(),
                 data.ignoring() ? GOLD : DIM, () -> send(BandAction.TOGGLE_IGNORE, ""));
-        if (data.skipCoins() > 0 && data.cooldownLeft() > 0) {
+        if (skip && y + 16 <= bottom) {
             y = wide(g, x, y, Component.translatable("screen.bsp_teleport.band.tpnow", data.skipCoins()).getString(), GOLD, () -> go(BandAction.TPNOW, ""));
         }
-        if (!data.accessOn()) {
+        if (!data.accessOn() || y + 2 + 9 + 14 > bottom) {
             return;
         }
         // The ACCESS list (D80): one line per restricted server, and the HUD layout the player draws it with.
@@ -364,21 +374,46 @@ public class BandScreen extends Screen {
         small(g, slots, left + 10, y + 9, data.used() > data.slots() ? BAD : TEXT);
         String next = data.extraHomesLevel() >= 3 ? Component.translatable("screen.bsp_teleport.band.slots_max").getString()
                 : Component.translatable("screen.bsp_teleport.band.next_slot", data.extraHomesLevel() + 1).getString();
-        small(g, next, left + 100, y + 9, MUTED);
+        small(g, clip(next, W - 110), left + 100, y + 9, MUTED);
         if (data.swiftLevel() > 0) {
-            small(g, Component.translatable("screen.bsp_teleport.band.swift", data.swiftLevel(), data.swiftLevel() * 25).getString(), left + 100, y, MUTED);
+            small(g, clip(Component.translatable("screen.bsp_teleport.band.swift", data.swiftLevel(), data.swiftLevel() * 25).getString(), W - 110), left + 100, y, MUTED);
         }
     }
 
     // Pieces
 
     private void row(GuiGraphics g, int y, String name, String sub, int nameColour, int subColour) {
+        row(g, y, name, sub, nameColour, subColour, left + W - 14);
+    }
+
+    /** A list row whose name and detail are cut to end before {@code textRight} (the keys' left edge), audit. */
+    private void row(GuiGraphics g, int y, String name, String sub, int nameColour, int subColour, int textRight) {
         g.fill(left + 10, y, left + W - 10, y + ROW_H, DIM);
         g.fill(left + 11, y + 1, left + W - 11, y + ROW_H - 1, SLOT);
         boolean withIcon = tab == Tab.HOMES || tab == Tab.WARPS;
         int tx = withIcon ? left + 32 : left + 14;
-        g.drawString(font, name, tx, y + 3, nameColour, false);
-        small(g, sub, tx, y + 12, subColour);
+        int room = Math.max(10, textRight - tx);
+        String shown = name;
+        while (shown.length() > 3 && font.width(shown) > room) {
+            shown = shown.substring(0, shown.length() - 1);
+        }
+        g.drawString(font, shown.length() < name.length() ? shown.substring(0, Math.max(1, shown.length() - 2)) + ".." : name, tx, y + 3, nameColour, false);
+        small(g, clip(sub, room), tx, y + 12, subColour);
+    }
+
+    /** The width a key with this label takes (keys draw their label in capitals). */
+    private int keyW(String label) {
+        return (int) (font.width(label.toUpperCase()) * 0.75f) + 8;
+    }
+
+    private String clip(String text, int maxWidth) {
+        if (font.width(text) * 0.75f <= maxWidth) {
+            return text;
+        }
+        while (text.length() > 3 && font.width(text + "...") * 0.75f > maxWidth) {
+            text = text.substring(0, text.length() - 1);
+        }
+        return text + "...";
     }
 
     /** The item icon at the row's left; clicking it (when {@code onClick} is given) makes it the held item. */

@@ -73,6 +73,8 @@ public class BSPTeleport {
         MinecraftForge.EVENT_BUS.addListener(Teleports::onLoggedOut);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, TeleportService::onPlayerLoggedIn);
         MinecraftForge.EVENT_BUS.addListener(TeleportService::onPlayerLoggedOut);
+        MinecraftForge.EVENT_BUS.addListener(com.mrgregles.bsp_teleport.teleport.NetworkSpawn::onPlayerLoggedIn);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOW, com.mrgregles.bsp_teleport.teleport.NetworkSpawn::onRespawn);
         MinecraftForge.EVENT_BUS.addListener(TeleportRequests::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(com.mrgregles.bsp_teleport.team.TeamTeleports::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(com.mrgregles.bsp_teleport.team.TeamTeleports::onLoggedOut);

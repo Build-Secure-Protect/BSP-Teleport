@@ -19,6 +19,13 @@ class MySqlDriversTest {
         assertEquals("org.mariadb.jdbc.Driver", order[2]);
     }
 
+    /** R9: BSP-Core 1.4.5's api hands over its driver, which takes a MySQL address. */
+    @Test
+    void bsp_cores_api_gives_its_driver() throws Exception {
+        Driver driver = BspCore.jdbcDriver();
+        assertTrue(driver != null && driver.acceptsURL("jdbc:mysql://localhost:3306/bsp"), "BspStorage.jdbcDriver() gave no MySQL driver");
+    }
+
     /** Fails when BSP-Core renames or drops its relocated driver, so the name here goes stale at build time, not on a server. */
     @Test
     void bsp_cores_full_jar_has_the_driver_under_that_name() throws Exception {

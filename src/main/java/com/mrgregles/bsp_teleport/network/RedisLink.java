@@ -34,11 +34,11 @@ public final class RedisLink implements AutoCloseable {
     private final Consumer<String> onMessage;
 
     @Nullable
-    private Socket pub;
+    private volatile Socket pub;
     @Nullable
-    private OutputStream pubOut;
+    private volatile OutputStream pubOut;
     @Nullable
-    private InputStream pubIn;
+    private volatile InputStream pubIn;
     @Nullable
     private volatile Socket sub;
     private volatile boolean running;
@@ -170,100 +170,93 @@ public final class RedisLink implements AutoCloseable {
         }
     }
 
-    /** B15: messages published while the publishing socket is (re)connecting, sent once it is up; the oldest go first. */
-    private final java.util.ArrayDeque<Queued> waiting = new java.util.ArrayDeque<>();
-    private volatile boolean connecting;
-    /** Whether the last background connect failed: a message kept now will likely be dropped, so publish says false. */
+    /**
+     * B15, T80: the publishing socket belongs to one daemon thread. A caller (usually the server thread) only puts the
+     * message in this queue and returns; the thread connects (at most once every 8 s while Redis is away), sends in order
+     * and drops what has waited over 15 s. Nothing on the caller's thread ever waits for Redis.
+     */
+    private final java.util.concurrent.LinkedBlockingDeque<Queued> outbox = new java.util.concurrent.LinkedBlockingDeque<>(500);
     private volatile boolean lastAttemptFailed;
-    private volatile long lastAttemptMs;
-    private static final int MAX_WAITING = 200;
+    @Nullable
+    private Thread publisher;
     private static final long WAITING_MS = 15_000L;
     private static final int READ_TIMEOUT_MS = 3000;
 
     private record Queued(String message, long at) {
     }
 
-    /**
-     * Publishes on the link's channel. Safe from any thread and never waits on a connection (B15): while the publishing
-     * socket is down the message is kept for up to 15 s and a background thread reconnects (at most once every 8 s);
-     * true when the message was sent or kept, false when it was dropped because Redis has been away.
-     */
-    public synchronized boolean publish(String message) {
-        if (pub == null || pub.isClosed() || pubOut == null || pubIn == null) {
-            keep(message);
-            reconnectInBackground();
-            return !lastAttemptFailed;
+    /** Queues a message for the channel. Never blocks; false once the last connection attempt has failed. */
+    public boolean publish(String message) {
+        Queued q = new Queued(message, System.currentTimeMillis());
+        if (!outbox.offerLast(q)) {
+            outbox.pollFirst();
+            outbox.offerLast(q);
         }
-        try {
-            send(message);
-            return true;
-        } catch (IOException e) {
-            lastError = e.getMessage() == null ? e.toString() : e.getMessage();
-            closeQuietly(pub);
-            pub = null;
-            BSPTeleport.LOGGER.warn("Redis publish failed: {}; reconnecting in the background", lastError);
-            keep(message);
-            reconnectInBackground();
-            return true;
-        }
+        startPublisher();
+        return !lastAttemptFailed;
     }
 
-    private void send(String message) throws IOException {
-        pubOut.write(encode("PUBLISH", channel, message));
-        pubOut.flush();
-        Object reply = decode(pubIn);
-        if (reply instanceof String r && r.startsWith("-")) {
-            throw new IOException(r);
-        }
-    }
-
-    private void keep(String message) {
-        if (waiting.size() >= MAX_WAITING) {
-            waiting.pollFirst();
-        }
-        waiting.addLast(new Queued(message, System.currentTimeMillis()));
-    }
-
-    /** Opens the publishing socket on a daemon thread, then sends what was kept meanwhile (B15). */
-    private void reconnectInBackground() {
-        long now = System.currentTimeMillis();
-        if (connecting || now - lastAttemptMs < RECONNECT_MS) {
+    private synchronized void startPublisher() {
+        if (publisher != null && publisher.isAlive()) {
             return;
         }
-        connecting = true;
-        lastAttemptMs = now;
-        Thread t = new Thread(() -> {
+        Thread t = new Thread(this::publishLoop, "BSP-Teleport redis publish");
+        t.setDaemon(true);
+        publisher = t;
+        t.start();
+    }
+
+    private void publishLoop() {
+        long nextAttempt = 0;
+        while (running || !outbox.isEmpty()) {
+            Queued q;
             try {
-                Socket s = open();
-                s.setSoTimeout(READ_TIMEOUT_MS);
-                lastAttemptFailed = false;
-                synchronized (RedisLink.this) {
+                q = outbox.pollFirst(1, java.util.concurrent.TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                return;
+            }
+            if (q == null) {
+                if (!running) {
+                    return;
+                }
+                continue;
+            }
+            if (System.currentTimeMillis() - q.at() > WAITING_MS) {
+                continue;
+            }
+            try {
+                if (pub == null || pub.isClosed()) {
+                    long now = System.currentTimeMillis();
+                    if (now < nextAttempt) {
+                        outbox.offerFirst(q);
+                        Thread.sleep(Math.min(500, nextAttempt - now));
+                        continue;
+                    }
+                    nextAttempt = now + RECONNECT_MS;
+                    Socket s = open();
+                    s.setSoTimeout(READ_TIMEOUT_MS);
                     pub = s;
                     pubOut = s.getOutputStream();
                     pubIn = new BufferedInputStream(s.getInputStream());
-                    long cutoff = System.currentTimeMillis() - WAITING_MS;
-                    while (!waiting.isEmpty()) {
-                        Queued q = waiting.pollFirst();
-                        if (q.at() >= cutoff) {
-                            send(q.message());
-                        }
-                    }
+                    lastAttemptFailed = false;
                 }
-            } catch (IOException e) {
+                pubOut.write(encode("PUBLISH", channel, q.message()));
+                pubOut.flush();
+                Object reply = decode(pubIn);
+                if (reply instanceof String r && r.startsWith("-")) {
+                    throw new IOException(r);
+                }
+            } catch (IOException | RuntimeException e) {
+                // A RuntimeException here is close() taking the socket away mid-send; the message is tried again.
                 lastError = e.getMessage() == null ? e.toString() : e.getMessage();
                 lastAttemptFailed = true;
-                synchronized (RedisLink.this) {
-                    closeQuietly(pub);
-                    pub = null;
-                    long cutoff = System.currentTimeMillis() - WAITING_MS;
-                    waiting.removeIf(q -> q.at() < cutoff);
-                }
-            } finally {
-                connecting = false;
+                closeQuietly(pub);
+                pub = null;
+                outbox.offerFirst(q);
+            } catch (InterruptedException e) {
+                return;
             }
-        }, "BSP-Teleport redis publish");
-        t.setDaemon(true);
-        t.start();
+        }
     }
 
     /** Starts the subscriber thread. */

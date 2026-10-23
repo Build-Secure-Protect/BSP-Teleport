@@ -47,6 +47,7 @@ public final class AdminCommands {
                     return 1;
                 }))
                 .then(Commands.literal("status").executes(AdminCommands::status))
+                .then(Commands.literal("setnetworkspawn").executes(AdminCommands::setNetworkSpawn))
                 .then(PortalCommands.portal())
                 .then(AccessCommands.access())
                 .then(PortalCommands.portalWarp())
@@ -68,6 +69,23 @@ public final class AdminCommands {
 
     private static int players(CommandContext<CommandSourceStack> ctx) {
         ctx.getSource().sendSuccess(() -> Component.literal("Other servers: " + PlayerDirectory.describe()), false);
+        return 1;
+    }
+
+    /** D140, D144: saves the network spawn warp where the admin stands; warns when this server needs access. */
+    private static int setNetworkSpawn(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        String name = com.mrgregles.bsp_teleport.data.TeleportData.normalise(com.mrgregles.bsp_teleport.teleport.NetworkSpawn.warpName());
+        com.mrgregles.bsp_teleport.data.Warp old = com.mrgregles.bsp_teleport.data.TeleportData.get(player.server).warp(name);
+        com.mrgregles.bsp_teleport.data.Warp warp = old == null ? new com.mrgregles.bsp_teleport.data.Warp(name, com.mrgregles.bsp_teleport.data.Position.of(player), 0, false)
+                : old.withPosition(com.mrgregles.bsp_teleport.data.Position.of(player));
+        com.mrgregles.bsp_teleport.data.TeleportData.get(player.server).setWarp(warp);
+        com.mrgregles.bsp_teleport.storage.Storage.warpSaved(warp);
+        ctx.getSource().sendSuccess(() -> Component.translatable("message.bsp_teleport.networkspawn.set", name), true);
+        if (com.mrgregles.bsp_teleport.access.AccessService.enabled()
+                && com.mrgregles.bsp_teleport.access.AccessService.restricted(player.server).stream().anyMatch(s -> s.equalsIgnoreCase(com.mrgregles.bsp_teleport.TeleportConfig.serverName()))) {
+            ctx.getSource().sendSuccess(() -> Component.translatable("message.bsp_teleport.networkspawn.restricted"), false);
+        }
         return 1;
     }
 

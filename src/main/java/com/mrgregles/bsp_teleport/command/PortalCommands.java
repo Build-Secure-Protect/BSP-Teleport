@@ -153,6 +153,7 @@ public final class PortalCommands {
                         .then(Commands.literal("lock").executes(ctx -> withRow(ctx, (p, row) -> PortalActions.command(p, row, "lock"))))
                         .then(Commands.literal("unlock").executes(ctx -> withRow(ctx, (p, row) -> PortalActions.command(p, row, "unlock"))))
                         .then(Commands.literal("tp").executes(ctx -> withRow(ctx, PortalActions::goTo)))
+                        .then(Commands.literal("forget").executes(ctx -> withRow(ctx, PortalActions::forget)))
                         .then(Commands.literal("info").executes(ctx -> withRow(ctx, (p, row) -> {
                             p.displayClientMessage(net.minecraft.network.chat.Component.literal(row.name() + " [" + row.server() + " " + row.world() + " " + row.x() + "," + row.y() + "," + row.z() + "] "
                                     + row.destination().describe() + (row.arriveOnly() ? " (arrive only)" : "") + ", " + row.status().toLowerCase(java.util.Locale.ROOT)

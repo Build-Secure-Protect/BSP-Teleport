@@ -344,7 +344,10 @@ public final class TeleportCommands {
         if (!TeleportData.validName(name)) {
             return fail(player, "warp.bad_name");
         }
-        Warp warp = new Warp(TeleportData.normalise(name), Position.of(player), cost, restricted);
+        // Audit: setting an existing warp again moves it and sets cost and restriction, but keeps its icon, rules and portal flag.
+        Warp old = TeleportData.get(player.server).warp(TeleportData.normalise(name));
+        Warp warp = old == null ? new Warp(TeleportData.normalise(name), Position.of(player), cost, restricted)
+                : old.withPosition(Position.of(player)).withCost(cost).withRestricted(restricted);
         TeleportData.get(player.server).setWarp(warp);
         Storage.warpSaved(warp);
         tell(player, "warp.set", warp.name(), restricted ? Permissions.warpNode(warp.name()) : "-", cost);

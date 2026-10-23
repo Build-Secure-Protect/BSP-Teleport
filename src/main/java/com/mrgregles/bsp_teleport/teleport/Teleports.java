@@ -154,15 +154,26 @@ public final class Teleports {
             tell(player, "tpnow.cannot_afford", price);
             return false;
         }
+        // Audit: pay only once the teleport has really started; a move refused by any later check costs nothing.
+        REFUSED.remove(player.getUUID());
+        Long until = COOLDOWN_UNTIL.remove(player.getUUID());
+        if (!start(player, refused.destination(), refused.label(), refused.kind(), refused.beforeMove())) {
+            if (until != null) {
+                COOLDOWN_UNTIL.put(player.getUUID(), until);
+            }
+            return false;
+        }
         if (!BspCore.pay(player, price)) {
+            PENDING.remove(player.getUUID());
+            if (until != null) {
+                COOLDOWN_UNTIL.put(player.getUUID(), until);
+            }
             tell(player, "tpnow.cannot_afford", price);
             return false;
         }
-        REFUSED.remove(player.getUUID());
-        COOLDOWN_UNTIL.remove(player.getUUID());
         Storage.cooldownSet(player.getUUID(), 0);
         tell(player, "tpnow.paid", price);
-        return start(player, refused.destination(), refused.label(), refused.kind(), refused.beforeMove());
+        return true;
     }
 
     public static boolean cancel(ServerPlayer player, String reasonKey) {
@@ -224,15 +235,21 @@ public final class Teleports {
         if (pending.beforeMove() != null && !pending.beforeMove().getAsBoolean()) {
             return;
         }
-        if (!BspTeleportApi.get().teleport(player, pending.destination())) {
-            tell(player, "failed");
-            return;
-        }
+        // T80: the cooldown is written before the move, so a cross-server landing's login read (queued after it on the
+        // same storage worker) already sees it; a move that fails takes it back.
         int cooldown = BspCore.cooldownSeconds(player, TeleportConfig.getOr(TeleportConfig.COOLDOWN_SECONDS, 60));
+        long until = System.currentTimeMillis() + cooldown * 1000L;
         if (cooldown > 0) {
-            long until = System.currentTimeMillis() + cooldown * 1000L;
             COOLDOWN_UNTIL.put(player.getUUID(), until);
             Storage.cooldownSet(player.getUUID(), until);
+        }
+        if (!BspTeleportApi.get().teleport(player, pending.destination())) {
+            if (cooldown > 0) {
+                COOLDOWN_UNTIL.remove(player.getUUID());
+                Storage.cooldownSet(player.getUUID(), 0);
+            }
+            tell(player, "failed");
+            return;
         }
         if (!pending.destination().crossServer()) {
             player.displayClientMessage(Component.translatable("message.bsp_teleport.teleported", pending.label()), false);
@@ -296,6 +313,10 @@ public final class Teleports {
 
     public static void onLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         PENDING.remove(event.getEntity().getUUID());
+        // T80: maps that only ever grew. Running cooldowns stay (without MySQL this map is the only copy); /back stays too.
+        long now = System.currentTimeMillis();
+        COOLDOWN_UNTIL.values().removeIf(until -> until < now);
+        com.mrgregles.bsp_teleport.portal.Portals.playerLeft(event.getEntity().getUUID());
         REFUSED.remove(event.getEntity().getUUID());
     }
 

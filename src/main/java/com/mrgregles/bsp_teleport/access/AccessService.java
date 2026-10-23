@@ -274,6 +274,9 @@ public final class AccessService {
         sync(player);
     }
 
+    /** T80: what each online player was last sent, so an unchanged sync is skipped. */
+    private static final java.util.Map<java.util.UUID, AccessSync> LAST_SENT = new java.util.concurrent.ConcurrentHashMap<>();
+
     /** Sends the player what the client shows (D79): their grants, every token assignment, the restricted servers. */
     public static void sync(ServerPlayer player) {
         long now = System.currentTimeMillis();
@@ -288,7 +291,12 @@ public final class AccessService {
             int[] c = counts.getOrDefault(server, new int[3]);
             countList.add(new AccessSync.Count(server, c[0], c[1], c[2]));
         }
-        BandPackets.sendAccess(player, new AccessSync(enabled(), grants, new ArrayList<>(tokens(player.server).values()), new ArrayList<>(restricted(player.server)), countList));
+        AccessSync sync = new AccessSync(enabled(), grants, new ArrayList<>(tokens(player.server).values()), new ArrayList<>(restricted(player.server)), countList);
+        // T80: the minute tick and every access notice called this for everyone; an unchanged answer is not sent again.
+        if (sync.equals(LAST_SENT.put(player.getUUID(), sync))) {
+            return;
+        }
+        BandPackets.sendAccess(player, sync);
     }
 
     private static void syncAll(MinecraftServer server) {
@@ -437,6 +445,7 @@ public final class AccessService {
     }
 
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        LAST_SENT.remove(event.getEntity().getUUID());
         GRANTS.remove(event.getEntity().getUUID());
         WARNED.remove(event.getEntity().getUUID());
     }

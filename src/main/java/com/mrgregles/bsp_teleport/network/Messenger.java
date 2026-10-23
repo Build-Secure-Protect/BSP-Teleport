@@ -151,8 +151,18 @@ public final class Messenger {
         send(new Message(Message.Type.ACCESS_CHANGED, Message.To.ALL, Message.ALL).put("uuid", uuid));
     }
 
+    /** T80: one portal notice per 2 s at most; every notice makes every other server re-read the whole portal table. */
+    private static volatile boolean portalNoticeWaiting;
+
     public static void portalsChanged() {
-        send(new Message(Message.Type.PORTALS_CHANGED, Message.To.ALL, Message.ALL));
+        if (portalNoticeWaiting) {
+            return;
+        }
+        portalNoticeWaiting = true;
+        com.mrgregles.bsp_teleport.util.Scheduler.later(40, () -> {
+            portalNoticeWaiting = false;
+            send(new Message(Message.Type.PORTALS_CHANGED, Message.To.ALL, Message.ALL));
+        });
     }
 
     /** A chat line to a player wherever they are on the network. */
@@ -300,7 +310,17 @@ public final class Messenger {
                 .put("uuid", player.getUUID().toString()).put("portal", portal));
     }
 
+    /** T80: when each player's last remote random search ran here, so a flood of requests cannot keep this server searching. */
+    private static final java.util.Map<String, Long> RTP_LAST = new java.util.concurrent.ConcurrentHashMap<>();
+
     private static void onRtpRequest(MinecraftServer server, Message m) {
+        long now = System.currentTimeMillis();
+        Long last = RTP_LAST.get(m.get("player"));
+        if (last != null && now - last < 4000L) {
+            return; // the asker's own hold is 5 s; a second ask inside 4 s is a repeat
+        }
+        RTP_LAST.put(m.get("player"), now);
+        RTP_LAST.values().removeIf(t -> now - t > 60_000L);
         Message reply = new Message(Message.Type.RTP_RESULT, Message.To.PLAYER, m.get("player")).put("portal", m.get("portal"));
         ServerLevel level = RandomTeleport.arrivalWorld(server);
         UUID owner = null;

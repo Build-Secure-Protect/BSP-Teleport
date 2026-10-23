@@ -204,7 +204,7 @@ def banner():
         s.rect(x, 232, w, 34, INSET, color, r=17)
         s.text(x + w / 2, 255, label, 15, color, "bold", "middle")
         x += w + 14
-    s.text(100, 312, "0.2.0  ·  Minecraft 1.20.1  ·  Forge 47.4  ·  requires BSP-Core 1.3  ·  Region Guard and RankUp optional  ·  MIT", 16, MUTED, family=MONO)
+    s.text(100, 312, "0.2.5  ·  Minecraft 1.20.1  ·  Forge 47.4  ·  requires BSP-Core 1.3  ·  Region Guard and RankUp optional  ·  MIT", 16, MUTED, family=MONO)
     s.pixels(BAND_MAP, BAND_PAL, 1000, 100, 8)
     s.save("banner")
 

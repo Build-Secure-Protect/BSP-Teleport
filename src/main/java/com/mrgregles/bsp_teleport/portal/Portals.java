@@ -101,6 +101,71 @@ public final class Portals {
         MOTION.remove(core);
     }
 
+    /** Whether this run has done its start-up check of its own rows (D146), which may load chunks. */
+    private static boolean ownRowsChecked;
+
+    /**
+     * D146 (B18): the rows carrying this server's name must have a Portal Core at their spot. A row without one (its world
+     * replaced, the core removed by a tool, or written by another copy of this server sharing the database) is deleted.
+     * The first check of a run loads each row's chunk; later ones look only at loaded chunks. Live cores missing from the
+     * table are written again, so a row deleted by mistake comes back.
+     */
+    public static void checkOwnRows(MinecraftServer server, Collection<PortalRow> tableRows) {
+        boolean loadChunks = !ownRowsChecked;
+        ownRowsChecked = true;
+        Set<String> ids = new HashSet<>();
+        boolean removed = false;
+        for (PortalRow r : new ArrayList<>(tableRows)) {
+            ids.add(r.id());
+            if (!r.server().equalsIgnoreCase(TeleportConfig.serverName())) {
+                continue;
+            }
+            ServerLevel level = TeleportService.levelOf(server, r.world());
+            if (level == null) {
+                forgetRow(server, r, "its world " + r.world() + " does not exist here");
+                removed = true;
+                continue;
+            }
+            BlockPos pos = new BlockPos(r.x(), r.y(), r.z());
+            if (!level.hasChunkAt(pos)) {
+                if (!loadChunks) {
+                    continue;
+                }
+                level.getChunk(pos);
+            }
+            if (!(level.getBlockEntity(pos) instanceof PortalCoreBlockEntity)) {
+                forgetRow(server, r, "no Portal Core at " + r.world() + " " + r.x() + ", " + r.y() + ", " + r.z());
+                removed = true;
+            }
+        }
+        for (PortalCoreBlockEntity core : allCores()) {
+            if (!ids.contains(core.rowId()) && core.getLevel() instanceof ServerLevel) {
+                core.setLastRow(null);
+                publish(core);
+            }
+        }
+        if (removed) {
+            destinationsChanged();
+        }
+    }
+
+    /** Deletes one row from everywhere this server keeps rows (D146, D147); the core, if any, is not touched. */
+    public static void forgetRow(MinecraftServer server, PortalRow row, String reason) {
+        ROWS.remove(row.id());
+        TeleportData.get(server).deletePortal(row.id());
+        if (Storage.enabled()) {
+            Storage.portalDeleted(row.id());
+        }
+        BSPTeleport.LOGGER.info("Removed portal row {} ({}): {}", row.name(), row.id(), reason);
+    }
+
+    /** T80: a player logged out; their per-portal cooldowns, message throttle and arrival mark go. */
+    public static void playerLeft(UUID player) {
+        COOLDOWNS.remove(player);
+        TOLD.remove(player);
+        ARRIVED.remove(player);
+    }
+
     /** The core block was broken: its field, doors and row go with it; a linked partner turns unready (D62). */
     public static void coreRemoved(ServerLevel level, PortalCoreBlockEntity core) {
         for (BlockPos p : core.opening()) {
@@ -420,6 +485,10 @@ public final class Portals {
         for (PortalRow r : rows) {
             ROWS.put(r.id(), r);
         }
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        if (server != null) {
+            checkOwnRows(server, rows);
+        }
         // This server's own cores are the truth for their rows; a stale read must not undo a change still being written.
         for (PortalCoreBlockEntity core : allCores()) {
             PortalRow mine = core.lastRow();
@@ -431,9 +500,25 @@ public final class Portals {
     }
 
     /** Something a destination depends on changed: every core re-checks its status. */
+    /** T80: a refresh can publish a row, which asks for another refresh; that one runs after this pass, not inside it. */
+    private static boolean refreshing, refreshAgain;
+
     public static void destinationsChanged() {
-        for (PortalCoreBlockEntity core : allCores()) {
-            refresh(core);
+        if (refreshing) {
+            refreshAgain = true;
+            return;
+        }
+        refreshing = true;
+        try {
+            int passes = 0;
+            do {
+                refreshAgain = false;
+                for (PortalCoreBlockEntity core : allCores()) {
+                    refresh(core);
+                }
+            } while (refreshAgain && ++passes < 3);
+        } finally {
+            refreshing = false;
         }
     }
 
@@ -832,7 +917,7 @@ public final class Portals {
                     Position spot = RandomTeleport.enabled() && world != null ? RandomTeleport.find(world, player) : null;
                     if (spot == null) {
                         tell(player, "rtp.no_spot");
-                        hold(player, core, 3);
+                        hold(player, core, 10); // T80: a failed search is not retried every 3 s by a player standing in the field
                         return;
                     }
                     go(core, player, spot.toDestination(""), hold, false);
@@ -986,6 +1071,13 @@ public final class Portals {
             if (!rules.refusal().getString().isEmpty()) {
                 player.displayClientMessage(rules.refusal(), true);
             }
+            hold(player, core, 3);
+            return;
+        }
+        // Audit: a landing here needs its world, checked before anything is charged or a warm-up starts.
+        if ((!destination.crossServer() || destination.server().equals(TeleportConfig.serverName()) || TeleportConfig.singlePlayer())
+                && TeleportService.levelOf(player.server, destination.world()) == null) {
+            tell(player, "no_world");
             hold(player, core, 3);
             return;
         }
@@ -1164,6 +1256,7 @@ public final class Portals {
     }
 
     public static void onServerStopping(ServerStoppingEvent event) {
+        ownRowsChecked = false;
         CORES.clear();
         MOTION.clear();
         ROWS.clear();

@@ -60,6 +60,8 @@ MESSAGES = {
     "spawn.set": "Spawn set here.",
     "spawn.none": "No spawn is set on this server.",
     "spawn.global_missing": "The spawn warp %s does not exist. Ask an admin to set it.",
+    "networkspawn.set": "Network spawn set here (warp %s). New players start here.",
+    "networkspawn.restricted": "Careful: this server needs access, so new players would be bounced from it.",
     "back.name": "where you were",
     "back.none": "Nowhere to go back to.",
     "back.server_offline": "%s is not online yet. Try again in a moment.",
@@ -136,6 +138,8 @@ MESSAGES = {
     "portal.bad_link": "Link ids are letters, numbers, _ or -, up to 32 long.",
     "portal.bad_name": "Portal names are 1 to 32 characters.",
     "portal.name_taken": "Another portal is already called %s. Pick a different name.",
+    "portal.forget_live": "%s is a real portal on this server. Break its core to remove it.",
+    "portal.forgotten": "Removed the portal row %s (%s) from the list.",
     "single_player": "Not available in single player.",
     "portal.destination": "Destination: %s",
     "portal.list": "Portals (%s): %s",
@@ -273,7 +277,7 @@ OTHER = {
     # Admin panel
     "screen.bsp_teleport.admin.title": "Admin",
     "screen.bsp_teleport.admin.tab.tokens": "Tokens",
-    "screen.bsp_teleport.admin.tokens_help": "Pick a token on the left, then click what it should stand for on the right. Rent and Full give you the stack to put in a shop.",
+    "screen.bsp_teleport.admin.tokens_help": "Pick a token, then what it stands for.",
     "screen.bsp_teleport.admin.tokens_list": "Tokens",
     "screen.bsp_teleport.admin.targets": "Targets",
     "screen.bsp_teleport.admin.token_free": "free",
@@ -301,7 +305,7 @@ OTHER = {
     "screen.bsp_teleport.admin.close_now": "Close",
     "screen.bsp_teleport.admin.lock": "Lock",
     "screen.bsp_teleport.admin.unlock": "Unlock",
-    "screen.bsp_teleport.admin.portals_help": "Open and Close act now and switch the portal to manual. Click a node on the map to select it.",
+    "screen.bsp_teleport.admin.portals_help": "Open/Close switch to manual; click a node to pick it.",
     # Core screen (T56, layout A Tabs)
     "screen.bsp_teleport.portal.title": "Portal",
     "screen.bsp_teleport.portal.help": "Up to eight destinations. Pick on the left, then Add destination.",
@@ -516,7 +520,7 @@ OTHER = {
     # TEAM tab (D92)
     "screen.bsp_teleport.band.team_help": "Pick a teammate. Stand still while it counts down.",
     "screen.bsp_teleport.band.no_team": "You are not in a team.",
-    "screen.bsp_teleport.band.no_team_hint": "Open the Team screen from your inventory to make one or accept an invite.",
+    "screen.bsp_teleport.band.no_team_hint": "Make or join one from the Team screen.",
     "screen.bsp_teleport.band.team_line": "leader %s  %s members  %s online",
     "screen.bsp_teleport.band.leader": "leader",
     "screen.bsp_teleport.band.mate_here": "here",
@@ -545,7 +549,7 @@ OTHER = {
     "screen.bsp_teleport.access.confirm_help": "This cannot be changed.",
     # Access Board (T61)
     "screen.bsp_teleport.board.title": "Access Board",
-    "screen.bsp_teleport.board.help": "Panels side by side and above each other join into one board. The bottom-left panel holds these settings.",
+    "screen.bsp_teleport.board.help": "Touching panels join into one board.",
     "screen.bsp_teleport.board.style": "Style",
     "screen.bsp_teleport.board.style.bars": "Bars",
     "screen.bsp_teleport.board.style.tiles": "Tiles",

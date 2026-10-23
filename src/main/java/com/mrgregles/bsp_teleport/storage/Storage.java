@@ -74,6 +74,8 @@ public final class Storage {
 
     public static void onServerStarted(ServerStartedEvent event) {
         if (!TeleportConfig.mysql()) {
+            // D146: the world save's own rows are checked once at start (with the shared table, after its first read).
+            com.mrgregles.bsp_teleport.portal.Portals.checkOwnRows(event.getServer(), com.mrgregles.bsp_teleport.portal.Portals.rows());
             status = "local (world save)";
             if (TeleportConfig.singlePlayer()) {
                 status = "this world's save (single player)";
@@ -142,9 +144,15 @@ public final class Storage {
         UUID uuid = player.getUUID();
         String name = player.getGameProfile().getName();
         run(() -> {
+            // D141: no record before this login's touch means the player is new to the whole network.
+            // Audit: one read; the touch changes only the name and last server, which the load does not use.
+            MySqlStore.UserRow before = s.loadUser(uuid);
             s.touchUser(uuid, name, TeleportConfig.serverName());
-            return new UserLoad(s.loadUser(uuid), s.loadHomes(uuid));
+            return new UserLoad(before, s.loadHomes(uuid), before == null);
         }, load -> {
+            if (load.newToNetwork()) {
+                com.mrgregles.bsp_teleport.teleport.NetworkSpawn.markNewToNetwork(uuid);
+            }
             TeleportData data = TeleportData.get(player.server);
             data.replaceHomes(uuid, load.homes());
             if (load.user() != null) {
@@ -187,7 +195,7 @@ public final class Storage {
     public record PublicHome(UUID owner, String ownerName, Home home) {
     }
 
-    private record UserLoad(@Nullable MySqlStore.UserRow user, List<Home> homes) {
+    private record UserLoad(@Nullable MySqlStore.UserRow user, List<Home> homes, boolean newToNetwork) {
     }
 
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {

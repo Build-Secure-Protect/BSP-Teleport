@@ -180,3 +180,32 @@ Not testable headless (the GameTest server is a dedicated server). Needs the own
 - [ ] Open to LAN: the same as single player.
 - [ ] Dedicated server with Redis stopped: no freeze when using the panel or commands; the footer's Redis line is not green while it says "not listening"; after Redis comes back, messages flow again within about 8 s.
 - [ ] Dedicated server, NETWORK tab: with no other server up there is no "Send everyone to..."; with one up, it opens a picker with Cancel; no key text spills out of its box anywhere (portal screen FLIP, admin keys).
+
+## Network spawn (T77, D140 to D145, 2026-10-23)
+
+Headless, already passing: GameTest `the_servers_own_spawn_comes_first_then_a_network_spawn_on_this_server`. The rest needs real logins and deaths. Put the spawn server first in Velocity's `try` list.
+
+- [ ] On the spawn server, `/bsptp setnetworkspawn`: "Network spawn set here (warp spawn). New players start here." `/warps` lists `spawn`. With access on and this server restricted, the warning line follows.
+- [ ] A brand-new account joins (no record anywhere on the network): about 3 s after joining it is moved to the network spawn, also when Velocity first put it on another server. The log says "<name> is new to the network: sent to the network spawn (spawn)".
+- [ ] An existing player who has never been on server X joins X by `/server X` (no landing): with a `/setspawn` on X they are placed there; without one, and with the network spawn on another server, they stay where Minecraft put them.
+- [ ] A player arriving on X by a warp, home or portal (a landing) is not moved again.
+- [ ] Die with no bed: you respawn at the server's `/setspawn` point (or the network spawn when it is on this server). With a bed you respawn at the bed. Dying inside a Region Guard region with a `spawn` flag still respawns at that flag's spot.
+- [ ] `/spawn` on a server whose config has `globalWarp = ""` still uses that server's own `/setspawn`. A fresh server (default `globalWarp = "spawn"`) uses the network spawn warp, or its own spawn while the warp does not exist.
+
+## Stale portal rows (B18, T78, D146 to D148, 2026-10-23)
+
+Headless, already passing: GameTest `rows_without_a_core_here_are_removed_and_the_rest_kept`. First point the local server copies at their own tables (D148).
+
+- [ ] Restart BSP-SafeRoom, BSP-Stormfall and BSP-Spawn: each log lists "Removed portal row Portal (...): no Portal Core at ..." for the rows with no core; the PORTAL LINK picker no longer offers them. Real portals are still listed.
+- [ ] Break a core with a tool that skips normal block breaking (or delete its row by hand): within 5 minutes the server that owns a live core writes its row again.
+- [ ] `/bsptp portal <name> forget` on a row from a server that no longer runs: "Removed the portal row ..."; on a real portal of this server: "<name> is a real portal on this server. Break its core to remove it."
+
+## Audit fixes (B19, T79, T80, 2026-10-23)
+
+- [ ] A warp with cost 50 and a COINS 50 rule, holding 60 coins: refused before the warm-up ("costs 100"), nothing taken. Holding 100: both taken once, after the warm-up.
+- [ ] A warp with a consume ITEM rule: swap the item out of your hand during the warm-up: the move is refused at the end, nothing taken.
+- [ ] `/tpnow` while the move would be refused (for example standing in a no-teleport region): no coins taken, the cooldown is still there.
+- [ ] `/setwarp` on an existing warp with an icon, rules and the portal flag: all three are kept.
+- [ ] Stop Redis on a backend: commands, the band and portals keep working with no freeze; messages flow again within about 8 s of Redis coming back.
+- [ ] `/rtp` and random portals into new terrain: no multi-second freeze; "no safe spot" can happen more often in fresh worlds (at most four new chunks per search).
+- [ ] Screens: long warp, home, portal and server names are cut with "..." and never run under keys; the band title does not overlap its tabs with six tabs; the access icons sit above the hunger bar.

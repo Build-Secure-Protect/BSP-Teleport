@@ -1,4 +1,6 @@
-# BSP-Teleport Unreleased
+# BSP-Teleport 0.2.5
+
+Minecraft 1.20.1, Forge 47.4, Java 17. Needed on the client and the server, and both must run this version (the network protocol changed). Requires BSP-Core 1.3.0 or newer; the Home Servers board needs BSP-Core 1.4.0, and 1.4.5 is recommended (its steal checks no longer load chunks, and it hands this mod its MySQL driver directly). BSP-Region Guard (0.1.0 or newer, built against 0.5.0), BSP-RankUp, BSP-InventorySync and LuckPerms are optional.
 
 ## Added
 
@@ -12,8 +14,17 @@
 
 **Portal names.** A new Portal Core is named after its server and the next free number on the network (BSP-Spawn-1, BSP-Frostwarf-2, ...), and no two portals may share a name, so pickers and `/bsptp portal <name>` always find the right one. The name and a Rename key now sit at the top of the core screen's DESTINATION tab.
 
+**Network spawn.** `/bsptp setnetworkspawn` saves the network spawn where you stand: one shared warp (the one `spawn.globalWarp` names, or `spawn`). Players new to the whole network are sent there once their first login settles, on whichever server it is. A first visit to a server, and a respawn with no bed or anchor, go to that server's own `/setspawn` point, or to the network spawn when it is on that server; neither ever moves a player to another server.
+
 ## Fixed
 
+**Portals that no longer exist.** Each server now checks the portal list for its own portals at start and every few minutes, and removes any whose core is no longer there, so pickers stop offering portals that lead nowhere. `/bsptp portal <name> forget` removes one by hand (for a server that is gone for good).
+
+**Coins.** A warp with both a cost and a coin rule now asks for one total and takes nothing unless all of it can be paid; rules are checked again when the warm-up ends; `/tpnow` charges only once the teleport has started; a portal checks its landing world before charging. Setting an existing warp again keeps its icon, rules and portal-only setting.
+
+**Smoother servers.** Redis messages are sent from their own thread; a random teleport loads at most four new chunks per search and remote requests are limited; portal change notices are grouped; access data is only sent when it changed; the TEAM tab cannot be refreshed faster than every 3 seconds; fewer database round trips; the cooldown reaches the next server before the player does.
+
+**Screens.** Long names and help lines are cut to fit everywhere, keys no longer cover text, the band's title no longer sits on its tabs, and the access icons sit above the hunger bar.
 **The core screen.** Buttons and lines that showed internal names ("screen.bsp_teleport.portal.add" and others) now read in plain English, and so do the keys on the destination card. The screen is larger with smaller text, long names are cut to fit instead of running off the panel, the picked destination is spelled out in full under the picker, and the portal picker scrolls.
 
 **Permissions on plain Forge servers.** Permission nodes (restricted warps, the bypass nodes, rank and permission rules on portals and warps) are now asked of LuckPerms' Forge edition directly. Before, they were only asked through Bukkit, so on a Forge server only admins passed them. Mohist servers are unchanged.

@@ -24,6 +24,8 @@ import java.util.UUID;
 
 /** The server side of the band screen: builds what it shows and carries out what it asks. */
 public final class BandService {
+    /** T80: when each player's TEAM tab was last rebuilt. */
+    private static final java.util.Map<java.util.UUID, Long> TEAM_LAST = new java.util.concurrent.ConcurrentHashMap<>();
     private BandService() {
     }
 
@@ -81,7 +83,16 @@ public final class BandService {
                 }
                 TeamTeleports.go(player, target);
             }
-            case TEAM_REFRESH -> BandPackets.sendData(player, build(player).asRefresh());
+            case TEAM_REFRESH -> {
+                // T80: the TEAM tab polls every 5 s; a client asking faster than every 3 s gets nothing new.
+                long now = System.currentTimeMillis();
+                Long last = TEAM_LAST.get(player.getUUID());
+                if (last == null || now - last >= 3000L) {
+                    TEAM_LAST.put(player.getUUID(), now);
+                    TEAM_LAST.values().removeIf(t -> now - t > 600_000L);
+                    BandPackets.sendData(player, build(player).asRefresh());
+                }
+            }
         }
     }
 

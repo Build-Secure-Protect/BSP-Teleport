@@ -76,7 +76,7 @@ public class AccessBoardScreen extends Screen {
         g.fill(left - 1, top - 1, left + W + 1, top + H + 1, VIO);
         g.fill(left, top, left + W, top + H, BG);
         g.drawString(font, this.title().getString().toUpperCase(), left + 10, top + 8, VIO, false);
-        small(g, Component.translatable("screen.bsp_teleport.board.help").getString(), left + 10, top + 19, MUTED);
+        small(g, clip(Component.translatable("screen.bsp_teleport.board.help").getString(), W - 20), left + 10, top + 19, MUTED);
         int y = top + 32;
         small(g, Component.translatable("screen.bsp_teleport.board.style").getString(), left + 10, y + 3, TEXT);
         int x = left + 60;
@@ -130,6 +130,16 @@ public class AccessBoardScreen extends Screen {
         small(g, label.toUpperCase(), x + 4, y + 3, colour);
         hits.add(new Hit(x, y, w, 12, action));
         return x;
+    }
+
+    private String clip(String text, int maxWidth) {
+        if (font.width(text) * 0.75f <= maxWidth) {
+            return text;
+        }
+        while (text.length() > 3 && font.width(text + "...") * 0.75f > maxWidth) {
+            text = text.substring(0, text.length() - 1);
+        }
+        return text + "...";
     }
 
     private void small(GuiGraphics g, String text, int x, int y, int colour) {

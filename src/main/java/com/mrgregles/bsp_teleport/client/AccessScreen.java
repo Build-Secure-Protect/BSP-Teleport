@@ -98,7 +98,7 @@ public class AccessScreen extends Screen {
 
     private void drawDenied(GuiGraphics g, int border) {
         g.drawString(font, Component.translatable("screen.bsp_teleport.access.denied_title", data.target()).getString().toUpperCase(), left + 10, top + 8, border, false);
-        small(g, (data.hint().isEmpty() ? Component.translatable("screen.bsp_teleport.access.denied_help").getString() : Component.translatable("screen.bsp_teleport.access.denied_help_hint", data.hint()).getString()),
+        small(g, clip(data.hint().isEmpty() ? Component.translatable("screen.bsp_teleport.access.denied_help").getString() : Component.translatable("screen.bsp_teleport.access.denied_help_hint", data.hint()).getString(), W - 20),
                 left + 10, top + 19, MUTED);
         int y = top + 32;
         if (data.token() > 0) {

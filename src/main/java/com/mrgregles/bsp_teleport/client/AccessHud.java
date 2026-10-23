@@ -59,7 +59,7 @@ public final class AccessHud {
     }
 
     private static void row(GuiGraphics g, Minecraft mc, List<ClientAccess.Entry> entries, int w, int h) {
-        int x = w / 2 + 22, y = h - 22 - 34;
+        int x = w / 2 + 22, y = h - 22 - 46;
         for (ClientAccess.Entry e : entries) {
             g.fill(x - 1, y - 1, x + 17, y + 17, frame(e));
             g.fill(x, y, x + 16, y + 16, 0xC0101418);
@@ -73,7 +73,7 @@ public final class AccessHud {
     }
 
     private static void strip(GuiGraphics g, Minecraft mc, List<ClientAccess.Entry> entries, int w, int h) {
-        int x = w / 2 + 12, y = h - 22 - 26;
+        int x = w / 2 + 12, y = h - 22 - 40;
         int width = 6;
         for (ClientAccess.Entry e : entries) {
             width += 16 + (int) (mc.font.width(label(e)) * 0.5f) + 8;

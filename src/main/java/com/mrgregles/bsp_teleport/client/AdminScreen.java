@@ -206,12 +206,12 @@ public class AdminScreen extends Screen {
         for (int i = 0; i < n; i++) {
             AdminData.ServerRow s = servers.get(i);
             boolean on = s.name().equals(selectedServer);
-            int bw = Math.max(64, (int) (font.width(s.name()) * 0.75f) + 12), bh = 20;
+            int bw = Math.min(84, Math.max(64, (int) (font.width(s.name()) * 0.75f) + 12)), bh = 20; // audit: capped, the name is cut
             int bx = nx[i] - bw / 2, by = ny[i] - bh / 2;
             int border = s.here() ? GOLD : !s.up() ? BAD : TQ;
             g.fill(bx, by, bx + bw, by + bh, border);
             g.fill(bx + 1, by + 1, bx + bw - 1, by + bh - 1, on ? 0xFF0F2A28 : BG);
-            small(g, s.name(), bx + 4, by + 3, on ? TQ : TEXT);
+            small(g, clip(s.name(), bw - 8), bx + 4, by + 3, on ? TQ : TEXT);
             String count = s.up() ? Component.translatable("screen.bsp_teleport.admin.players", s.players().size()).getString()
                     : Component.translatable("screen.bsp_teleport.admin.restarting").getString();
             small(g, count, bx + 4, by + 11, s.up() ? MUTED : BAD);
@@ -238,7 +238,7 @@ public class AdminScreen extends Screen {
             small(g, Component.translatable("screen.bsp_teleport.admin.access_off").getString(), sx + 4, y + 24, MUTED);
         }
         String who = sel.players().isEmpty() ? Component.translatable("screen.bsp_teleport.admin.nobody").getString() : String.join(", ", sel.players());
-        small(g, clip(who, 150), sx + 4, y + 13, MUTED);
+        small(g, clip(who, Math.max(40, sw - 130)), sx + 4, y + 13, MUTED);
         if (!data.readOnly()) {
             int bx = sx + sw - 4;
             // B16: Send only when another server is up; its picker always has a way back.
@@ -313,7 +313,7 @@ public class AdminScreen extends Screen {
             }
             g.fill(left + 10, y, left + W - 10, y + 14, DIM);
             g.fill(left + 11, y + 1, left + W - 11, y + 13, SLOT);
-            small(g, Component.translatable("screen.bsp_teleport.admin.setting." + s.id()).getString(), left + 14, y + 4, TEXT);
+            small(g, clip(Component.translatable("screen.bsp_teleport.admin.setting." + s.id()).getString(), W - 150), left + 14, y + 4, TEXT);
             int bx = left + W - 14;
             switch (s.kind()) {
                 case "BOOL" -> {
@@ -342,6 +342,10 @@ public class AdminScreen extends Screen {
             }
             y += 16;
         }
+        // Audit: placed in full here, since the warp-rules and TOKENS views move this box too.
+        textBox.setX(left + 10);
+        textBox.setWidth(120);
+        textBox.setHint(Component.empty());
         textBox.setY(top + H - 42);
         if (!data.readOnly()) {
             small(g, Component.translatable("screen.bsp_teleport.admin.saved").getString(), left + 136, top + H - 38, MUTED);
@@ -376,11 +380,9 @@ public class AdminScreen extends Screen {
             if (!data.readOnly()) {
                 hits.add(new Hit(left + 11, y, 18, 16, () -> send(AdminAction.WARP_ICON, w.name())));
             }
-            g.drawString(font, w.name(), left + 30, y + 4, TEXT, false);
             String sub = (w.server().equals(data.server()) ? "" : w.server() + "  ") + (w.cost() > 0 ? w.cost() + "c  " : "")
                     + Component.translatable(w.restricted() ? "screen.bsp_teleport.admin.restricted" : "screen.bsp_teleport.admin.open").getString()
                     + (w.portal() ? "  " + Component.translatable("screen.bsp_teleport.admin.portal").getString() : "");
-            small(g, sub, left + 30 + font.width(w.name()) + 6, y + 5, w.portal() ? VIO : w.server().equals(data.server()) ? MUTED : VIO);
             int bx = left + W - 14;
             if (!data.readOnly()) {
                 bx = button(g, bx, y + 2, Component.translatable("screen.bsp_teleport.admin.del").getString(), BAD, BAD, () -> ask(
@@ -396,9 +398,16 @@ public class AdminScreen extends Screen {
                 bx = button(g, bx, y + 2, "-", DIM, GOLD, () -> send(AdminAction.WARP_COST, w.name() + ";" + Math.max(0, w.cost() - 10))) - 2;
                 bx = button(g, bx, y + 2, Component.translatable("screen.bsp_teleport.admin.move_here").getString(), DIM, MUTED, () -> send(AdminAction.MOVE_WARP, w.name())) - 2;
             }
-            button(g, bx, y + 2, Component.translatable("screen.bsp_teleport.admin.go").getString(), TQ, TQ, () -> go(AdminAction.GO_WARP, w.name()));
+            int gx = button(g, bx, y + 2, Component.translatable("screen.bsp_teleport.admin.go").getString(), TQ, TQ, () -> go(AdminAction.GO_WARP, w.name()));
+            // Audit: name and details on two small lines, cut to the room the keys leave.
+            small(g, clip(w.name(), gx - (left + 30) - 4), left + 30, y + 2, TEXT);
+            small(g, clip(sub, gx - (left + 30) - 4), left + 30, y + 9, w.portal() ? VIO : w.server().equals(data.server()) ? MUTED : VIO);
             y += 18;
         }
+        // Audit: placed in full here, since the warp-rules and TOKENS views move this box too.
+        nameBox.setX(left + 10);
+        nameBox.setWidth(90);
+        nameBox.setHint(Component.translatable("screen.bsp_teleport.band.name_hint"));
         nameBox.setY(top + H - 42);
         if (!data.readOnly()) {
             button(g, left + W - 10, top + H - 41, Component.translatable("screen.bsp_teleport.admin.set_warp").getString(), GOLD, GOLD, () -> {
@@ -425,9 +434,15 @@ public class AdminScreen extends Screen {
             y += 14;
         }
         for (int i = 0; i < rules.size(); i++) {
+            if (y + 14 > top + H - 64) {
+                // Audit: more rules than fit above the add row; the rest are listed by /bsptp.
+                small(g, "+" + (rules.size() - i), left + 14, y + 3, MUTED);
+                y += 14;
+                break;
+            }
             g.fill(left + 10, y, left + W - 10, y + 12, DIM);
             g.fill(left + 11, y + 1, left + W - 11, y + 11, SLOT);
-            small(g, rules.get(i).describe(), left + 14, y + 3, TEXT);
+            small(g, clip(rules.get(i).describe(), W - 70), left + 14, y + 3, TEXT);
             if (!data.readOnly()) {
                 int index = i;
                 button(g, left + W - 14, y, Component.translatable("screen.bsp_teleport.admin.del").getString(), BAD, BAD, () -> send(AdminAction.WARP_RULE_DEL, w.name() + ";" + index));
@@ -474,7 +489,7 @@ public class AdminScreen extends Screen {
 
     private void drawPortals(GuiGraphics g) {
         int y = top + 28;
-        small(g, Component.translatable("screen.bsp_teleport.admin.portals_help").getString(), left + 10, y, MUTED);
+        small(g, clip(Component.translatable("screen.bsp_teleport.admin.portals_help").getString(), W - 60), left + 10, y, MUTED);
         button(g, left + W - 10, y - 2, Component.translatable(portalMap ? "screen.bsp_teleport.admin.list" : "screen.bsp_teleport.admin.map").getString(), VIO, VIO, () -> {
             portalMap = !portalMap;
             scroll = 0;
@@ -520,7 +535,7 @@ public class AdminScreen extends Screen {
             for (int i = 0; i < n; i++) {
                 AdminData.PortalEntry p = portals.get(i);
                 boolean on = p.id().equals(selectedPortal);
-                int bw = Math.max(60, (int) (font.width(p.name()) * 0.75f) + 10), bh = 18;
+                int bw = Math.min(80, Math.max(60, (int) (font.width(p.name()) * 0.75f) + 10)), bh = 18; // audit: capped, the name is cut
                 int bx = nx[i] - bw / 2, by = ny[i] - bh / 2;
                 int border = portalColour(p);
                 g.fill(bx, by, bx + bw, by + bh, border);
@@ -573,7 +588,7 @@ public class AdminScreen extends Screen {
     private void portalRow(GuiGraphics g, int y, AdminData.PortalEntry p, boolean withServer) {
         g.fill(left + 10, y, left + W - 10, y + 18, DIM);
         g.fill(left + 11, y + 1, left + W - 11, y + 17, SLOT);
-        g.drawString(font, p.name(), left + 14, y + 2, TEXT, false);
+        small(g, clip(p.name(), 150), left + 14, y + 3, TEXT);
         String state = p.status().toLowerCase().replace('_', ' ') + (p.doors().isEmpty() ? "" : ", " + p.doors());
         small(g, clip((withServer ? p.server() + "  " : "") + p.x() + "," + p.y() + "," + p.z() + "  " + state + "  " + p.destination(), W - 150), left + 14, y + 11, portalColour(p));
         int bx = left + W - 14;
@@ -625,7 +640,7 @@ public class AdminScreen extends Screen {
 
     private void drawTokens(GuiGraphics g) {
         int y = top + 28;
-        small(g, Component.translatable("screen.bsp_teleport.admin.tokens_help").getString(), left + 10, y, MUTED);
+        small(g, clip(Component.translatable("screen.bsp_teleport.admin.tokens_help").getString(), W - 20), left + 10, y, MUTED);
         y += 12;
         // Left: the twenty tokens, five across; dim means free, violet assigned, turquoise picked.
         int lx = left + 10;
@@ -711,7 +726,7 @@ public class AdminScreen extends Screen {
             if (has != null) {
                 g.renderItem(new net.minecraft.world.item.ItemStack(com.mrgregles.bsp_teleport.registry.ModItems.ACCESS_TOKENS[has.token() - 1].get()), rx + 2, ry + 1);
             }
-            g.drawString(font, clip(t.name(), rw - 50), rx + 22, ry + 2, TEXT, false);
+            small(g, clip(t.name(), rw - 50), rx + 22, ry + 3, TEXT); // audit: clip measures small text
             small(g, Component.translatable("screen.bsp_teleport.admin.kind." + t.kind()).getString() + (has != null ? "  " + com.mrgregles.bsp_teleport.access.TokenAssignment.roman(has.token()) : pickedToken > 0 ? "  " + Component.translatable("screen.bsp_teleport.admin.place").getString() : ""),
                     rx + 22, ry + 11, has != null ? VIO : pickedToken > 0 ? TQ : MUTED);
             if (!data.readOnly() && pickedToken > 0) {

@@ -255,6 +255,17 @@ public final class PortalActions {
         return done(player, core, "cooldown " + core.cooldownSeconds() + " s");
     }
 
+    /** D147: deletes a portal row by name, for a server that will never run again; a live core here keeps its row. */
+    public static boolean forget(ServerPlayer player, PortalRow row) {
+        if (row.server().equalsIgnoreCase(TeleportConfig.serverName()) && Portals.localCore(player.server, row) != null) {
+            return fail(player, "portal.forget_live", row.name());
+        }
+        Portals.forgetRow(player.server, row, "removed by " + player.getGameProfile().getName());
+        Portals.destinationsChanged();
+        tell(player, "portal.forgotten", row.name(), row.server());
+        return true;
+    }
+
     /** The portal's warm-up (D118), 0 to 30 s; 0 sends players through at once. */
     public static boolean setWarmup(ServerPlayer player, PortalCoreBlockEntity core, int seconds) {
         core.setWarmupSeconds(seconds);
