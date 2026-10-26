@@ -139,7 +139,7 @@ def checkRefmap = tasks.register('checkRefmap') {
             throw new GradleException("${jarFile.name} has no ${mod_id}.refmap.json: run ./gradlew clean build")
         }
         def text = refmap.iterator().next().text
-        ['ServerGamePacketListenerMixin', 'PlayerListMixin', 'PlayerListAccessor', 'GuiHotbarMixin'].each { name ->
+        ['ServerGamePacketListenerMixin', 'PlayerListMixin', 'PlayerListAccessor', 'GuiHotbarMixin', 'ConnectionDiagnosticMixin'].each { name ->
             if (!text.contains(name)) {
                 throw new GradleException("${mod_id}.refmap.json in ${jarFile.name} has no entry for ${name}")
             }

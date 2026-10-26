@@ -209,3 +209,10 @@ Headless, already passing: GameTest `rows_without_a_core_here_are_removed_and_th
 - [ ] Stop Redis on a backend: commands, the band and portals keep working with no freeze; messages flow again within about 8 s of Redis coming back.
 - [ ] `/rtp` and random portals into new terrain: no multi-second freeze; "no safe spot" can happen more often in fresh worlds (at most four new chunks per search).
 - [ ] Screens: long warp, home, portal and server names are cut with "..." and never run under keys; the band title does not overlap its tabs with six tabs; the access icons sit above the hunger bar.
+
+## Departure hold (B21, 2026-10-26)
+
+- [ ] A portal to another server with warm-up 0, walking in at full speed (and sprinting): you stop for about a second, then switch, with no "Can't serialize unregistered packet" kick. Try ten times in each direction.
+- [ ] Warps, homes and `/tpaccept` to another server: the same short stop, then the switch.
+- [ ] `network.departureHoldTicks = 0` brings back the old behaviour (for comparison only).
+- [ ] Clients and servers all on this jar (network protocol 3); an older client is told to update.

@@ -771,7 +771,7 @@ public final class Portals {
     /** A player stands in a field cell. */
     public static void touched(ServerLevel level, BlockPos pos, ServerPlayer player) {
         PortalCoreBlockEntity core = coreFor(level, pos);
-        if (core == null || PortalChooser.isChoosing(player) || PortalWarmup.isWarming(player)) {
+        if (core == null || PortalChooser.isChoosing(player) || PortalWarmup.isWarming(player) || TeleportService.isDeparting(player)) {
             return;
         }
         UUID id = player.getUUID();

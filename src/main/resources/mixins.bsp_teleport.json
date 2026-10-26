@@ -6,7 +6,8 @@
   "refmap": "bsp_teleport.refmap.json",
   "mixins": [],
   "client": [
-    "GuiHotbarMixin"
+    "GuiHotbarMixin",
+    "ConnectionDiagnosticMixin"
   ],
   "server": [
     "PlayerListAccessor",

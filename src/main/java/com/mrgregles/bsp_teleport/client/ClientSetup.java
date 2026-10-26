@@ -28,9 +28,11 @@ public final class ClientSetup {
         HomeServersBoard.register();
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(AccessHud::onOverlay);
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(PortalWarmupHud::onOverlay);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener(ClientDeparture::onMovementInput);
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut e) -> {
             ClientAccess.clear();
             PortalWarmupHud.clear();
+            ClientDeparture.clear();
         });
     }
 

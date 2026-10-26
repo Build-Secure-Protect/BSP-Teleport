@@ -20,6 +20,8 @@ Minecraft 1.20.1, Forge 47.4, Java 17. Needed on the client and the server, and 
 
 **Portals that no longer exist.** Each server now checks the portal list for its own portals at start and every few minutes, and removes any whose core is no longer there, so pickers stop offering portals that lead nowhere. `/bsptp portal <name> forget` removes one by hand (for a server that is gone for good).
 
+**No more kicks when walking into a portal to another server.** A client still walking when the proxy switch began could be thrown out with "Can't serialize unregistered packet". Every move to another server now holds the player still for one second with their movement keys off before the switch starts (`network.departureHoldTicks`, 20).
+
 **Coins.** A warp with both a cost and a coin rule now asks for one total and takes nothing unless all of it can be paid; rules are checked again when the warm-up ends; `/tpnow` charges only once the teleport has started; a portal checks its landing world before charging. Setting an existing warp again keeps its icon, rules and portal-only setting.
 
 **Smoother servers.** Redis messages are sent from their own thread; a random teleport loads at most four new chunks per search and remote requests are limited; portal change notices are grouped; access data is only sent when it changed; the TEAM tab cannot be refreshed faster than every 3 seconds; fewer database round trips; the cooldown reaches the next server before the player does.

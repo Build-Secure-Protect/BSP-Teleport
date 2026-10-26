@@ -69,6 +69,12 @@ public class InventorySyncGameTests {
                 h.fail("the departure was refused");
                 return;
             }
+            // B21: the switch waits for the departure hold; nothing has gone out yet.
+            if (!TeleportService.isDeparting(player) || !steps.isEmpty()) {
+                h.fail("the departure should be held first, got " + steps);
+                return;
+            }
+            TeleportService.finishDepartures();
             if (!BspCore.isTransferring(player.getUUID())) {
                 h.fail("BSP-Core was not told");
                 return;
@@ -95,6 +101,7 @@ public class InventorySyncGameTests {
         ServerPlayer player = recordingPlayer(h, FakeInventorySyncApi.STEPS);
         try {
             TeleportService.INSTANCE.sendToServer(player, TARGET);
+            TeleportService.finishDepartures();
             List<String> expected = List.of("inventory " + TARGET + " core=true", "connect " + TARGET);
             if (!FakeInventorySyncApi.STEPS.equals(expected)) {
                 h.fail("expected " + expected + ", got " + FakeInventorySyncApi.STEPS);
@@ -109,6 +116,7 @@ public class InventorySyncGameTests {
             FakeInventorySyncApi.reset();
             FakeInventorySyncApi.throwOnBegin = true;
             TeleportService.INSTANCE.sendToServer(player, TARGET);
+            TeleportService.finishDepartures();
             if (!FakeInventorySyncApi.STEPS.equals(List.of("connect " + TARGET))) {
                 h.fail("a throwing beginTransfer must not stop the Connect, got " + FakeInventorySyncApi.STEPS);
                 return;

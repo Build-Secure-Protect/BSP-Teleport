@@ -68,6 +68,7 @@ public final class TeleportService implements BspTeleportApi {
 
     public static void onPlayerLoggedOut(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
         LOGIN_AT.remove(event.getEntity().getUUID());
+        DEPARTING.remove(event.getEntity().getUUID());
         WAITING.remove(event.getEntity().getUUID());
     }
 
@@ -177,6 +178,70 @@ public final class TeleportService implements BspTeleportApi {
      * proxy asked.
      */
     private static void leave(ServerPlayer player, String server) {
+        if (player.hasDisconnected()) {
+            return;
+        }
+        // B21: a client still walking when the proxy switch starts can be kicked ("Can't serialize unregistered packet");
+        // hold the player still, movement keys off, for departureHoldTicks first. Not while the server is stopping.
+        int hold = TeleportConfig.getOr(TeleportConfig.DEPARTURE_HOLD_TICKS, 20);
+        if (hold > 0 && player.server.isRunning() && !DEPARTING.containsKey(player.getUUID())) {
+            DEPARTING.put(player.getUUID(), new Departure(player, server, player.position(), hold));
+            player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+            com.mrgregles.bsp_teleport.network.BandPackets.sendDeparting(player, hold + 40);
+            return;
+        }
+        if (DEPARTING.containsKey(player.getUUID())) {
+            return; // already on the way out
+        }
+        go(player, server);
+    }
+
+    private record Departure(ServerPlayer player, String server, net.minecraft.world.phys.Vec3 at, int ticks) {
+    }
+
+    private static final Map<UUID, Departure> DEPARTING = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Whether the player is being held before a switch (B21). */
+    public static boolean isDeparting(ServerPlayer player) {
+        return DEPARTING.containsKey(player.getUUID());
+    }
+
+    /** Ends every hold now and sends those players off (the GameTests; never needed in play). */
+    public static void finishDepartures() {
+        for (Map.Entry<UUID, Departure> e : DEPARTING.entrySet()) {
+            DEPARTING.remove(e.getKey());
+            go(e.getValue().player(), e.getValue().server());
+        }
+    }
+
+    /** B21: every tick, keep each departing player in place and send them off once their hold is over. */
+    public static void onServerTick(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END || DEPARTING.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<UUID, Departure> e : DEPARTING.entrySet()) {
+            Departure d = e.getValue();
+            ServerPlayer player = d.player();
+            if (player.hasDisconnected() || player.isRemoved() || player.isDeadOrDying()) {
+                DEPARTING.remove(e.getKey());
+                continue;
+            }
+            if (player.position().distanceToSqr(d.at()) > 1.0E-4) {
+                player.connection.teleport(d.at().x, d.at().y, d.at().z, player.getYRot(), player.getXRot());
+                player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+                player.fallDistance = 0f;
+            }
+            if (d.ticks() <= 1) {
+                DEPARTING.remove(e.getKey());
+                go(player, d.server());
+            } else {
+                DEPARTING.put(e.getKey(), new Departure(player, d.server(), d.at(), d.ticks() - 1));
+            }
+        }
+    }
+
+    /** The switch itself: off any mount, BSP-Core and BSP-InventorySync told, then the proxy asked. */
+    private static void go(ServerPlayer player, String server) {
         if (player.hasDisconnected()) {
             return;
         }

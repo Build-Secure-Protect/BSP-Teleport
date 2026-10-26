@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 /** The mod's own channel: the band screen's data down, its actions up. */
 public final class BandPackets {
     /** "2" since T69 and T73 changed packets 2, 11 and added 13: an older client is told to update instead of misreading them. */
-    private static final String PROTOCOL = "2";
+    private static final String PROTOCOL = "3";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(new ResourceLocation(BSPTeleport.MODID, "main"), () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
 
     private BandPackets() {
@@ -61,6 +61,7 @@ public final class BandPackets {
         CHANNEL.registerMessage(12, Choose.class, (m, buf) -> buf.writeVarInt(m.index()), buf -> new Choose(buf.readVarInt()), Choose::handle);
         CHANNEL.registerMessage(13, Warmup.class, (m, buf) -> buf.writeUtf(m.portal()).writeVarInt(m.totalTicks()).writeVarInt(m.ticksLeft()).writeBoolean(m.held()),
                 buf -> new Warmup(buf.readUtf(), buf.readVarInt(), buf.readVarInt(), buf.readBoolean()), Warmup::handle);
+        CHANNEL.registerMessage(14, Departing.class, (m, buf) -> buf.writeVarInt(m.ticks()), buf -> new Departing(buf.readVarInt()), Departing::handle);
         CHANNEL.registerMessage(3, AdminDo.class, (m, buf) -> buf.writeEnum(m.action()).writeUtf(m.arg()), buf -> new AdminDo(buf.readEnum(AdminAction.class), buf.readUtf()), AdminDo::handle);
     }
 
@@ -213,6 +214,20 @@ public final class BandPackets {
         void handle(Supplier<NetworkEvent.Context> ctx) {
             ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> com.mrgregles.bsp_teleport.client.PortalWarmupHud.show(portal, totalTicks, ticksLeft, held)));
             ctx.get().setPacketHandled(true);
+        }
+    }
+
+    /** Packet 14 (B21): the client turns its movement keys off for this many ticks (0 = on again) before a server switch. */
+    public record Departing(int ticks) {
+        void handle(Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> com.mrgregles.bsp_teleport.client.ClientDeparture.hold(ticks)));
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    public static void sendDeparting(ServerPlayer player, int ticks) {
+        if (player.connection != null && player.connection.isAcceptingMessages()) {
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Departing(ticks));
         }
     }
 
