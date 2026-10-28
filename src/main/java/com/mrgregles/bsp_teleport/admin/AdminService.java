@@ -172,15 +172,17 @@ public final class AdminService {
                 String d = parts.length > 3 ? parts[3] : "", e = parts.length > 4 ? parts[4] : "";
                 com.mrgregles.bsp_teleport.access.AccessRule rule = com.mrgregles.bsp_teleport.access.AccessRule.of(b, c, parseInt(d, 0), Boolean.parseBoolean(e));
                 if (rule == null) {
-                    tell(player, "access.rule_bad");
+                    tell(player, b.equalsIgnoreCase("TIME") ? "portal.bad_hours" : "access.rule_bad", com.mrgregles.bsp_teleport.access.OpenHours.MAX);
                 } else {
-                    editWarp(player, a, w -> {
-                        List<com.mrgregles.bsp_teleport.access.AccessRule> rules = com.mrgregles.bsp_teleport.access.AccessRule.parseList(w.rules());
-                        if (rules.size() < com.mrgregles.bsp_teleport.access.AccessRule.MAX) {
-                            rules.add(rule);
-                        }
-                        return w.withRules(com.mrgregles.bsp_teleport.access.AccessRule.serializeList(rules));
-                    });
+                    // D158: a TIME rule joins the warp's TIME rule; a refusal leaves the warp as it was.
+                    Warp current = TeleportData.get(player.server).warp(a);
+                    List<com.mrgregles.bsp_teleport.access.AccessRule> rules = current == null ? List.of() : com.mrgregles.bsp_teleport.access.AccessRule.parseList(current.rules());
+                    List<com.mrgregles.bsp_teleport.access.AccessRule> next = com.mrgregles.bsp_teleport.access.AccessRule.add(rules, rule);
+                    if (current != null && next == null) {
+                        com.mrgregles.bsp_teleport.portal.PortalActions.refuseRule(player, rules, rule);
+                    } else {
+                        editWarp(player, a, w -> next == null ? w : w.withRules(com.mrgregles.bsp_teleport.access.AccessRule.serializeList(next)));
+                    }
                 }
                 open(player);
             }

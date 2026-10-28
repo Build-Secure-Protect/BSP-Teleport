@@ -10,7 +10,7 @@ import java.util.List;
 public record PortalScreenData(BlockPos pos, boolean readOnly, String server, String world, String name, String status, int maxSize, int maxOpening,
                                int width, int height, int cells, String destKind, String destTarget, String destText, String partner, boolean arriveOnly,
                                String colour, String doorStyle, String facing, String arrivalLine, String mode, boolean openWhenPowered, boolean powered,
-                               int openAt, int closeAt, int gameOpenAt, int gameCloseAt, String zone, boolean locked, boolean closeWhenDown, int cooldown,
+                               String hours, int nowMinute, int gameOpenAt, int gameCloseAt, String zone, boolean locked, boolean closeWhenDown, int cooldown,
                                String doors, boolean lit, List<WarpEntry> warps, List<String> servers, String rules, int accessToken,
                                List<DestEntry> dests, List<PortalEntry> portals, int maxDests, int warmup) {
 
@@ -42,8 +42,8 @@ public record PortalScreenData(BlockPos pos, boolean readOnly, String server, St
         buf.writeUtf(colour).writeUtf(doorStyle).writeUtf(facing).writeUtf(arrivalLine).writeUtf(mode);
         buf.writeBoolean(openWhenPowered);
         buf.writeBoolean(powered);
-        buf.writeVarInt(openAt);
-        buf.writeVarInt(closeAt);
+        buf.writeUtf(hours);
+        buf.writeVarInt(nowMinute);
         buf.writeVarInt(gameOpenAt);
         buf.writeVarInt(gameCloseAt);
         buf.writeUtf(zone);
@@ -82,7 +82,8 @@ public record PortalScreenData(BlockPos pos, boolean readOnly, String server, St
         boolean arriveOnly = buf.readBoolean();
         String colour = buf.readUtf(), doorStyle = buf.readUtf(), facing = buf.readUtf(), arrivalLine = buf.readUtf(), mode = buf.readUtf();
         boolean openWhenPowered = buf.readBoolean(), powered = buf.readBoolean();
-        int openAt = buf.readVarInt(), closeAt = buf.readVarInt(), gameOpenAt = buf.readVarInt(), gameCloseAt = buf.readVarInt();
+        String hours = buf.readUtf();
+        int nowMinute = buf.readVarInt(), gameOpenAt = buf.readVarInt(), gameCloseAt = buf.readVarInt();
         String zone = buf.readUtf();
         boolean locked = buf.readBoolean(), closeWhenDown = buf.readBoolean();
         int cooldown = buf.readVarInt();
@@ -100,7 +101,7 @@ public record PortalScreenData(BlockPos pos, boolean readOnly, String server, St
             servers.add(buf.readUtf());
         }
         return new PortalScreenData(pos, readOnly, server, world, name, status, maxSize, maxOpening, width, height, cells, destKind, destTarget, destText, partner,
-                arriveOnly, colour, doorStyle, facing, arrivalLine, mode, openWhenPowered, powered, openAt, closeAt, gameOpenAt, gameCloseAt, zone, locked,
+                arriveOnly, colour, doorStyle, facing, arrivalLine, mode, openWhenPowered, powered, hours, nowMinute, gameOpenAt, gameCloseAt, zone, locked,
                 closeWhenDown, cooldown, doors, lit, warps, servers, buf.readUtf(), buf.readVarInt(), readDests(buf), readPortals(buf), buf.readVarInt(), buf.readVarInt());
     }
 

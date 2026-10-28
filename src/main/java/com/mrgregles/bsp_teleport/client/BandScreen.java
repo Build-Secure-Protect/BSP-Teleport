@@ -201,14 +201,27 @@ public class BandScreen extends Screen {
                 sub += "  " + Component.translatable("screen.bsp_teleport.band.coins", w.cost()).getString();
             }
             String wkey = Component.translatable(w.nearRaid() ? "screen.bsp_teleport.band.near_raid" : "screen.bsp_teleport.band.go").getString();
-            row(g, y, w.name(), sub, w.nearRaid() ? BAD : TEXT, w.server().equals(data.server()) ? MUTED : VIO, left + W - 10 - keyW(wkey) - 4);
+            // D150: a warp with open hours carries a chip before its key: OPEN, or OPENS 03:00 on a red-edged row.
+            boolean closed = w.opensAt() >= 0;
+            String chip = w.opensAt() == -1 || w.nearRaid() ? null : closed
+                    ? Component.translatable("screen.bsp_teleport.band.opens", com.mrgregles.bsp_teleport.access.OpenHours.hhmm(w.opensAt())).getString()
+                    : Component.translatable("screen.bsp_teleport.band.open").getString();
+            int textRight = left + W - 10 - keyW(wkey) - 4 - (chip == null ? 0 : keyW(chip) + 2);
+            row(g, y, w.name(), sub, w.nearRaid() ? BAD : TEXT, w.server().equals(data.server()) ? MUTED : VIO, textRight);
+            if (closed) {
+                outline(g, y, BAD);
+            }
             icon(g, y, w.icon(), com.mrgregles.bsp_teleport.util.Icons.DEFAULT_WARP, null);
             if (w.nearRaid()) {
                 button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.near_raid").getString(), BAD, BAD, null);
             } else {
                 boolean afford = w.cost() <= data.coins();
-                button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.go").getString(), w.cost() > 0 ? GOLD : TQ, afford ? (w.cost() > 0 ? GOLD : TQ) : MUTED,
-                        afford ? () -> go(BandAction.WARP, w.name()) : null);
+                // A closed warp's key stays pressable but dim: admins pass the hours, and everyone else is told when it opens.
+                int keyX = button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.go").getString(), closed ? DIM : w.cost() > 0 ? GOLD : TQ,
+                        closed || !afford ? MUTED : w.cost() > 0 ? GOLD : TQ, afford ? () -> go(BandAction.WARP, w.name()) : null);
+                if (chip != null) {
+                    button(g, keyX - 2, y + 4, chip, closed ? BAD : OK, closed ? BAD : OK, null);
+                }
             }
             y += ROW_H + 2;
         }
@@ -399,6 +412,14 @@ public class BandScreen extends Screen {
         }
         g.drawString(font, shown.length() < name.length() ? shown.substring(0, Math.max(1, shown.length() - 2)) + ".." : name, tx, y + 3, nameColour, false);
         small(g, clip(sub, room), tx, y + 12, subColour);
+    }
+
+    /** A 1 px edge in {@code colour} round a list row, over the dim one. */
+    private void outline(GuiGraphics g, int y, int colour) {
+        g.fill(left + 10, y, left + W - 10, y + 1, colour);
+        g.fill(left + 10, y + ROW_H - 1, left + W - 10, y + ROW_H, colour);
+        g.fill(left + 10, y, left + 11, y + ROW_H, colour);
+        g.fill(left + W - 11, y, left + W - 10, y + ROW_H, colour);
     }
 
     /** The width a key with this label takes (keys draw their label in capitals). */

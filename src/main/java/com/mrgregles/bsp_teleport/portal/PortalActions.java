@@ -309,15 +309,15 @@ public final class PortalActions {
         return done(player, core, "mode redstone, " + (openWhenPowered ? "open" : "closed") + " when powered");
     }
 
-    /** Times as HH:MM. */
-    public static boolean setRealClock(ServerPlayer player, PortalCoreBlockEntity core, String openAt, String closeAt) {
-        int open = parseTime(openAt), close = parseTime(closeAt);
-        if (open < 0 || close < 0) {
-            return fail(player, "portal.bad_time");
+    /** T82: the whole list of windows, "15:00-17:00, 03:00-05:00" (or "15:00 17:00"); touching ones are joined, up to four. */
+    public static boolean setRealClock(ServerPlayer player, PortalCoreBlockEntity core, String text) {
+        com.mrgregles.bsp_teleport.access.OpenHours hours = com.mrgregles.bsp_teleport.access.OpenHours.parse(text);
+        if (hours == null) {
+            return fail(player, "portal.bad_hours", com.mrgregles.bsp_teleport.access.OpenHours.MAX);
         }
-        core.setRealClock(open, close);
+        core.setRealClock(hours);
         Portals.doorsChanged(core);
-        return done(player, core, "mode real clock, open " + PortalCoreBlockEntity.hhmm(open) + " to " + PortalCoreBlockEntity.hhmm(close) + " (" + PortalCoreBlockEntity.zone().getId() + ")");
+        return done(player, core, "mode real clock, open " + hours.describe() + " (" + PortalCoreBlockEntity.zone().getId() + ")");
     }
 
     public static boolean setGameClock(ServerPlayer player, PortalCoreBlockEntity core, int openAt, int closeAt) {
@@ -336,20 +336,6 @@ public final class PortalActions {
         return done(player, core, "doors " + style.name().toLowerCase(java.util.Locale.ROOT));
     }
 
-    /** Minutes of the day from HH:MM, or -1. */
-    static int parseTime(String text) {
-        String[] parts = text.trim().split(":");
-        if (parts.length != 2) {
-            return -1;
-        }
-        try {
-            int h = Integer.parseInt(parts[0]), m = Integer.parseInt(parts[1]);
-            return h < 0 || h > 23 || m < 0 || m > 59 ? -1 : h * 60 + m;
-        } catch (NumberFormatException e) {
-            return -1;
-        }
-    }
-
     // Access rules (D86)
 
     public static boolean addRule(ServerPlayer player, PortalCoreBlockEntity core, com.mrgregles.bsp_teleport.access.AccessRule rule) {
@@ -357,12 +343,23 @@ public final class PortalActions {
         if (rule == null) {
             return fail(player, "access.rule_bad");
         }
-        if (rules.size() >= com.mrgregles.bsp_teleport.access.AccessRule.MAX) {
-            return fail(player, "access.rule_full", com.mrgregles.bsp_teleport.access.AccessRule.MAX);
+        List<com.mrgregles.bsp_teleport.access.AccessRule> next = com.mrgregles.bsp_teleport.access.AccessRule.add(rules, rule);
+        if (next == null) {
+            return refuseRule(player, rules, rule);
         }
-        rules.add(rule);
-        core.setRules(rules);
+        core.setRules(next);
         return done(player, core, "rule " + rule.describe());
+    }
+
+    /** Why {@link com.mrgregles.bsp_teleport.access.AccessRule#add} refused: too many windows once joined (D158), or a full list. */
+    public static boolean refuseRule(ServerPlayer player, List<com.mrgregles.bsp_teleport.access.AccessRule> rules, com.mrgregles.bsp_teleport.access.AccessRule rule) {
+        boolean joins = rule.kind() == com.mrgregles.bsp_teleport.access.AccessRule.Kind.TIME && rules.stream().anyMatch(r -> r.hours() != null);
+        return joins ? fail(player, "portal.bad_hours", com.mrgregles.bsp_teleport.access.OpenHours.MAX)
+                : fail(player, "access.rule_full", com.mrgregles.bsp_teleport.access.AccessRule.MAX);
+    }
+
+    public static boolean badHours(ServerPlayer player) {
+        return fail(player, "portal.bad_hours", com.mrgregles.bsp_teleport.access.OpenHours.MAX);
     }
 
     public static boolean removeRule(ServerPlayer player, PortalCoreBlockEntity core, int index) {

@@ -24,7 +24,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
 import javax.annotation.Nullable;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
@@ -71,8 +70,8 @@ public class PortalCoreBlockEntity extends BlockEntity {
     private Mode mode = Mode.MANUAL;
     /** Redstone: the portal is open while powered (true) or closed while powered (false). */
     private boolean openWhenPowered = true;
-    /** Real clock: minutes of the day; equal values mean always open. */
-    private int openAtMinute, closeAtMinute;
+    /** Real clock: the open hours each day (T82, up to four windows). */
+    private com.mrgregles.bsp_teleport.access.OpenHours hours = com.mrgregles.bsp_teleport.access.OpenHours.ALL_DAY;
     /** Game clock: world time 0 to 24000; equal values mean always open. */
     private int gameOpenAt, gameCloseAt;
     /** How far the doors have travelled, in cells per side; 0 is fully open. Saved, so a closed portal loads closed. */
@@ -153,8 +152,11 @@ public class PortalCoreBlockEntity extends BlockEntity {
         tag.putString("Rules", com.mrgregles.bsp_teleport.access.AccessRule.serializeList(rules));
         tag.putString("Mode", mode.name());
         tag.putBoolean("OpenWhenPowered", openWhenPowered);
-        tag.putInt("OpenAt", openAtMinute);
-        tag.putInt("CloseAt", closeAtMinute);
+        tag.putString("OpenHours", hours.encode());
+        // The first window as before T82, so an older jar still reads a sensible clock.
+        com.mrgregles.bsp_teleport.access.OpenHours.Window first = hours.windows().get(0);
+        tag.putInt("OpenAt", first.open() % com.mrgregles.bsp_teleport.access.OpenHours.DAY);
+        tag.putInt("CloseAt", first.close() % com.mrgregles.bsp_teleport.access.OpenHours.DAY);
         tag.putInt("GameOpenAt", gameOpenAt);
         tag.putInt("GameCloseAt", gameCloseAt);
         tag.putInt("DoorProgress", doorProgress);
@@ -194,8 +196,7 @@ public class PortalCoreBlockEntity extends BlockEntity {
             mode = Mode.MANUAL;
         }
         openWhenPowered = !tag.contains("OpenWhenPowered") || tag.getBoolean("OpenWhenPowered");
-        openAtMinute = tag.getInt("OpenAt");
-        closeAtMinute = tag.getInt("CloseAt");
+        hours = readHours(tag);
         gameOpenAt = tag.getInt("GameOpenAt");
         gameCloseAt = tag.getInt("GameCloseAt");
         doorProgress = tag.getInt("DoorProgress");
@@ -510,12 +511,19 @@ public class PortalCoreBlockEntity extends BlockEntity {
         return openWhenPowered;
     }
 
-    public int openAtMinute() {
-        return openAtMinute;
+    public com.mrgregles.bsp_teleport.access.OpenHours hours() {
+        return hours;
     }
 
-    public int closeAtMinute() {
-        return closeAtMinute;
+    /** "OpenHours", or a pre-T82 core's one window (equal times meant always open). */
+    private static com.mrgregles.bsp_teleport.access.OpenHours readHours(CompoundTag tag) {
+        com.mrgregles.bsp_teleport.access.OpenHours read = tag.contains("OpenHours") ? com.mrgregles.bsp_teleport.access.OpenHours.parse(tag.getString("OpenHours")) : null;
+        if (read != null) {
+            return read;
+        }
+        int open = tag.getInt("OpenAt"), close = tag.getInt("CloseAt");
+        read = open == close ? null : com.mrgregles.bsp_teleport.access.OpenHours.of(List.of(new com.mrgregles.bsp_teleport.access.OpenHours.Window(open, close)));
+        return read == null ? com.mrgregles.bsp_teleport.access.OpenHours.ALL_DAY : read;
     }
 
     public int gameOpenAt() {
@@ -563,10 +571,9 @@ public class PortalCoreBlockEntity extends BlockEntity {
         setChanged();
     }
 
-    public void setRealClock(int openAtMinute, int closeAtMinute) {
+    public void setRealClock(com.mrgregles.bsp_teleport.access.OpenHours hours) {
         this.mode = Mode.REAL_CLOCK;
-        this.openAtMinute = openAtMinute;
-        this.closeAtMinute = closeAtMinute;
+        this.hours = hours;
         setChanged();
     }
 
@@ -582,18 +589,13 @@ public class PortalCoreBlockEntity extends BlockEntity {
         return switch (mode) {
             case MANUAL -> open;
             case REDSTONE -> powered == openWhenPowered;
-            case REAL_CLOCK -> inWindow(LocalTime.now(zone()).toSecondOfDay() / 60, openAtMinute, closeAtMinute);
+            case REAL_CLOCK -> hours.isOpen(com.mrgregles.bsp_teleport.access.OpenHours.now());
             case GAME_CLOCK -> inWindow(level == null ? 0 : (int) (level.getDayTime() % 24000L), gameOpenAt, gameCloseAt);
         };
     }
 
     public static ZoneId zone() {
-        String id = TeleportConfig.getOr(TeleportConfig.PORTAL_TIME_ZONE, "");
-        try {
-            return id.isEmpty() ? ZoneId.systemDefault() : ZoneId.of(id);
-        } catch (RuntimeException e) {
-            return ZoneId.systemDefault();
-        }
+        return com.mrgregles.bsp_teleport.access.OpenHours.zone();
     }
 
     /** Open from {@code open} until {@code close}, wrapping past midnight; equal bounds mean always open. */
@@ -697,7 +699,7 @@ public class PortalCoreBlockEntity extends BlockEntity {
         String m = switch (mode) {
             case MANUAL -> "manual";
             case REDSTONE -> "redstone, " + (openWhenPowered ? "open" : "closed") + " when powered" + (powered ? " (powered now)" : "");
-            case REAL_CLOCK -> "real clock " + hhmm(openAtMinute) + " to " + hhmm(closeAtMinute) + " (" + zone().getId() + ")";
+            case REAL_CLOCK -> "real clock " + hours.describe() + " (" + zone().getId() + ")";
             case GAME_CLOCK -> "game clock " + gameOpenAt + " to " + gameCloseAt;
         };
         return doors + ", mode " + m + ", doors " + doorStyle.name().toLowerCase(java.util.Locale.ROOT) + (closeWhenDown ? ", close when down" : "");

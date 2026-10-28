@@ -83,8 +83,8 @@ public final class Storage {
             }
             return;
         }
-        MySqlStore s = new MySqlStore(TeleportConfig.STORAGE_HOST.get(), TeleportConfig.STORAGE_PORT.get(), TeleportConfig.STORAGE_DATABASE.get(),
-                TeleportConfig.STORAGE_USER.get(), TeleportConfig.STORAGE_PASSWORD.get(), TeleportConfig.STORAGE_TABLE_PREFIX.get(), TeleportConfig.STORAGE_SSL.get());
+        MySqlStore s = new MySqlStore(NetworkConfig.DB_HOST.get(), NetworkConfig.DB_PORT.get(), NetworkConfig.DB_DATABASE.get(),
+                NetworkConfig.DB_USER.get(), NetworkConfig.DB_PASSWORD.get(), NetworkConfig.DB_TABLE_PREFIX.get(), NetworkConfig.DB_SSL.get());
         store = s;
         worker = Executors.newSingleThreadExecutor(r -> {
             Thread t = new Thread(r, "BSP-Teleport storage");

@@ -1,4 +1,4 @@
-# BSP-Teleport 0.2.5
+# BSP-Teleport 0.2.6
 
 Minecraft 1.20.1, Forge 47.4, Java 17. Needed on the client and the server, and both must run this version (the network protocol changed). Requires BSP-Core 1.3.0 or newer; the Home Servers board needs BSP-Core 1.4.0, and 1.4.5 is recommended (its steal checks no longer load chunks, and it hands this mod its MySQL driver directly). BSP-Region Guard (0.1.0 or newer, built against 0.5.0), BSP-RankUp, BSP-InventorySync and LuckPerms are optional.
 
@@ -11,6 +11,8 @@ Minecraft 1.20.1, Forge 47.4, Java 17. Needed on the client and the server, and 
 **Back portals.** A new destination kind, Back, sends each player to the spot `/back` would take them to: where they last teleported from, or where they died. Alone on a portal it makes a way home for everyone; among other destinations it is one wide key across the top of the chooser card. A player with nowhere to go back to, or whose spot is on a server that is down, stays and is told why. Back also checks the landing like `/back` does (Region Guard flags, Anti Totem zones, server access). Command: `/bsptp portal dest add back [label]`.
 
 **Portal warm-ups.** A portal may make players wait up to 30 seconds in the field before going: set it under the cooldown on the Open/close tab or with `/bsptp portal warmup <seconds>`. The player is held still where they stepped in while a box at the top of the screen counts down; crouching or being hurt cancels it. Coins are taken only when the player actually goes. Off by default, and players who may skip warm-ups skip this one too.
+
+**Open hours for portals and warps.** A Real clock portal may now open for up to four stretches a day instead of one (for example 15:00 to 17:00 and 03:00 to 05:00); the Open/close tab draws the day as a bar with the open hours lit and a gold mark at the server's time, lists the stretches with an x to remove each, and says whether it is open now. Warps (and portals) get a new **Time** rule with the same hours: outside them players are told "Closed now. Opens at 03:00 (Europe/London).", the band shows OPEN or OPENS 03:00 on the warp's row, and a portal entry leading to the warp is greyed in the chooser. Stretches that touch are joined, a second Time rule joins the first, and a warp that closes during a warm-up refuses the move without charging. Every day has the same hours; the zone is `portals.timeZone`. Command: `/bsptp portal mode realclock 15:00-17:00 03:00-05:00` (the old `15:00 17:00` form still works). Old Real clock portals keep their one window.
 
 **Portal names.** A new Portal Core is named after its server and the next free number on the network (BSP-Spawn-1, BSP-Frostwarf-2, ...), and no two portals may share a name, so pickers and `/bsptp portal <name>` always find the right one. The name and a Rename key now sit at the top of the core screen's DESTINATION tab.
 
@@ -37,6 +39,8 @@ Minecraft 1.20.1, Forge 47.4, Java 17. Needed on the client and the server, and 
 
 **Admin panel and screens.** "Send everyone to..." only shows when another server is up and always has Cancel; keys are sized to their capital-letter labels so text no longer spills out of them; the panel's status lines are cut to fit.
 **/back after a portal trip.** `/back` used to remember the spot inside the portal you left by, so it could throw you straight back through. It now remembers the spot in front of that portal, and any landing inside a portal's field no longer fires it until you walk off.
+
+**Database and Redis passwords no longer reach players.** Forge sends every server config file to each player who joins, so the passwords in `bsp_teleport-server.toml` could be read by anyone on the server. The database and Redis connection (host, port, database, user, password, table prefix, SSL; Redis host, port, password, TLS, database) now live in `config/bsp_teleport-network.toml`, which is never sent. Settings still in the server file are moved there at the next start (or at `/bsptp reload`) and cleared; a value already in the new file wins, and the log names what moved without showing a password. `storage.mode`, `redis.enabled`, `redis.cluster` and `network.serverName` stay in the server config. Admins: clear the passwords from any `defaultconfigs/bsp_teleport-server.toml`, keep the new file out of the client pack, and change both passwords once every BSP mod is updated.
 
 **MySQL on plain Forge servers.** On a Forge server (not Mohist) the shared storage could not find a MySQL driver, so homes, warps and cross-server landings stayed on each server. It now uses the driver inside BSP-Core's full jar. Mohist servers are unchanged.
 

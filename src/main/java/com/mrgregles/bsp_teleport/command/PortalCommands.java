@@ -140,8 +140,9 @@ public final class PortalCommands {
                         .then(Commands.literal("redstone").executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.setRedstone(p, core, true)))
                                 .then(Commands.argument("openWhenPowered", BoolArgumentType.bool())
                                         .executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.setRedstone(p, core, BoolArgumentType.getBool(c, "openWhenPowered"))))))
-                        .then(Commands.literal("realclock").then(Commands.argument("open", StringArgumentType.word()).then(Commands.argument("close", StringArgumentType.word())
-                                .executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.setRealClock(p, core, StringArgumentType.getString(c, "open"), StringArgumentType.getString(c, "close")))))))
+                        // T82: "15:00-17:00 03:00-05:00"; the old "15:00 17:00" still reads as one window. Greedy, since a word cannot hold ':'.
+                        .then(Commands.literal("realclock").then(Commands.argument("hours", StringArgumentType.greedyString())
+                                .executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.setRealClock(p, core, StringArgumentType.getString(c, "hours"))))))
                         .then(Commands.literal("gameclock").then(Commands.argument("open", IntegerArgumentType.integer(0, 24000)).then(Commands.argument("close", IntegerArgumentType.integer(0, 24000))
                                 .executes(ctx -> withCore(ctx, (p, core, c) -> PortalActions.setGameClock(p, core, IntegerArgumentType.getInteger(c, "open"), IntegerArgumentType.getInteger(c, "close"))))))))
                 .then(Commands.literal("doors")

@@ -216,3 +216,29 @@ Headless, already passing: GameTest `rows_without_a_core_here_are_removed_and_th
 - [ ] Warps, homes and `/tpaccept` to another server: the same short stop, then the switch.
 - [ ] `network.departureHoldTicks = 0` brings back the old behaviour (for comparison only).
 - [ ] Clients and servers all on this jar (network protocol 3); an older client is told to update.
+
+## Network passwords out of the synced server config (D149, 2026-10-28)
+
+Forge sends `<world>/serverconfig/bsp_teleport-server.toml` to every player who joins, so the database and Redis settings now live in `config/bsp_teleport-network.toml` (a COMMON config, never sent).
+
+- [ ] On a backend with the settings still in the server file: start it. The log has one warning, "the network connection settings were in bsp_teleport-server.toml ...", naming what moved (hosts and ports shown, passwords never). `config/bsp_teleport-network.toml` now has them; the server file's old keys are back to their defaults with a "Moved to" comment. `/bsptp status` still shows mysql and Redis connected.
+- [ ] Restart: no warning this time, everything still connects.
+- [ ] Put a password back in the server file's `[redis]` and run `/bsptp reload`: the same warning, the password is in the network file and gone from the server file.
+- [ ] A network file that already has a password keeps it; the server file's old one is dropped and the log says "already set here".
+- [ ] Clear the passwords from every `defaultconfigs/bsp_teleport-server.toml`, keep `config/bsp_teleport-network.toml` out of the client pack, and change the database and Redis passwords once every BSP mod is updated.
+
+## Open hours for portals and warps (T82, D150 to D158, 2026-10-28)
+
+Set `portals.timeZone` (for example `Europe/London`) and pick hours a few minutes either side of now so both states can be seen.
+
+- [ ] Core screen, Open/close tab, Real clock: the day bar is drawn with tick marks 00 to 24 and a gold mark at the server's time. Add 15:00 to 17:00, then 03:00 to 05:00: both chips appear and light on the bar; the line under it says "OPEN NOW, CLOSES ..." in green or "CLOSED NOW, OPENS ..." in red. The doors open and close at the window edges.
+- [ ] Add a window that touches one (17:00 to 18:00): it joins into 15:00-18:00. A fifth separate window is refused with the HH:MM line. 15:00 to 15:00 is refused. A window across midnight (22:00 to 02:00) lights both ends of the bar.
+- [ ] The x on a chip removes that window; with one window left there is no x. A player (not admin) sees the bar and chips but no boxes or x.
+- [ ] An old Real clock portal (set before this jar) shows its one window and still opens and closes as before.
+- [ ] `/bsptp portal mode realclock 15:00-17:00 03:00-05:00` sets both; `/bsptp portal mode realclock 15:00 17:00` sets one.
+- [ ] Admin panel, WARPS, Rules of a warp: the TIME pill shows two boxes; Add puts a "time" row with a small day bar. Adding a second window joins it into the same row.
+- [ ] As a player outside the hours: `/warp <name>` and GO on the band are refused with "Closed now. Opens at 03:00 (Europe/London)."; the band row has a red edge, an OPENS 03:00 chip and a dim GO. Inside the hours: a green OPEN chip and GO works. An admin passes at any time.
+- [ ] Start a warp's warm-up just before it closes: at the end the move is refused and no coins are taken.
+- [ ] A portal with several destinations, one a closed warp: in the chooser that entry is greyed with the closed line. A portal whose only destination is that warp refuses with the same line on the action bar.
+- [ ] A TIME rule on a portal's ACCESS tab: outside the hours players are refused at the portal (doors stay as they are).
+- [ ] Clients and servers all on this jar (network protocol 4).

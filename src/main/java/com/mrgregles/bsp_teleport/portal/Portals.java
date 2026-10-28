@@ -830,6 +830,12 @@ public final class Portals {
                 down = backRefusal(player);
                 server = backServer(player);
             }
+            if (down == null) {
+                down = warpClosed(player, d);
+                if (down != null && firstReason == null) {
+                    firstReason = down;
+                }
+            }
             if (down != null) {
                 state = PortalChoice.State.DOWN;
                 detail = down;
@@ -872,6 +878,22 @@ public final class Portals {
         PortalChooser.start(player, core, candidates, new PortalChoice(Component.literal(core.name()), options));
     }
 
+    /** D155: why an entry leading to a warp is shut now by that warp's open hours (its TIME rule), or null. */
+    @Nullable
+    static Component warpClosed(ServerPlayer player, PortalDestination d) {
+        if (d.kind() != PortalDestination.Kind.WARP && d.kind() != PortalDestination.Kind.PORTAL_WARP) {
+            return null;
+        }
+        Warp warp = TeleportData.get(player.server).warp(d.target());
+        return warp == null ? null : com.mrgregles.bsp_teleport.access.AccessChecks.closedNow(player, com.mrgregles.bsp_teleport.access.AccessRule.parseList(warp.rules()));
+    }
+
+    /** {@link #warpClosed} for the GameTests in another package. */
+    @Nullable
+    public static Component warpClosedForTest(ServerPlayer player, PortalDestination d) {
+        return warpClosed(player, d);
+    }
+
     /** Sends the player to one entry: the last checks of D61, the per-kind lookup, then the forced move. */
     static void travel(PortalCoreBlockEntity core, ServerPlayer player, PortalDestination d) {
         travel(core, player, d, null);
@@ -886,7 +908,13 @@ public final class Portals {
                     tell(player, "portal.not_answering");
                     return;
                 }
-                go(core, player, warp.position().toDestination(""), hold, false);
+                Component closed = warpClosed(player, d);
+                if (closed != null) {
+                    player.displayClientMessage(closed, true);
+                    hold(player, core, 3);
+                    return;
+                }
+                go(core, player, warp.position().toDestination(""), hold, false, d);
             }
             case POSITION -> {
                 if (d.position() == null) {
@@ -1044,6 +1072,11 @@ public final class Portals {
      * check runs again at the end and the coins are taken only then (D122).
      */
     public static void go(PortalCoreBlockEntity core, ServerPlayer player, Destination destination, @Nullable PortalWarmup.Hold hold, boolean warmed) {
+        go(core, player, destination, hold, warmed, null);
+    }
+
+    /** As above; {@code entry} is the list entry when it leads to a warp, so a warm-up checks that warp's hours again at its end. */
+    static void go(PortalCoreBlockEntity core, ServerPlayer player, Destination destination, @Nullable PortalWarmup.Hold hold, boolean warmed, @Nullable PortalDestination entry) {
         if (!com.mrgregles.bsp_teleport.access.AccessService.mayEnter(player, destination.server())) {
             com.mrgregles.bsp_teleport.access.AccessService.deny(player, com.mrgregles.bsp_teleport.access.AccessGrant.Kind.SERVER, destination.server());
             hold(player, core, 3);
@@ -1083,7 +1116,7 @@ public final class Portals {
         }
         int warmup = core.warmupSeconds();
         if (!warmed && warmup > 0 && !Permissions.has(player, Permissions.BYPASS_WARMUP)) {
-            PortalWarmup.start(player, core, destination, warmup, hold);
+            PortalWarmup.start(player, core, destination, warmup, hold, entry);
             return;
         }
         if (!com.mrgregles.bsp_teleport.access.AccessChecks.charge(player, rules)) {

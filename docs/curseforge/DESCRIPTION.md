@@ -14,8 +14,8 @@
 ## 1. Setting it up (admins first)
 
 1. Put the jar in `mods/` on every backend and on every client, next to BSP-Core 1.3.0 or newer.
-2. Start each server once. The config appears at `<world>/serverconfig/bsp_teleport-server.toml`.
-3. On a network: `storage.mode = "mysql"` with your database (BSP-Core's can be shared, the tables are prefixed), `redis.enabled = true` with your Redis, and `network.serverName` set to this server's Velocity name on every backend. Without a database the mod keeps everything in the world save and works on one server.
+2. Start each server once. The config appears at `<world>/serverconfig/bsp_teleport-server.toml`, and the database and Redis connection at `config/bsp_teleport-network.toml`. That second file holds the passwords and is never sent to players (Forge sends the server config to everyone who joins); keep it out of any client pack.
+3. On a network: `storage.mode = "mysql"` and `redis.enabled = true` in the server config, your database (BSP-Core's can be shared, the tables are prefixed) and Redis in `bsp_teleport-network.toml`, and `network.serverName` set to this server's Velocity name on every backend. Without a database the mod keeps everything in the world save and works on one server.
 4. Behind BSP-Velocity Additions, set `network.suppressJoinLeaveMessages = true` on every backend so the proxy's one join line is the only one (more below).
 5. Set `access.enabled = true` if you want the server access system, and `access.lobbyServer` to the network's main spawn server.
 6. `/bsptp status` shows the storage and Redis state and whether Redis is listening; `/bsptp reload` re-reads the file. The values admins change often are also on the panel's SETTINGS tab.
@@ -98,7 +98,7 @@ One destination sends a player straight through. With several, a card opens the 
 
 ![Open and close](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/core-doors.png)
 
-**Open/close** picks how the portal opens: by hand, by a redstone signal into the core, on a real-time clock in the server's time zone, or on the game clock. A Lock forces it closed in any mode. With "close when every destination is down" on, the doors shut by themselves while nothing on the list answers, and reopen when something does. A **warm-up** of up to 30 seconds holds players still in the field first, with a countdown box at the top of the screen; crouching or being hurt cancels it.
+**Open/close** picks how the portal opens: by hand, by a redstone signal into the core, on a real-time clock in the server's time zone (up to four open stretches a day, such as 15:00 to 17:00 and 03:00 to 05:00, drawn as a day bar with the hours lit), or on the game clock. A Lock forces it closed in any mode. With "close when every destination is down" on, the doors shut by themselves while nothing on the list answers, and reopen when something does. A **warm-up** of up to 30 seconds holds players still in the field first, with a countdown box at the top of the screen; crouching or being hurt cancels it.
 
 Closed portals grow hangar doors that slide in from both ends of every row and meet in the middle, hazard stripes facing each other. Two styles: solid **blocks** that fill in cell by cell, or smooth **rendered** panels. Either way the wall is real.
 
@@ -130,7 +130,7 @@ A refused teleport, portal or warp tells you what you need: the server, the toke
 
 ### Rules on portals and warps
 
-Any portal or warp can carry rules an admin sets on the portal's ACCESS tab or the warp's Rules button on the panel: a **rank** (a LuckPerms group, this or better), a **held item** with a count, used up or not, a **permission node**, **coins per pass**, and **token**, meaning bought access through an Access Token. Every rule must pass; admins always pass. Coins are charged and items taken only when the move actually happens.
+Any portal or warp can carry rules an admin sets on the portal's ACCESS tab or the warp's Rules button on the panel: a **rank** (a LuckPerms group, this or better), a **held item** with a count, used up or not, a **permission node**, **coins per pass**, **token**, meaning bought access through an Access Token, and **time**, open hours each day in real-world time (up to four stretches). A warp with open hours shows OPEN or OPENS 03:00 on the band, and a portal entry leading to it is greyed while it is closed. Every rule must pass; admins always pass. Coins are charged and items taken only when the move actually happens.
 
 ---
 

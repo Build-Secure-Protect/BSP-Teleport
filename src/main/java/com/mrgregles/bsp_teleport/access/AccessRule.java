@@ -6,12 +6,13 @@ import java.util.List;
 /**
  * One rule on a portal or warp (D86); every rule in the list must pass.
  *
- * @param value   the LuckPerms group, the item id, the permission node, or empty for COINS and TOKEN
+ * @param value   the LuckPerms group, the item id, the permission node, the open hours for TIME ({@link OpenHours#encode}), or empty
+ *                for COINS and TOKEN
  * @param count   the item count, or the coins charged per pass
  * @param consume ITEM only: whether the items are used up on the move
  */
 public record AccessRule(Kind kind, String value, int count, boolean consume) {
-    public enum Kind { RANK, ITEM, NODE, COINS, TOKEN }
+    public enum Kind { RANK, ITEM, NODE, COINS, TOKEN, TIME }
 
     public static final int MAX = 8;
 
@@ -23,7 +24,44 @@ public record AccessRule(Kind kind, String value, int count, boolean consume) {
             case NODE -> "node " + value;
             case COINS -> "coins " + count;
             case TOKEN -> "token";
+            case TIME -> "time " + value.replace(",", ", ");
         };
+    }
+
+    /** TIME only: the open hours, or null when the stored value cannot be read. */
+    @javax.annotation.Nullable
+    public OpenHours hours() {
+        return kind == Kind.TIME ? OpenHours.parse(value) : null;
+    }
+
+    /**
+     * The list with {@code rule} added (D158: a TIME rule joins its windows into the list's TIME rule, since two would only
+     * pass where both are open), or null when the rule is bad, the list is full, or the joined hours have too many windows.
+     */
+    @javax.annotation.Nullable
+    public static List<AccessRule> add(List<AccessRule> rules, @javax.annotation.Nullable AccessRule rule) {
+        if (rule == null) {
+            return null;
+        }
+        List<AccessRule> out = new ArrayList<>(rules);
+        if (rule.kind() == Kind.TIME) {
+            for (int i = 0; i < out.size(); i++) {
+                OpenHours have = out.get(i).hours();
+                if (have != null) {
+                    OpenHours joined = have.plus(rule.hours());
+                    if (joined == null) {
+                        return null;
+                    }
+                    out.set(i, new AccessRule(Kind.TIME, joined.encode(), 0, false));
+                    return out;
+                }
+            }
+        }
+        if (out.size() >= MAX) {
+            return null;
+        }
+        out.add(rule);
+        return out;
     }
 
     /** {@code kind|value|count|consume}; the list form joins rules with {@code ;}. */
@@ -86,6 +124,10 @@ public record AccessRule(Kind kind, String value, int count, boolean consume) {
             case ITEM -> v.isEmpty() ? null : new AccessRule(kind, v, Math.max(1, count), consume);
             case COINS -> count <= 0 ? null : new AccessRule(kind, "", count, false);
             case TOKEN -> new AccessRule(kind, "", 0, false);
+            case TIME -> {
+                OpenHours h = OpenHours.parse(v);
+                yield h == null ? null : new AccessRule(kind, h.encode(), 0, false);
+            }
         };
     }
 }

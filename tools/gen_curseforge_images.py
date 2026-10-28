@@ -480,38 +480,54 @@ def core_doors():
     x, y, w, h = 40, 40, 700, 560
     s.hud(x, y, w, h, "Portal", VIOLET, "Hub East.  Doors follow the mode; Lock forces them closed in any mode.", ("Destination", "Look", "Open/close", "Access"), 2)
     s.rect(x + 16, y + 62, w - 32, 26, INSET, OK, r=0)
-    s.text(x + 26, y + 80, "READY  DOORS: CLOSED", 12, OK, "bold", spacing=1)
+    s.text(x + 26, y + 80, "READY  DOORS: OPEN", 12, OK, "bold", spacing=1)
     px = x + 16
     for label, on in (("manual", False), ("redstone", False), ("real clock", True), ("game clock", False)):
         tw = len(label) * 8 + 20
         s.rect(px, y + 100, tw, 22, INSET, VIOLET if on else LINE, r=0)
         s.text(px + tw / 2, y + 115, label.upper(), 11, VIOLET if on else MUTED, "bold", "middle", spacing=1)
         px += tw + 6
-    s.row(x + 16, y + 134, w - 32, 50, "Real clock", "opens and closes at these times (Europe/London)")
-    s.rect(x + 380, y + 147, 70, 24, INSET, LINE, r=0)
-    s.text(x + 388, y + 164, "18:00", 13, TEXT, family=MONO)
-    s.text(x + 460, y + 164, "to", 13, MUTED)
-    s.rect(x + 484, y + 147, 70, 24, INSET, LINE, r=0)
-    s.text(x + 492, y + 164, "23:00", 13, TEXT, family=MONO)
-    s.button(x + w - 26, y + 147, "set", ACCENT)
-    s.row(x + 16, y + 196, w - 32, 40, "Lock", "forces the portal closed in any mode")
-    s.switch(x + w - 26, y + 205, False)
-    s.row(x + 16, y + 242, w - 32, 40, "Cooldown per player", "seconds before the same player may use it again")
-    bx = s.button(x + w - 26, y + 251, "+", ACCENT) - 8
-    s.text(bx, y + 267, "5 s", 14, GOLD, anchor="end")
-    s.button(bx - 36, y + 251, "-", ACCENT)
-    s.row(x + 16, y + 288, w - 32, 40, "Warm-up", "seconds a player is held in the field; 0 for none", border=ACCENT)
-    bx = s.button(x + w - 26, y + 297, "+", ACCENT) - 8
-    s.text(bx, y + 313, "3 s", 14, GOLD, anchor="end")
-    s.button(bx - 36, y + 297, "-", ACCENT)
-    s.text(x + 26, y + 356, "Doors: closed, mode real clock 18:00 to 23:00, doors rendered, close when down", 12, MUTED)
+    # T82 (D150): the day bar, its windows as chips, the add row and the state line.
+    s.text(x + 18, y + 146, "Open in the lit hours each day (Europe/London), up to 4 windows. The gold mark is now.", 12, MUTED)
+    bx0, bw = x + 18, w - 36
+    s.rect(bx0, y + 156, bw, 18, INSET, LINE, r=0)
+    for a, b in ((180, 300), (900, 1020)):
+        s.rect(bx0 + 1 + a * (bw - 2) / 1440, y + 157, (b - a) * (bw - 2) / 1440, 16, ACCENT, None, r=0, opacity=0.55)
+    s.rect(bx0 + 1 + 970 * (bw - 2) / 1440 - 1.5, y + 152, 3, 26, GOLD, None, r=0)
+    for k, t in enumerate(("00", "06", "12", "18", "24")):
+        s.text(bx0 + k * bw / 4, y + 190, t, 11, MUTED, anchor="start" if k == 0 else "end" if k == 4 else "middle", family=MONO)
+    cx = bx0
+    for chip in ("03:00-05:00", "15:00-17:00"):
+        s.rect(cx, y + 200, 118, 22, INSET, ACCENT, r=0)
+        s.text(cx + 8, y + 215, chip, 12, ACCENT, family=MONO)
+        s.text(cx + 104, y + 215, "x", 12, BAD, "bold")
+        cx += 126
+    s.rect(x + 380, y + 200, 70, 22, INSET, LINE, r=0)
+    s.text(x + 388, y + 215, "hh:mm", 12, LINE, family=MONO)
+    s.text(x + 460, y + 215, "to", 13, MUTED)
+    s.rect(x + 484, y + 200, 70, 22, INSET, LINE, r=0)
+    s.text(x + 492, y + 215, "hh:mm", 12, LINE, family=MONO)
+    s.button(x + w - 26, y + 200, "add", ACCENT)
+    s.rect(x + 18, y + 230, w - 36, 22, INSET, OK, r=0)
+    s.text(x + 28, y + 245, "OPEN NOW, CLOSES 17:00", 11, OK, "bold", spacing=1)
+    s.row(x + 16, y + 262, w - 32, 40, "Lock", "forces the portal closed in any mode")
+    s.switch(x + w - 26, y + 271, False)
+    s.row(x + 16, y + 308, w - 32, 40, "Cooldown per player", "seconds before the same player may use it again")
+    bx = s.button(x + w - 26, y + 317, "+", ACCENT) - 8
+    s.text(bx, y + 333, "5 s", 14, GOLD, anchor="end")
+    s.button(bx - 36, y + 317, "-", ACCENT)
+    s.row(x + 16, y + 354, w - 32, 40, "Warm-up", "seconds a player is held in the field; 0 for none", border=ACCENT)
+    bx = s.button(x + w - 26, y + 363, "+", ACCENT) - 8
+    s.text(bx, y + 379, "3 s", 14, GOLD, anchor="end")
+    s.button(bx - 36, y + 363, "-", ACCENT)
+    s.text(x + 26, y + 420, "Doors: open, mode real clock 03:00-05:00, 15:00-17:00, doors rendered, close when down", 12, MUTED)
     s.footer(x, y + h - 50, w, "BSP-Spawn  minecraft:overworld  120, 64, -40      frame 9x6, opening 28 cells", "DARK", MUTED, MUTED)
     rx = 780
     s.text(rx, 70, "Four ways to open and close", 22, TEXT, "bold")
     yy = 100
     for t, d in (("Manual", "an Open and a Close button; the panel and /bsptp portal <name> open|close do the same from anywhere"),
                  ("Redstone", "the core reads power on any side: open while powered, or closed while powered"),
-                 ("Real clock", "open from one time of day to another on the server's clock, wrapping past midnight"),
+                 ("Real clock", "open for up to four stretches a day on the server's clock, such as 15:00 to 17:00 and 03:00 to 05:00, drawn as a day bar"),
                  ("Game clock", "the same in world time, 0 to 24000"),
                  ("Close when down", "the doors shut by themselves while every destination is away and reopen when one is back"),
                  ("Warm-up", "up to 30 s held in the field first, with a countdown box; crouching or a hit cancels it")):

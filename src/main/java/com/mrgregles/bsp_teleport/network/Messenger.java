@@ -7,6 +7,7 @@ import com.mrgregles.bsp_teleport.api.Destination;
 import com.mrgregles.bsp_teleport.data.Position;
 import com.mrgregles.bsp_teleport.request.TeleportRequests;
 import com.mrgregles.bsp_teleport.portal.Portals;
+import com.mrgregles.bsp_teleport.storage.NetworkConfig;
 import com.mrgregles.bsp_teleport.storage.Storage;
 import com.mrgregles.bsp_teleport.teleport.RandomTeleport;
 import com.mrgregles.bsp_teleport.teleport.TeleportKind;
@@ -65,11 +66,11 @@ public final class Messenger {
             return;
         }
         String channel = "bsp_teleport:" + TeleportConfig.REDIS_CLUSTER.get() + ":v" + BspTeleportApi.API_VERSION;
-        RedisLink l = new RedisLink(TeleportConfig.REDIS_HOST.get(), TeleportConfig.REDIS_PORT.get(), TeleportConfig.REDIS_PASSWORD.get(),
-                TeleportConfig.REDIS_SSL.get(), TeleportConfig.REDIS_DB.get(), channel, Messenger::onRaw);
+        RedisLink l = new RedisLink(NetworkConfig.REDIS_HOST.get(), NetworkConfig.REDIS_PORT.get(), NetworkConfig.REDIS_PASSWORD.get(),
+                NetworkConfig.REDIS_SSL.get(), NetworkConfig.REDIS_DB.get(), channel, Messenger::onRaw);
         link = l;
         l.start();
-        BSPTeleport.LOGGER.info("Redis messaging on: {}:{} channel {}; the subscriber reports when it connects", TeleportConfig.REDIS_HOST.get(), TeleportConfig.REDIS_PORT.get(), channel);
+        BSPTeleport.LOGGER.info("Redis messaging on: {}:{} channel {}; the subscriber reports when it connects", NetworkConfig.REDIS_HOST.get(), NetworkConfig.REDIS_PORT.get(), channel);
         send(new Message(Message.Type.PLAYER_LIST_REQUEST, Message.To.ALL, Message.ALL));
     }
 

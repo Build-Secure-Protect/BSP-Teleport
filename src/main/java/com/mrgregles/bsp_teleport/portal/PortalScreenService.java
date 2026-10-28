@@ -75,7 +75,7 @@ public final class PortalScreenService {
             case ARRIVAL_LINE -> PortalActions.setArrivalLine(player, core, a);
             case MODE_MANUAL -> PortalActions.setManual(player, core);
             case MODE_REDSTONE -> PortalActions.setRedstone(player, core, Boolean.parseBoolean(a));
-            case MODE_REAL -> PortalActions.setRealClock(player, core, a, b);
+            case MODE_REAL -> PortalActions.setRealClock(player, core, a);
             case MODE_GAME -> PortalActions.setGameClock(player, core, parseInt(a), parseInt(b));
             case OPEN_NOW -> PortalActions.setOpen(player, core, true);
             case CLOSE_NOW -> PortalActions.setOpen(player, core, false);
@@ -85,7 +85,13 @@ public final class PortalScreenService {
             case WARMUP -> PortalActions.setWarmup(player, core, parseInt(a));
             case RULE_ADD -> {
                 String c = parts.length > 2 ? parts[2] : "", d = parts.length > 3 ? parts[3] : "";
-                PortalActions.addRule(player, core, com.mrgregles.bsp_teleport.access.AccessRule.of(a, b, parseInt(c), Boolean.parseBoolean(d)));
+                com.mrgregles.bsp_teleport.access.AccessRule rule = com.mrgregles.bsp_teleport.access.AccessRule.of(a, b, parseInt(c), Boolean.parseBoolean(d));
+                if (rule == null && "TIME".equalsIgnoreCase(a.trim())) {
+                    // T82 audit: a mistyped window says how to write one, not just "bad rule".
+                    PortalActions.badHours(player);
+                } else {
+                    PortalActions.addRule(player, core, rule);
+                }
             }
             case RULE_DEL -> PortalActions.removeRule(player, core, parseInt(a));
             case DEST_ADD -> PortalActions.addDestination(player, core, PortalActions.resolve(player, core, a, b), "");
@@ -136,7 +142,7 @@ public final class PortalScreenService {
                 core.status().name(), Portals.maxSize(), Portals.maxOpening(), frameOk ? shape.width() : 0, frameOk ? shape.height() : 0, core.opening().size(),
                 d.kind().name(), d.target(), d.describe(), partner, core.arriveOnly(), core.colour().getSerializedName(), core.doorStyle().name(),
                 core.getBlockState().getValue(PortalCoreBlock.FACING).getName(), core.arrivalLine(), core.mode().name(), core.openWhenPowered(), core.powered(),
-                core.openAtMinute(), core.closeAtMinute(), core.gameOpenAt(), core.gameCloseAt(), PortalCoreBlockEntity.zone().getId(), core.isLocked(),
+                core.hours().encode(), com.mrgregles.bsp_teleport.access.OpenHours.now(), core.gameOpenAt(), core.gameCloseAt(), PortalCoreBlockEntity.zone().getId(), core.isLocked(),
                 core.closeWhenDown(), core.cooldownSeconds(), core.doorWord(), core.lit(), warps, servers,
                 com.mrgregles.bsp_teleport.access.AccessRule.serializeList(core.rules()), tokenFor(player, core), dests, portals, PortalActions.maxDestinations(), core.warmupSeconds());
     }

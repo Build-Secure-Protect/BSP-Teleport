@@ -35,16 +35,20 @@ public final class PortalWarmup {
         final Destination destination;
         final int totalTicks;
         final Hold hold;
+        /** The list entry when it leads to a warp, so the warp's open hours are checked again at the end (T82 audit); else null. */
+        @Nullable
+        final PortalDestination entry;
         int ticksLeft;
         /** D139: a crouch cancels only once the player has stood up after the start, so walking in crouched does not. */
         boolean armed;
 
-        Pending(ServerPlayer player, PortalCoreBlockEntity core, Destination destination, int totalTicks, Hold hold) {
+        Pending(ServerPlayer player, PortalCoreBlockEntity core, Destination destination, int totalTicks, Hold hold, @Nullable PortalDestination entry) {
             this.player = player;
             this.core = core;
             this.destination = destination;
             this.totalTicks = totalTicks;
             this.hold = hold;
+            this.entry = entry;
             this.ticksLeft = totalTicks;
             this.armed = !player.isShiftKeyDown();
         }
@@ -60,11 +64,11 @@ public final class PortalWarmup {
     }
 
     /** Starts the countdown; the portal's checks have passed and nothing has been charged yet. */
-    static void start(ServerPlayer player, PortalCoreBlockEntity core, Destination destination, int seconds, @Nullable Hold hold) {
+    static void start(ServerPlayer player, PortalCoreBlockEntity core, Destination destination, int seconds, @Nullable Hold hold, @Nullable PortalDestination entry) {
         // B17, D139: a portal is one block thick, so a walking player would be through it at once: hold them where they
         // touched the field (or where the chooser held them).
         Hold at = hold != null ? hold : new Hold(player.position(), player.getYRot(), player.getXRot());
-        Pending p = new Pending(player, core, destination, seconds * 20, at);
+        Pending p = new Pending(player, core, destination, seconds * 20, at, entry);
         PENDING.put(player.getUUID(), p);
         player.setDeltaMovement(Vec3.ZERO);
         BandPackets.sendWarmup(player, core.name(), p.totalTicks, p.ticksLeft, true);
@@ -107,6 +111,14 @@ public final class PortalWarmup {
             if (p.ticksLeft <= 0) {
                 PENDING.remove(e.getKey());
                 BandPackets.sendWarmup(player, "", 0, 0, false);
+                // D154 for portals: a warp that closed during the countdown refuses the move, nothing charged.
+                Component closed = p.entry == null ? null : Portals.warpClosed(player, p.entry);
+                if (closed != null) {
+                    Portals.leftWithoutGoing(player, p.core);
+                    player.displayClientMessage(closed, true);
+                    Sounds.cancelled(player);
+                    continue;
+                }
                 Portals.go(p.core, player, p.destination, null, true);
                 continue;
             }

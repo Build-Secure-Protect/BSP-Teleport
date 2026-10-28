@@ -14,6 +14,7 @@ import com.mrgregles.bsp_teleport.network.Messenger;
 import com.mrgregles.bsp_teleport.portal.Portals;
 import com.mrgregles.bsp_teleport.registry.ModBlocks;
 import com.mrgregles.bsp_teleport.registry.ModItems;
+import com.mrgregles.bsp_teleport.storage.NetworkConfig;
 import com.mrgregles.bsp_teleport.storage.Storage;
 import com.mrgregles.bsp_teleport.teleport.PendingLandings;
 import com.mrgregles.bsp_teleport.teleport.TeleportService;
@@ -39,6 +40,7 @@ public class BSPTeleport {
 
     public BSPTeleport(FMLJavaModLoadingContext context) {
         context.registerConfig(ModConfig.Type.SERVER, TeleportConfig.SPEC);
+        context.registerConfig(ModConfig.Type.COMMON, NetworkConfig.SPEC, NetworkConfig.FILE);
         context.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
         BspTeleportApiSetter.set(TeleportService.INSTANCE);
         ModBlocks.BLOCKS.register(context.getModEventBus());
@@ -48,6 +50,7 @@ public class BSPTeleport {
         BandPackets.register();
 
         // Storage and messaging first: their join handlers fill the caches the others read.
+        MinecraftForge.EVENT_BUS.addListener(NetworkConfig::onAboutToStart);
         MinecraftForge.EVENT_BUS.addListener(Storage::onServerStarted);
         MinecraftForge.EVENT_BUS.addListener(Storage::onServerStopping);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, Storage::onPlayerLoggedIn);

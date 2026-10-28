@@ -442,7 +442,15 @@ public class AdminScreen extends Screen {
             }
             g.fill(left + 10, y, left + W - 10, y + 12, DIM);
             g.fill(left + 11, y + 1, left + W - 11, y + 11, SLOT);
-            small(g, clip(rules.get(i).describe(), W - 70), left + 14, y + 3, TEXT);
+            com.mrgregles.bsp_teleport.access.OpenHours hours = rules.get(i).hours();
+            if (hours != null) {
+                // D150: the small day bar on a TIME rule's row (no now-mark: the panel does not carry the server's time).
+                small(g, "time", left + 14, y + 3, TEXT);
+                HoursBar.draw(g, left + 36, y + 3, 70, 6, hours, -1);
+                small(g, clip(hours.describe(), W - 150), left + 112, y + 3, TEXT);
+            } else {
+                small(g, clip(rules.get(i).describe(), W - 70), left + 14, y + 3, TEXT);
+            }
             if (!data.readOnly()) {
                 int index = i;
                 button(g, left + W - 14, y, Component.translatable("screen.bsp_teleport.admin.del").getString(), BAD, BAD, () -> send(AdminAction.WARP_RULE_DEL, w.name() + ";" + index));
@@ -454,7 +462,7 @@ public class AdminScreen extends Screen {
         }
         y += 4;
         int px = left + 10;
-        for (String kind : new String[]{"RANK", "ITEM", "NODE", "COINS", "TOKEN"}) {
+        for (String kind : new String[]{"RANK", "ITEM", "NODE", "COINS", "TOKEN", "TIME"}) {
             boolean on = kind.equals(warpRuleKind);
             String label = Component.translatable("screen.bsp_teleport.portal.rule." + kind.toLowerCase()).getString();
             int pw = (int) (font.width(label.toUpperCase()) * 0.75f) + 8;
@@ -473,15 +481,26 @@ public class AdminScreen extends Screen {
         textBox.setY(y);
         textBox.setWidth(36);
         textBox.setHint(Component.translatable("screen.bsp_teleport.portal.rule_count"));
-        nameBox.visible = warpRuleKind.equals("RANK") || warpRuleKind.equals("NODE") || warpRuleKind.equals("ITEM");
-        textBox.visible = warpRuleKind.equals("ITEM") || warpRuleKind.equals("COINS");
-        if (warpRuleKind.equals("ITEM")) {
+        boolean time = warpRuleKind.equals("TIME");
+        nameBox.visible = time || warpRuleKind.equals("RANK") || warpRuleKind.equals("NODE") || warpRuleKind.equals("ITEM");
+        textBox.visible = time || warpRuleKind.equals("ITEM") || warpRuleKind.equals("COINS");
+        if (time) {
+            // T82: from and to, one window per Add; a second window joins the warp's TIME rule (D158).
+            nameBox.setWidth(44);
+            nameBox.setHint(Component.translatable("screen.bsp_teleport.portal.time_hint"));
+            small(g, Component.translatable("screen.bsp_teleport.portal.to").getString(), left + 60, y + 3, MUTED);
+            textBox.setX(left + 74);
+            textBox.setWidth(44);
+            textBox.setHint(Component.translatable("screen.bsp_teleport.portal.time_hint"));
+            small(g, clip(Component.translatable("screen.bsp_teleport.admin.rule_time_help").getString(), W - 170), left + 124, y + 3, MUTED);
+        } else if (warpRuleKind.equals("ITEM")) {
             button(g, left + 230, y + 1, Component.translatable("screen.bsp_teleport.portal.rule_consume").getString(), warpRuleConsume ? OK : DIM, warpRuleConsume ? OK : MUTED, () -> warpRuleConsume = !warpRuleConsume);
         } else if (warpRuleKind.equals("TOKEN")) {
             small(g, Component.translatable("screen.bsp_teleport.admin.kind.warp").getString() + " " + w.name() + ": " + Component.translatable("screen.bsp_teleport.admin.tokens_list").getString().toLowerCase(), left + 12, y + 3, MUTED);
         }
         button(g, left + W - 14, y + 1, Component.translatable("screen.bsp_teleport.portal.rule_add").getString(), TQ, TQ, () -> {
-            send(AdminAction.WARP_RULE_ADD, w.name() + ";" + warpRuleKind + ";" + nameBox.getValue().trim() + ";" + textBox.getValue().trim() + ";" + warpRuleConsume);
+            send(AdminAction.WARP_RULE_ADD, w.name() + ";" + warpRuleKind + ";" + (time ? nameBox.getValue().trim() + "-" + textBox.getValue().trim() : nameBox.getValue().trim())
+                    + ";" + (time ? "" : textBox.getValue().trim()) + ";" + warpRuleConsume);
             nameBox.setValue("");
             textBox.setValue("");
         });

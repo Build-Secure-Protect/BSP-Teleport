@@ -124,7 +124,8 @@ public final class BandService {
         for (Warp w : TeleportActions.usableWarps(player)) {
             Position p = w.position();
             warps.add(new BandData.WarpEntry(w.name(), p.server(), p.world(), (int) Math.floor(p.x()), (int) Math.floor(p.y()), (int) Math.floor(p.z()),
-                    w.cost(), raid && nearRaid(player, p, raidDistance), w.icon()));
+                    w.cost(), raid && nearRaid(player, p, raidDistance), w.icon(),
+                    com.mrgregles.bsp_teleport.access.AccessChecks.opensAt(com.mrgregles.bsp_teleport.access.AccessRule.parseList(w.rules()))));
         }
         List<BandData.PlayerEntry> players = new ArrayList<>();
         for (ServerPlayer other : player.server.getPlayerList().getPlayers()) {

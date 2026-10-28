@@ -480,15 +480,15 @@ public class PortalScreen extends Screen {
                 button(g, left + W - 14, y + 2, Component.translatable(data.openWhenPowered() ? "screen.bsp_teleport.portal.open_when_powered" : "screen.bsp_teleport.portal.closed_when_powered").getString(),
                         VIO, VIO, ro() ? null : () -> send(PortalScreenAction.MODE_REDSTONE, String.valueOf(!data.openWhenPowered())));
             }
-            case "REAL_CLOCK", "GAME_CLOCK" -> {
-                boolean real = cur.equals("REAL_CLOCK");
+            case "REAL_CLOCK" -> y = drawHours(g, y);
+            case "GAME_CLOCK" -> {
                 if (!boxesFilled) {
-                    box1.setValue(real ? hhmm(data.openAt()) : String.valueOf(data.gameOpenAt()));
-                    box2.setValue(real ? hhmm(data.closeAt()) : String.valueOf(data.gameCloseAt()));
+                    box1.setValue(String.valueOf(data.gameOpenAt()));
+                    box2.setValue(String.valueOf(data.gameCloseAt()));
                     boxesFilled = true;
                 }
                 row(g, y, 22, DIM);
-                small(g, clip(real ? Component.translatable("screen.bsp_teleport.portal.real_help", data.zone()).getString() : Component.translatable("screen.bsp_teleport.portal.game_help").getString(), W - 60), left + 14, y + 2, MUTED);
+                small(g, clip(Component.translatable("screen.bsp_teleport.portal.game_help").getString(), W - 60), left + 14, y + 2, MUTED);
                 if (ro()) {
                     small(g, box1.getValue() + " " + Component.translatable("screen.bsp_teleport.portal.to").getString() + " " + box2.getValue(), left + 14, y + 11, GOLD);
                 } else {
@@ -502,7 +502,7 @@ public class PortalScreen extends Screen {
                     box2.setWidth(44);
                     box2.visible = true;
                     button(g, left + W - 14, y + 8, Component.translatable("screen.bsp_teleport.portal.set").getString(), TQ, TQ,
-                            () -> send(real ? PortalScreenAction.MODE_REAL : PortalScreenAction.MODE_GAME, box1.getValue().trim() + ";" + box2.getValue().trim()));
+                            () -> send(PortalScreenAction.MODE_GAME, box1.getValue().trim() + ";" + box2.getValue().trim()));
                 }
                 y += 6;
             }
@@ -539,6 +539,85 @@ public class PortalScreen extends Screen {
         small(g, clip(Component.translatable("screen.bsp_teleport.portal.doors_now", data.doors().isEmpty() ? "-" : data.doors()).getString(), W - 24), left + 12, y + 2, MUTED);
     }
 
+    /**
+     * Real clock (T82, D150, mock-up B): the day bar with the open hours lit and the server's time as a gold mark, the
+     * windows as chips with an x, a row to add one, and whether it is open now. Returns the y the rows below go from, less
+     * the 22 the caller adds.
+     */
+    private int drawHours(GuiGraphics g, int y) {
+        boolean live = "REAL_CLOCK".equals(data.mode());
+        com.mrgregles.bsp_teleport.access.OpenHours hours = live ? com.mrgregles.bsp_teleport.access.OpenHours.parse(data.hours()) : null;
+        if (!boxesFilled) {
+            box1.setValue("");
+            box2.setValue("");
+            boxesFilled = true;
+        }
+        small(g, clip(Component.translatable("screen.bsp_teleport.portal.real_help", data.zone(), com.mrgregles.bsp_teleport.access.OpenHours.MAX).getString(), W - 24), left + 12, y, MUTED);
+        y += 10;
+        HoursBar.draw(g, left + 12, y, W - 24, 10, hours, live ? data.nowMinute() : -1);
+        y += 12;
+        String[] ticks = {"00", "06", "12", "18", "24"};
+        for (int i = 0; i < ticks.length; i++) {
+            int tx = left + 12 + i * (W - 24) / 4 - (i == 0 ? 0 : i == 4 ? (int) (font.width(ticks[i]) * 0.75f) : (int) (font.width(ticks[i]) * 0.375f));
+            small(g, ticks[i], tx, y, MUTED);
+        }
+        y += 9;
+        int cx = left + 12;
+        if (hours != null) {
+            boolean removable = !ro() && hours.windows().size() > 1;
+            for (int i = 0; i < hours.windows().size(); i++) {
+                com.mrgregles.bsp_teleport.access.OpenHours.Window win = hours.windows().get(i);
+                String label = com.mrgregles.bsp_teleport.access.OpenHours.hhmm(win.open()) + "-" + com.mrgregles.bsp_teleport.access.OpenHours.hhmm(win.close());
+                int lw = (int) (font.width(label) * 0.75f);
+                int cw = lw + 8 + (removable ? 8 : 0);
+                g.fill(cx, y, cx + cw, y + 12, TQ);
+                g.fill(cx + 1, y + 1, cx + cw - 1, y + 11, SLOT);
+                small(g, label, cx + 4, y + 3, TQ);
+                if (removable) {
+                    small(g, "x", cx + lw + 7, y + 3, BAD);
+                    com.mrgregles.bsp_teleport.access.OpenHours rest = hours.without(i);
+                    hits.add(new Hit(cx + lw + 5, y, 9, 12, () -> send(PortalScreenAction.MODE_REAL, rest.encode())));
+                }
+                cx += cw + 4;
+            }
+        } else {
+            small(g, Component.translatable("screen.bsp_teleport.portal.hours_none").getString(), cx, y + 3, DIM);
+        }
+        y += 15;
+        if (!ro()) {
+            box1.setX(left + 12);
+            box1.setY(y);
+            box1.setWidth(44);
+            box1.setHint(Component.translatable("screen.bsp_teleport.portal.time_hint"));
+            box1.visible = true;
+            small(g, Component.translatable("screen.bsp_teleport.portal.to").getString(), left + 62, y + 3, MUTED);
+            box2.setX(left + 76);
+            box2.setY(y);
+            box2.setWidth(44);
+            box2.setHint(Component.translatable("screen.bsp_teleport.portal.time_hint"));
+            box2.visible = true;
+            // An all-day clock (a fresh one, or the pick before any window) starts again from the new window instead of joining it.
+            String before = hours == null || hours.windows().get(0).close() == com.mrgregles.bsp_teleport.access.OpenHours.DAY ? "" : hours.encode() + ",";
+            button(g, left + W - 14, y + 1, Component.translatable("screen.bsp_teleport.portal.rule_add").getString(), TQ, TQ, () -> {
+                send(PortalScreenAction.MODE_REAL, before + box1.getValue().trim() + "-" + box2.getValue().trim());
+                boxesFilled = false;
+            });
+            y += 16;
+        }
+        if (hours != null) {
+            int now = data.nowMinute();
+            boolean open = hours.isOpen(now);
+            int closes = hours.closesAt(now);
+            String line = open ? (closes < 0 ? Component.translatable("screen.bsp_teleport.portal.hours_open_all").getString()
+                    : Component.translatable("screen.bsp_teleport.portal.hours_open", com.mrgregles.bsp_teleport.access.OpenHours.hhmm(closes)).getString())
+                    : Component.translatable("screen.bsp_teleport.portal.hours_closed", com.mrgregles.bsp_teleport.access.OpenHours.hhmm(hours.nextOpen(now))).getString();
+            row(g, y, 12, open ? OK : BAD);
+            small(g, clip(line.toUpperCase(), W - 30), left + 14, y + 3, open ? OK : BAD);
+            y += 14;
+        }
+        return y - 22 + 4;
+    }
+
     private void drawAccess(GuiGraphics g) {
         int y = top + 46;
         small(g, clip(Component.translatable("screen.bsp_teleport.portal.rules_help").getString(), W - 24), left + 12, y, MUTED);
@@ -557,7 +636,14 @@ public class PortalScreen extends Screen {
             }
             com.mrgregles.bsp_teleport.access.AccessRule r = rules.get(i);
             row(g, y, 12, DIM);
-            small(g, clip(r.describe(), W - 70), left + 14, y + 3, TEXT);
+            if (r.hours() != null) {
+                // D150: the small day bar on a TIME rule's row.
+                small(g, "time", left + 14, y + 3, TEXT);
+                HoursBar.draw(g, left + 36, y + 3, 96, 6, r.hours(), data.nowMinute());
+                small(g, clip(r.hours().describe(), W - 190), left + 138, y + 3, TEXT);
+            } else {
+                small(g, clip(r.describe(), W - 70), left + 14, y + 3, TEXT);
+            }
             if (!ro()) {
                 int index = i;
                 button(g, left + W - 14, y, Component.translatable("screen.bsp_teleport.admin.del").getString(), BAD, BAD, () -> send(PortalScreenAction.RULE_DEL, String.valueOf(index)));
@@ -569,7 +655,7 @@ public class PortalScreen extends Screen {
         }
         y += 4;
         int px = left + 10;
-        for (String kind : new String[]{"RANK", "ITEM", "NODE", "COINS", "TOKEN"}) {
+        for (String kind : new String[]{"RANK", "ITEM", "NODE", "COINS", "TOKEN", "TIME"}) {
             boolean on = kind.equals(ruleKind);
             px = pill(g, px, y, Component.translatable("screen.bsp_teleport.portal.rule." + kind.toLowerCase()).getString(), on, () -> {
                 ruleKind = kind;
@@ -610,11 +696,28 @@ public class PortalScreen extends Screen {
                 box2.visible = true;
                 box2.setHint(Component.translatable("screen.bsp_teleport.portal.rule_count"));
             }
+            case "TIME" -> {
+                // T82: one window per Add; a second one joins the TIME rule already on the list (D158).
+                box1.setX(left + 12);
+                box1.setY(y);
+                box1.setWidth(44);
+                box1.visible = true;
+                box1.setHint(Component.translatable("screen.bsp_teleport.portal.time_hint"));
+                small(g, Component.translatable("screen.bsp_teleport.portal.to").getString(), left + 62, y + 3, MUTED);
+                box2.setX(left + 76);
+                box2.setY(y);
+                box2.setWidth(44);
+                box2.visible = true;
+                box2.setHint(Component.translatable("screen.bsp_teleport.portal.time_hint"));
+                small(g, clip(Component.translatable("screen.bsp_teleport.portal.rule_time_help", data.zone()).getString(), W - 200), left + 126, y + 3, MUTED);
+            }
             default -> small(g, clip(data.accessToken() > 0 ? Component.translatable("screen.bsp_teleport.portal.rule_token_hint", "Access Token " + com.mrgregles.bsp_teleport.access.TokenAssignment.roman(data.accessToken())).getString()
                     : Component.translatable("screen.bsp_teleport.portal.rule_token_none").getString(), W - 90), left + 12, y + 3, data.accessToken() > 0 ? VIO : GOLD);
         }
         button(g, left + W - 14, y + 1, Component.translatable("screen.bsp_teleport.portal.rule_add").getString(), TQ, TQ, () -> {
-            send(PortalScreenAction.RULE_ADD, ruleKind + ";" + box1.getValue().trim() + ";" + box2.getValue().trim() + ";" + ruleConsume);
+            boolean time = ruleKind.equals("TIME");
+            send(PortalScreenAction.RULE_ADD, ruleKind + ";" + (time ? box1.getValue().trim() + "-" + box2.getValue().trim() : box1.getValue().trim())
+                    + ";" + (time ? "" : box2.getValue().trim()) + ";" + ruleConsume);
             boxesFilled = false;
         });
     }
@@ -686,10 +789,6 @@ public class PortalScreen extends Screen {
             text = text.substring(0, text.length() - 1);
         }
         return text + "...";
-    }
-
-    private static String hhmm(int minute) {
-        return String.format(java.util.Locale.ROOT, "%02d:%02d", minute / 60, minute % 60);
     }
 
     // Input

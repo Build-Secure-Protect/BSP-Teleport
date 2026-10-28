@@ -59,6 +59,12 @@ public final class AccessChecks {
                         return new Result(msg("access.rule_coins", coins), 0, List.of());
                     }
                 }
+                case TIME -> {
+                    Component closed = closedLine(r, OpenHours.now());
+                    if (closed != null) {
+                        return new Result(closed, 0, List.of());
+                    }
+                }
                 case TOKEN -> {
                     if (!AccessService.enabled() || !AccessRules.has(AccessService.grantsOf(player.server, player.getUUID()), what, target, System.currentTimeMillis())) {
                         AccessService.deny(player, what, target);
@@ -68,6 +74,47 @@ public final class AccessChecks {
             }
         }
         return new Result(null, coins, consumed);
+    }
+
+    /** TIME (T82): "Closed now. Opens at 03:00 (Europe/London).", or null when open at {@code minute} (or the hours are unreadable). */
+    @Nullable
+    static Component closedLine(AccessRule rule, int minute) {
+        OpenHours hours = rule.hours();
+        if (hours == null || hours.isOpen(minute)) {
+            return null;
+        }
+        return msg("access.rule_time", OpenHours.hhmm(hours.nextOpen(minute)), OpenHours.zone().getId());
+    }
+
+    /**
+     * The TIME rules alone (D155): why the place is shut for this player now, or null. A portal entry leading to a warp
+     * checks only this, as its other rules were never applied through portals. Admins pass.
+     */
+    @Nullable
+    public static Component closedNow(ServerPlayer player, List<AccessRule> rules) {
+        if (Permissions.isAdmin(player)) {
+            return null;
+        }
+        int now = OpenHours.now();
+        for (AccessRule r : rules) {
+            Component closed = r.kind() == AccessRule.Kind.TIME ? closedLine(r, now) : null;
+            if (closed != null) {
+                return closed;
+            }
+        }
+        return null;
+    }
+
+    /** For the band (D150): -1 with no TIME rule, -2 when open now, else the minute it next opens. */
+    public static int opensAt(List<AccessRule> rules) {
+        int now = OpenHours.now();
+        for (AccessRule r : rules) {
+            OpenHours hours = r.hours();
+            if (hours != null) {
+                return hours.isOpen(now) ? -2 : hours.nextOpen(now);
+            }
+        }
+        return -1;
     }
 
     /** Pays the coins and uses up the items; false when the coins could not be paid after all. */

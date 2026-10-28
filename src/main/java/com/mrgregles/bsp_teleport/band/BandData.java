@@ -22,7 +22,8 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
     public record HomeEntry(String name, String server, String world, int x, int y, int z, boolean locked, boolean nearRaid, String icon) {
     }
 
-    public record WarpEntry(String name, String server, String world, int x, int y, int z, int cost, boolean nearRaid, String icon) {
+    /** @param opensAt D150: -1 with no open hours, -2 when open now, else the minute of the day it next opens (server's zone) */
+    public record WarpEntry(String name, String server, String world, int x, int y, int z, int cost, boolean nearRaid, String icon, int opensAt) {
     }
 
     public record PlayerEntry(String name, String server) {
@@ -77,6 +78,7 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
             buf.writeInt(w.z());
             buf.writeVarInt(w.cost());
             buf.writeBoolean(w.nearRaid());
+            buf.writeVarInt(w.opensAt());
         }
         buf.writeVarInt(players.size());
         for (PlayerEntry p : players) {
@@ -127,7 +129,7 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
         List<WarpEntry> warps = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
             String wn = buf.readUtf(), ws = buf.readUtf(), ww = buf.readUtf(), wi = buf.readUtf();
-            warps.add(new WarpEntry(wn, ws, ww, buf.readInt(), buf.readInt(), buf.readInt(), buf.readVarInt(), buf.readBoolean(), wi));
+            warps.add(new WarpEntry(wn, ws, ww, buf.readInt(), buf.readInt(), buf.readInt(), buf.readVarInt(), buf.readBoolean(), wi, buf.readVarInt()));
         }
         n = buf.readVarInt();
         List<PlayerEntry> players = new ArrayList<>(n);

@@ -1,0 +1,182 @@
+<title>Portal and Warp Open Hours</title>
+<style>
+/* Layout: three concept sheets (A, B, C), each with the portal's Open/close tab, the admin warp rules and the band's warp row, drawn as Holo HUD panels. One set of toggles above drives all three. */
+:root {
+  --bg: #0B0F14; --panel: #10151C; --inset: #0C0E12; --line: #2A2F3A;
+  --accent: #19D3B0; --violet: #B58CFF; --gold: #FFD23A; --bad: #FF6B5C; --ok: #8FE04A;
+  --text: #E6EAF2; --muted: #9AA3B5;
+  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif; --mono: Menlo, Monaco, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--sans); margin: 0; padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 28px; margin: 0 0 6px; text-wrap: balance; }
+h2 { font-size: 20px; margin: 36px 0 6px; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; }
+h3 { font-size: 13px; margin: 16px 0 6px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; font-weight: normal; }
+p, li { color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 72ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin: 16px 0 4px; padding: 10px 12px; border: 1px solid var(--line); background: var(--inset); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.controls .label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; }
+.seg button { font: inherit; font-size: 11px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); background: var(--inset); border: 1px solid var(--line); padding: 5px 8px; cursor: pointer; }
+.seg button.on { color: var(--gold); border-color: var(--gold); }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sheets { display: flex; flex-wrap: wrap; gap: 20px; }
+.sheet { flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.hud { background: var(--panel); border: 2px solid var(--violet); padding: 12px 14px 14px; font-size: 13px; }
+.hud.tq { border-color: var(--accent); }
+.title { font-weight: bold; letter-spacing: 2px; text-transform: uppercase; font-size: 14px; color: var(--violet); }
+.hud.tq .title { color: var(--accent); }
+.help { color: var(--muted); font-size: 11px; margin: 3px 0 8px; line-height: 1.4; }
+.pills { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 8px; }
+.pill { border: 1px solid var(--line); background: var(--inset); color: var(--muted); font-size: 10px; font-weight: bold; letter-spacing: 1px; padding: 4px 6px; text-transform: uppercase; }
+.pill.on { border-color: var(--violet); color: var(--violet); }
+.row { border: 1px solid var(--line); background: var(--inset); padding: 5px 8px; margin: 4px 0; display: flex; align-items: center; gap: 8px; min-height: 28px; flex-wrap: wrap; }
+.row .grow { flex: 1 1 auto; min-width: 0; }
+.row .name { font-weight: bold; color: var(--text); }
+.row .sub { color: var(--muted); font-size: 11px; }
+.row.dim { opacity: .55; }
+.row.badb { border-color: var(--bad); }
+.key { border: 1px solid var(--accent); color: var(--accent); background: var(--inset); font-size: 10px; font-weight: bold; letter-spacing: 1px; padding: 3px 7px; text-transform: uppercase; white-space: nowrap; }
+.key.r { border-color: var(--bad); color: var(--bad); }
+.key.d { border-color: var(--line); color: var(--muted); }
+.key.g { border-color: var(--gold); color: var(--gold); }
+.box { border: 1px solid var(--line); background: var(--inset); color: var(--text); font-family: var(--mono); font-size: 11px; padding: 3px 6px; }
+.box.w { width: 5ch; text-align: center; }
+.box.long { flex: 1 1 140px; min-width: 0; }
+.box.hint { color: #4A5160; }
+.mono { font-family: var(--mono); font-size: 11px; font-variant-numeric: tabular-nums; }
+.gold { color: var(--gold); }
+.muted { color: var(--muted); }
+.num { color: var(--gold); font-family: var(--mono); font-size: 11px; width: 12px; }
+.state { font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; padding: 4px 8px; border: 1px solid var(--ok); color: var(--ok); background: var(--inset); margin: 6px 0; }
+.state.closed { border-color: var(--bad); color: var(--bad); }
+.chip { font-size: 9px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; padding: 2px 5px; border: 1px solid var(--bad); color: var(--bad); white-space: nowrap; }
+.chip.open { border-color: var(--ok); color: var(--ok); }
+.bar { position: relative; height: 18px; background: var(--inset); border: 1px solid var(--line); margin: 4px 0 2px; }
+.bar.mini { height: 8px; flex: 0 0 96px; margin: 0; }
+.bar .on { position: absolute; top: 0; bottom: 0; background: var(--accent); opacity: .55; }
+.bar .now { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--gold); }
+.ticks { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9px; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+.wchip { border: 1px solid var(--accent); color: var(--accent); background: var(--inset); font-family: var(--mono); font-size: 11px; padding: 2px 6px; display: inline-flex; gap: 6px; align-items: center; }
+.wchip .x { color: var(--bad); font-family: var(--sans); font-weight: bold; }
+.verdict { border-top: 1px solid var(--line); padding-top: 8px; font-size: 12px; color: var(--muted); line-height: 1.45; }
+.verdict b { color: var(--text); }
+.ro .edit { display: none; }
+</style>
+
+<h1>Open hours for portals and warps</h1>
+<p>A portal in Real clock mode can open for several stretches a day instead of one, and a warp gets a new TIME rule with the same list of stretches. The example is the owner's: open 15:00 to 17:00 and 03:00 to 05:00, server zone Europe/London. Each option shows the three places the change appears: the portal's Open/close tab, the admin panel's rules for one warp, and the warp's row on the band (and in a portal's chooser card). Use the toggles to move the clock and to see a player's read-only view.</p>
+
+<div class="controls" role="group" aria-label="Preview state">
+  <span class="label">Time now</span>
+  <div class="seg" id="seg-time">
+    <button type="button" id="t1" data-t="970" class="on">16:10</button>
+    <button type="button" id="t2" data-t="1200">20:00</button>
+    <button type="button" id="t3" data-t="270">04:30</button>
+    <button type="button" id="t4" data-t="60">01:00</button>
+  </div>
+  <span class="label">View</span>
+  <div class="seg" id="seg-view">
+    <button type="button" id="v1" data-v="edit" class="on">Admin</button>
+    <button type="button" id="v2" data-v="ro">Read only</button>
+  </div>
+</div>
+
+<div class="sheets" id="sheets"></div>
+
+<h2>What stays the same in all three</h2>
+<ul>
+  <li>Up to 4 windows per portal and per TIME rule. A window may cross midnight (22:00 to 02:00). Windows that touch or overlap are joined when saved.</li>
+  <li>Old Real clock portals keep their single window as window 1.</li>
+  <li>A player who tries a closed warp is told "Market is closed. It opens at 03:00 (Europe/London)." Admins pass, as with every rule.</li>
+  <li>Commands: <span class="mono">/bsptp portal mode realclock 15:00-17:00 03:00-05:00</span> and <span class="mono">/bsptp warp rule &lt;warp&gt; add time 15:00-17:00 03:00-05:00</span>.</li>
+</ul>
+
+<script>
+(function () {
+  var W = [[900, 1020], [180, 300]]; // minutes of the day: 15:00-17:00, 03:00-05:00
+  var state = { t: 970, ro: false };
+
+  function hhmm(m) { m = ((m % 1440) + 1440) % 1440; var h = Math.floor(m / 60), n = m % 60; return (h < 10 ? "0" : "") + h + ":" + (n < 10 ? "0" : "") + n; }
+  function inWin(t, w) { return w[0] < w[1] ? t >= w[0] && t < w[1] : t >= w[0] || t < w[1]; }
+  function openNow(t) { return W.some(function (w) { return inWin(t, w); }); }
+  function closeAt(t) { for (var i = 0; i < W.length; i++) if (inWin(t, W[i])) return W[i][1]; return null; }
+  function nextOpen(t) { var best = null, bd = 1e9; W.forEach(function (w) { var d = (w[0] - t + 1440) % 1440; if (d < bd) { bd = d; best = w[0]; } }); return best; }
+  function sorted() { return W.slice().sort(function (a, b) { return a[0] - b[0]; }); }
+  function list() { return sorted().map(function (w) { return hhmm(w[0]) + "-" + hhmm(w[1]); }).join(", "); }
+  function stateLine(t) { return openNow(t) ? '<div class="state">Open now, closes ' + hhmm(closeAt(t)) + '</div>' : '<div class="state closed">Closed now, opens ' + hhmm(nextOpen(t)) + '</div>'; }
+  function bar(t, mini) {
+    var s = '<div class="bar' + (mini ? " mini" : "") + '" aria-hidden="true">';
+    W.forEach(function (w) { s += '<span class="on" style="left:' + (w[0] / 14.4) + '%;width:' + ((w[1] - w[0] + 1440) % 1440 / 14.4) + '%"></span>'; });
+    return s + '<span class="now" style="left:' + (t / 14.4) + '%"></span></div>';
+  }
+  function modes() { return '<div class="pills"><span class="pill">Manual</span><span class="pill">Redstone</span><span class="pill on">Real clock</span><span class="pill">Game clock</span></div>'; }
+  function kinds() { return '<div class="pills edit"><span class="pill">Rank</span><span class="pill">Item</span><span class="pill">Node</span><span class="pill">Coins</span><span class="pill">Token</span><span class="pill on">Time</span></div>'; }
+  function otherRule() { return '<div class="row"><span class="grow">rank member</span><span class="key r edit">Del</span></div>'; }
+
+  var options = [
+    { id: "A", name: "A. Window rows", portal: function (t) {
+        var s = modes() + '<div class="help">Open in these hours each day (Europe/London). Up to 4.</div>';
+        sorted().forEach(function (w, i) { s += '<div class="row"><span class="num">' + (i + 1) + '</span><span class="grow mono gold">' + hhmm(w[0]) + ' to ' + hhmm(w[1]) + '</span><span class="key r edit">Del</span></div>'; });
+        s += '<div class="row edit"><span class="box w">--:--</span><span class="muted">to</span><span class="box w">--:--</span><span class="grow"></span><span class="key">Add</span></div>';
+        return s + stateLine(t);
+      }, warp: function (t) {
+        return otherRule() + '<div class="row"><span class="grow">time ' + list() + '</span><span class="key r edit">Del</span></div>' + kinds() +
+          '<div class="row edit"><span class="box w">15:00</span><span class="muted">to</span><span class="box w">17:00</span><span class="muted">+</span><span class="box w">03:00</span><span class="muted">to</span><span class="box w">05:00</span><span class="grow"></span><span class="key">Add</span></div>';
+      }, band: function (t) {
+        var o = openNow(t);
+        return '<div class="row' + (o ? "" : " dim") + '"><span class="grow"><span class="name">Market</span><br><span class="sub">' + (o ? "BSP-Spawn, open until " + hhmm(closeAt(t)) : "closed, opens " + hhmm(nextOpen(t))) + '</span></span><span class="key' + (o ? "" : " d") + '">Go</span></div>';
+      }, verdict: "Closest to the screens you have: one row per window, like the destination list. Easy to read, but the warp editor needs two box pairs on one line." },
+    { id: "B", name: "B. Day bar", portal: function (t) {
+        var s = modes() + '<div class="help">Open in the lit hours each day (Europe/London). The gold mark is now.</div>' + bar(t, false) +
+          '<div class="ticks"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div><div class="chips">';
+        sorted().forEach(function (w) { s += '<span class="wchip">' + hhmm(w[0]) + '-' + hhmm(w[1]) + '<span class="x edit">x</span></span>'; });
+        s += '</div><div class="row edit"><span class="box w">--:--</span><span class="muted">to</span><span class="box w">--:--</span><span class="grow"></span><span class="key">Add</span></div>';
+        return s + stateLine(t);
+      }, warp: function (t) {
+        return otherRule() + '<div class="row"><span class="muted">time</span>' + bar(t, true) + '<span class="grow mono">' + list() + '</span><span class="key r edit">Del</span></div>' + kinds() +
+          '<div class="row edit"><span class="box w">--:--</span><span class="muted">to</span><span class="box w">--:--</span><span class="key d">+ window</span><span class="grow"></span><span class="key">Add</span></div>';
+      }, band: function (t) {
+        var o = openNow(t);
+        return '<div class="row' + (o ? "" : " badb") + '"><span class="grow"><span class="name">Market</span><br><span class="sub">BSP-Spawn</span></span>' + (o ? '<span class="chip open">Open</span>' : '<span class="chip">Opens ' + hhmm(nextOpen(t)) + '</span>') + '<span class="key' + (o ? "" : " d") + '">Go</span></div>';
+      }, verdict: "The most visual: the whole day at a glance, so a gap or a window across midnight is obvious. Takes the most room and the most drawing code." },
+    { id: "C", name: "C. One line", portal: function (t) {
+        var s = modes() + '<div class="help">Open hours each day (Europe/London), for example 15:00-17:00, 03:00-05:00. Up to 4.</div>';
+        s += '<div class="row edit"><span class="box long">' + list() + '</span><span class="key">Set</span></div>';
+        s += '<div class="row"><span class="grow sub">Open 4 h a day: <span class="gold mono">' + list() + '</span></span></div>';
+        return s + stateLine(t);
+      }, warp: function (t) {
+        return otherRule() + '<div class="row"><span class="grow">time ' + list() + '</span><span class="key r edit">Del</span></div>' + kinds() +
+          '<div class="row edit"><span class="box long">15:00-17:00, 03:00-05:00</span><span class="key">Add</span></div>';
+      }, band: function (t) {
+        var o = openNow(t);
+        return '<div class="row"><span class="grow"><span class="name">Market</span><br><span class="sub">BSP-Spawn</span></span><span class="key' + (o ? "" : " d") + '">' + (o ? "Go" : hhmm(nextOpen(t))) + '</span></div>';
+      }, verdict: "The least code and the same box on both screens, but admins type the format by hand and a typo is only caught on Set." }
+  ];
+
+  function render() {
+    var host = document.getElementById("sheets");
+    host.className = "sheets" + (state.ro ? " ro" : "");
+    host.innerHTML = options.map(function (o) {
+      return '<div class="sheet"><h2>' + o.name + '</h2>' +
+        '<h3>Portal core, Open/close tab</h3><div class="hud tq"><div class="title">Gate East</div>' + o.portal(state.t) + '</div>' +
+        '<h3>Admin panel, rules of a warp</h3><div class="hud"><div class="title">Rules of Market</div><div class="help">All rules must pass. Admins skip them.</div>' + o.warp(state.t) + '</div>' +
+        '<h3>Band, warps tab</h3><div class="hud tq">' + o.band(state.t) + '<div class="row"><span class="grow"><span class="name">Arena</span><br><span class="sub">BSP-Frostwarf</span></span><span class="key">Go</span></div></div>' +
+        '<div class="verdict"><b>Trade-off.</b> ' + o.verdict + '</div></div>';
+    }).join("");
+  }
+  function wire(id, fn) {
+    var seg = document.getElementById(id);
+    seg.addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      Array.prototype.forEach.call(seg.querySelectorAll("button"), function (x) { x.classList.toggle("on", x === b); });
+      fn(b); render();
+    });
+  }
+  wire("seg-time", function (b) { state.t = +b.dataset.t; });
+  wire("seg-view", function (b) { state.ro = b.dataset.v === "ro"; });
+  render();
+})();
+</script>

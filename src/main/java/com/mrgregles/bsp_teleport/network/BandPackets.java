@@ -31,8 +31,8 @@ import java.util.function.Supplier;
 
 /** The mod's own channel: the band screen's data down, its actions up. */
 public final class BandPackets {
-    /** "2" since T69 and T73 changed packets 2, 11 and added 13: an older client is told to update instead of misreading them. */
-    private static final String PROTOCOL = "3";
+    /** "2" since T69 and T73 changed packets 2, 11 and added 13; "3" added 14 (B21); "4" since T82 changed the band and core screen data. An older client is told to update instead of misreading them. */
+    private static final String PROTOCOL = "4";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(new ResourceLocation(BSPTeleport.MODID, "main"), () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
 
     private BandPackets() {

@@ -16,13 +16,17 @@ public final class TeleportConfig {
     public static final ForgeConfigSpec.IntValue WARMUP_SECONDS, COOLDOWN_SECONDS, INVULNERABLE_SECONDS, SKIP_COOLDOWN_COINS;
     public static final ForgeConfigSpec.BooleanValue CANCEL_ON_DAMAGE, CANCEL_ON_MOVE;
 
-    public static final ForgeConfigSpec.ConfigValue<String> STORAGE_MODE, STORAGE_HOST, STORAGE_DATABASE, STORAGE_USER, STORAGE_PASSWORD, STORAGE_TABLE_PREFIX;
-    public static final ForgeConfigSpec.IntValue STORAGE_PORT;
-    public static final ForgeConfigSpec.BooleanValue STORAGE_SSL;
+    public static final ForgeConfigSpec.ConfigValue<String> STORAGE_MODE, REDIS_CLUSTER;
+    public static final ForgeConfigSpec.BooleanValue REDIS_ENABLED;
 
-    public static final ForgeConfigSpec.BooleanValue REDIS_ENABLED, REDIS_SSL;
-    public static final ForgeConfigSpec.ConfigValue<String> REDIS_HOST, REDIS_PASSWORD, REDIS_CLUSTER;
-    public static final ForgeConfigSpec.IntValue REDIS_PORT, REDIS_DB;
+    /**
+     * D149: the connection settings' old places, read only to move them into {@link com.mrgregles.bsp_teleport.storage.NetworkConfig}
+     * (this file is sent to every player who joins). Kept in the spec because Forge deletes keys a spec does not have when it loads.
+     */
+    public static final ForgeConfigSpec.ConfigValue<String> OLD_STORAGE_HOST, OLD_STORAGE_DATABASE, OLD_STORAGE_USER, OLD_STORAGE_PASSWORD, OLD_STORAGE_TABLE_PREFIX,
+            OLD_REDIS_HOST, OLD_REDIS_PASSWORD;
+    public static final ForgeConfigSpec.IntValue OLD_STORAGE_PORT, OLD_REDIS_PORT, OLD_REDIS_DB;
+    public static final ForgeConfigSpec.BooleanValue OLD_STORAGE_SSL, OLD_REDIS_SSL;
 
     public static final ForgeConfigSpec.ConfigValue<String> GLOBAL_SPAWN_WARP;
     public static final ForgeConfigSpec.IntValue RAID_HOME_DISTANCE, RAID_RANDOM_DISTANCE;
@@ -77,25 +81,27 @@ public final class TeleportConfig {
         b.pop();
 
         b.push("storage");
-        STORAGE_MODE = b.comment("\"local\" keeps homes and warps in this server's world save. \"mysql\" shares them across the network and is needed for cross-server teleports.")
+        STORAGE_MODE = b.comment("\"local\" keeps homes and warps in this server's world save. \"mysql\" shares them across the network and is needed for cross-server teleports.",
+                        "The database and Redis addresses and passwords are in config/bsp_teleport-network.toml, which is never sent to players.")
                 .define("mode", "local");
-        STORAGE_HOST = b.comment("Database host name or address.").define("host", "localhost");
-        STORAGE_PORT = b.comment("Database port.").defineInRange("port", 3306, 1, 65535);
-        STORAGE_DATABASE = b.comment("Name of the existing database (schema) to use. BSP-Core's can be shared: the tables are prefixed.").define("database", "bsp");
-        STORAGE_USER = b.comment("Database user. It needs CREATE, SELECT, INSERT, UPDATE and DELETE on that database.").define("user", "bsp");
-        STORAGE_PASSWORD = b.comment("Database password. This file is plain text: keep it private.").define("password", "");
-        STORAGE_TABLE_PREFIX = b.comment("Prefix for this mod's tables. Letters, digits and underscores only.").define("tablePrefix", "bsptp_");
-        STORAGE_SSL = b.comment("Whether to use SSL for the database connection.").define("ssl", false);
+        String moved = "Moved to config/bsp_teleport-network.toml. Leave as it is: a value set here is copied there at the next start and cleared here.";
+        OLD_STORAGE_HOST = b.comment(moved).define("host", "localhost");
+        OLD_STORAGE_PORT = b.comment(moved).defineInRange("port", 3306, 1, 65535);
+        OLD_STORAGE_DATABASE = b.comment(moved).define("database", "bsp");
+        OLD_STORAGE_USER = b.comment(moved).define("user", "bsp");
+        OLD_STORAGE_PASSWORD = b.comment(moved).define("password", "");
+        OLD_STORAGE_TABLE_PREFIX = b.comment(moved).define("tablePrefix", "bsptp_");
+        OLD_STORAGE_SSL = b.comment(moved).define("ssl", false);
         b.pop();
 
         b.push("redis");
         REDIS_ENABLED = b.comment("Whether to use Redis for live messages between servers (teleport requests, player lists, random teleports). Needs storage.mode = mysql.")
                 .define("enabled", false);
-        REDIS_HOST = b.define("host", "localhost");
-        REDIS_PORT = b.defineInRange("port", 6379, 1, 65535);
-        REDIS_PASSWORD = b.comment("Password of the Redis default user, or empty.").define("password", "");
-        REDIS_SSL = b.define("ssl", false);
-        REDIS_DB = b.comment("Redis database index.").defineInRange("database", 0, 0, 15);
+        OLD_REDIS_HOST = b.comment(moved).define("host", "localhost");
+        OLD_REDIS_PORT = b.comment(moved).defineInRange("port", 6379, 1, 65535);
+        OLD_REDIS_PASSWORD = b.comment(moved).define("password", "");
+        OLD_REDIS_SSL = b.comment(moved).define("ssl", false);
+        OLD_REDIS_DB = b.comment(moved).defineInRange("database", 0, 0, 15);
         REDIS_CLUSTER = b.comment("Name shared by every server that should talk to each other. Change it to run two separate networks on one Redis.")
                 .define("cluster", "main");
         b.pop();
@@ -178,13 +184,17 @@ public final class TeleportConfig {
         return getOr(SERVER_NAME, "server-1");
     }
 
-    /** Re-reads the config file from disk ({@code /bsptp reload}). Forge also does this by itself when the file changes. */
+    /**
+     * Re-reads the config file from disk ({@code /bsptp reload}). Forge also does this by itself when the file changes. Connection
+     * settings put back in it are moved out again at once (D149); the connection itself only changes at the next start.
+     */
     public static void reload(net.minecraft.server.MinecraftServer server) {
         java.nio.file.Path path = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).resolve("serverconfig").resolve("bsp_teleport-server.toml");
         com.electronwill.nightconfig.core.file.CommentedFileConfig file = com.electronwill.nightconfig.core.file.CommentedFileConfig.builder(path)
                 .sync().autosave().writingMode(com.electronwill.nightconfig.core.io.WritingMode.REPLACE).build();
         file.load();
         SPEC.setConfig(file);
+        com.mrgregles.bsp_teleport.storage.NetworkConfig.moveFromServerConfig();
     }
 
     /**
