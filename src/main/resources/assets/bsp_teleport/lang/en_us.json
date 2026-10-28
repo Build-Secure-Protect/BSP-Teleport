@@ -234,6 +234,7 @@
   "screen.bsp_teleport.admin.setting.rtpEnabled": "Random teleport here",
   "screen.bsp_teleport.admin.setting.rtpMinRadius": "Random: nearest from spawn",
   "screen.bsp_teleport.admin.setting.rtpMaxRadius": "Random: farthest from spawn",
+  "screen.bsp_teleport.admin.setting.rtpUseBorder": "Random: whole border as range",
   "screen.bsp_teleport.admin.setting.requestSeconds": "Request expiry seconds",
   "screen.bsp_teleport.admin.setting.globalSpawnWarp": "Global spawn warp (empty: own spawn)",
   "screen.bsp_teleport.admin.setting.rtpMinY": "Random: lowest Y",

@@ -15,10 +15,14 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-/** Picks a random safe spot around the world spawn, within the config's radii. */
+/** Picks a random safe spot around the world spawn, within the config's radii and the world's border. */
 public final class RandomTeleport {
     /** T80: the most chunks one search may load or generate on the server thread. */
     static final int MAX_NEW_CHUNKS = 4;
+    /** T83: draws per try to find a column inside both the ring and the border; plain arithmetic, no chunk is touched. */
+    static final int DRAWS = 64;
+    /** The vanilla world border's size when nobody has set it (a map 59,999,968 blocks across): not a real limit. */
+    private static final double VANILLA_DEFAULT_BORDER = 5.9E7;
 
     private RandomTeleport() {
     }
@@ -87,11 +91,78 @@ public final class RandomTeleport {
     @Nullable
     static double[] shrunkBorder(ServerLevel level, int margin) {
         double[] b = com.mrgregles.bsp_teleport.compat.RegionGuard.border(level);
-        if (b == null) {
-            return null;
+        return b == null ? null : shrink(b, margin);
+    }
+
+    /**
+     * T83: the square spots must fall in, as {minX, minZ, maxX, maxZ}: Region Guard's border shrunk by {@link #BORDER_MARGIN},
+     * else the vanilla world border shrunk the same way when an admin has set it; cut to the vanilla border either way.
+     * Null when the world has neither.
+     */
+    @Nullable
+    static double[] borderBox(ServerLevel level) {
+        net.minecraft.world.level.border.WorldBorder vanilla = level.getWorldBorder();
+        double[] edge = {vanilla.getMinX(), vanilla.getMinZ(), vanilla.getMaxX(), vanilla.getMaxZ()};
+        double[] box = shrunkBorder(level, BORDER_MARGIN);
+        if (box == null) {
+            return vanilla.getSize() < VANILLA_DEFAULT_BORDER ? shrink(edge, BORDER_MARGIN) : null;
         }
+        return new double[] {Math.max(box[0], edge[0]), Math.max(box[1], edge[1]), Math.min(box[2], edge[2]), Math.min(box[3], edge[3])};
+    }
+
+    private static double[] shrink(double[] b, int margin) {
         double m = Math.min(margin, (Math.min(b[2] - b[0], b[3] - b[1])) / 2.0 - 1);
         return new double[] {b[0] + m, b[1] + m, b[2] - m, b[3] - m};
+    }
+
+    /** How far the box's farthest corner is from {@code (cx, cz)}: with {@code useBorder} the ring reaches that far. Pure. */
+    public static double farthest(double[] box, double cx, double cz) {
+        double far = 0;
+        for (double x : new double[] {box[0], box[2]}) {
+            for (double z : new double[] {box[1], box[3]}) {
+                far = Math.max(far, Math.hypot(x - cx, z - cz));
+            }
+        }
+        return far;
+    }
+
+    /**
+     * T83: one column inside both the ring {@code min..max} round {@code (cx, cz)} and the box, or null after {@link #DRAWS}
+     * draws found none. It draws from whichever of the two is smaller, so a big ring round a small border (or the other way
+     * round) does not spend the search's tries on spots outside it. A ring that misses the box altogether draws anywhere
+     * in the box, as before. Pure, for the unit test.
+     */
+    @Nullable
+    public static int[] pick(java.util.Random random, @Nullable double[] box, double cx, double cz, double min, double max) {
+        if (box == null) {
+            return ringPoint(random, cx, cz, min, max);
+        }
+        if (box[2] <= box[0] || box[3] <= box[1]) {
+            // T83 audit: Region Guard's border lies wholly outside the vanilla one, so nowhere is inside both.
+            return null;
+        }
+        if (!ringTouches(box, cx, cz, min, max)) {
+            return boxPoint(random, box);
+        }
+        boolean fromBox = (box[2] - box[0]) * (box[3] - box[1]) <= Math.PI * (max * max - min * min);
+        for (int d = 0; d < DRAWS; d++) {
+            int[] p = fromBox ? boxPoint(random, box) : ringPoint(random, cx, cz, min, max);
+            double dist = Math.hypot(p[0] - cx, p[1] - cz);
+            if (p[0] >= box[0] && p[0] <= box[2] && p[1] >= box[1] && p[1] <= box[3] && dist >= min && dist <= max) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    private static int[] boxPoint(java.util.Random random, double[] box) {
+        return new int[] {(int) Math.floor(box[0] + random.nextDouble() * (box[2] - box[0])), (int) Math.floor(box[1] + random.nextDouble() * (box[3] - box[1]))};
+    }
+
+    private static int[] ringPoint(java.util.Random random, double cx, double cz, double min, double max) {
+        double angle = random.nextDouble() * Math.PI * 2;
+        double distance = min + random.nextDouble() * (max - min);
+        return new int[] {(int) Math.round(cx + Math.cos(angle) * distance), (int) Math.round(cz + Math.sin(angle) * distance)};
     }
 
     /** Whether the ring {@code min..max} around {@code (cx, cz)} overlaps the box at all. Pure, for the unit test. */
@@ -129,25 +200,19 @@ public final class RandomTeleport {
         List<? extends String> unsafe = TeleportConfig.getOr(TeleportConfig.RTP_UNSAFE_BLOCKS, List.of());
         BlockPos centre = level.getSharedSpawnPos();
         ThreadLocalRandom random = ThreadLocalRandom.current();
-        // Region Guard's border, shrunk so nobody arrives next to its warning line (RG-T3).
-        double[] box = shrunkBorder(level, BORDER_MARGIN);
-        boolean ringMissesBox = box != null && !ringTouches(box, centre.getX(), centre.getZ(), min, max);
+        // The border, shrunk so nobody arrives next to its warning line (RG-T3).
+        double[] box = borderBox(level);
+        if (box != null && TeleportConfig.getOr(TeleportConfig.RTP_USE_BORDER, false)) {
+            // T83: the whole border is the range; minRadius still keeps players off spawn.
+            max = Math.max(min + 1, (int) Math.ceil(farthest(box, centre.getX(), centre.getZ())));
+        }
         int newChunks = 0;
         for (int i = 0; i < tries; i++) {
-            int x, z;
-            if (ringMissesBox) {
-                // The ring lies outside the border (small map, or spawn near an edge): draw anywhere inside the box.
-                x = (int) Math.floor(box[0] + random.nextDouble() * (box[2] - box[0]));
-                z = (int) Math.floor(box[1] + random.nextDouble() * (box[3] - box[1]));
-            } else {
-                double angle = random.nextDouble() * Math.PI * 2;
-                double distance = min + random.nextDouble() * (max - min);
-                x = centre.getX() + (int) Math.round(Math.cos(angle) * distance);
-                z = centre.getZ() + (int) Math.round(Math.sin(angle) * distance);
-                if (box != null && (x < box[0] || x > box[2] || z < box[1] || z > box[3])) {
-                    continue;
-                }
+            int[] at = pick(random, box, centre.getX(), centre.getZ(), min, max);
+            if (at == null) {
+                continue;
             }
+            int x = at[0], z = at[1];
             if (!level.getWorldBorder().isWithinBounds(new BlockPos(x, 0, z))) {
                 continue;
             }

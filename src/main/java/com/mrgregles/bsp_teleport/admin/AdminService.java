@@ -253,6 +253,7 @@ public final class AdminService {
             new Entry("rtpEnabled", TeleportConfig.RTP_ENABLED, "BOOL", 0, 1, 1),
             new Entry("rtpMinRadius", TeleportConfig.RTP_MIN_RADIUS, "INT", 0, 1000000, 100),
             new Entry("rtpMaxRadius", TeleportConfig.RTP_MAX_RADIUS, "INT", 1, 1000000, 500),
+            new Entry("rtpUseBorder", TeleportConfig.RTP_USE_BORDER, "BOOL", 0, 1, 1),
             new Entry("requestSeconds", TeleportConfig.REQUEST_SECONDS, "INT", 5, 600, 5),
             new Entry("globalSpawnWarp", TeleportConfig.GLOBAL_SPAWN_WARP, "TEXT", 0, 16, 0),
             new Entry("rtpMinY", TeleportConfig.RTP_MIN_Y, "INT", -2048, 2048, 8),

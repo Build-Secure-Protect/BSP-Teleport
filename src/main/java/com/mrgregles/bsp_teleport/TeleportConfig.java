@@ -34,7 +34,7 @@ public final class TeleportConfig {
 
     public static final ForgeConfigSpec.IntValue HOME_SLOTS;
 
-    public static final ForgeConfigSpec.BooleanValue RTP_ENABLED;
+    public static final ForgeConfigSpec.BooleanValue RTP_ENABLED, RTP_USE_BORDER;
     public static final ForgeConfigSpec.IntValue RTP_MIN_RADIUS, RTP_MAX_RADIUS, RTP_TRIES, RTP_MIN_Y, RTP_MAX_Y;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> BACK_RESTRICTED_WORLDS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> RTP_WORLDS, RTP_UNSAFE_BLOCKS;
@@ -131,6 +131,10 @@ public final class TeleportConfig {
         RTP_ENABLED = b.comment("Whether /rtp works on this server.").define("enabled", true);
         RTP_MIN_RADIUS = b.comment("Nearest distance from the world spawn a random teleport may land.").defineInRange("minRadius", 500, 0, 1_000_000);
         RTP_MAX_RADIUS = b.comment("Farthest distance from the world spawn a random teleport may land.").defineInRange("maxRadius", 5000, 1, 1_000_000);
+        RTP_USE_BORDER = b.comment("Use the whole world border as the range: Region Guard's border, or the vanilla world border when it has been set.",
+                        "maxRadius is then ignored and minRadius still keeps players away from spawn. Without either border, maxRadius applies.",
+                        "Either way a random teleport never lands outside the border or within 16 blocks of its edge.")
+                .define("useBorder", false);
         RTP_TRIES = b.comment("Spots tried before giving up.").defineInRange("tries", 20, 1, 200);
         RTP_MIN_Y = b.comment("Lowest Y a random teleport may land at.").defineInRange("minY", -64, -2048, 2048);
         RTP_MAX_Y = b.comment("Highest Y a random teleport may land at. In worlds with a ceiling (the Nether) the search starts from here and goes down.")

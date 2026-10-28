@@ -4,21 +4,21 @@
 
 **Homes, warps, portals, team teleports and server access across the Build Secure Protect network.** Every player gets a Teleport Band on their hotbar that takes them home, to a warp, to a friend, to a teammate or to a random spot on any server in the network. Admins build walk-through portals with hangar doors, and sell access to servers, regions, portals and warps with Access Tokens. Built around [BSP-Core](https://www.curseforge.com/minecraft/mc-mods/bsp-core)'s Shatter Totem: your totem travels with you, and nothing here can take you into a raid for free.
 
-- Minecraft 1.20.1, Forge 47 or newer, Java 17. Needed on the client and the server.
-- Requires BSP-Core 1.3.0 or newer. BSP-Region Guard, BSP-RankUp and BSP-InventorySync are optional and switch more on. Made to sit behind BSP-Velocity Additions on the proxy.
-- Made for a Velocity network of Mohist backends with Proxy Compatible Forge, one MySQL database and one Redis. Plain Forge backends work too, using the MySQL driver in BSP-Core's full jar. Runs on a single server with no database too.
+- Minecraft 1.20.1, Forge 47 or newer, Java 17. Needed on the client and the server, and both must run the same version.
+- Requires BSP-Core 1.3.0 or newer; 1.4.5 is recommended (its steal checks no longer load chunks, and it hands this mod its MySQL driver). The Home Servers board needs 1.4.0. BSP-Region Guard, BSP-RankUp, BSP-InventorySync and LuckPerms are optional and switch more on. Made to sit behind BSP-Velocity Additions on the proxy.
+- Made for a Velocity network of Mohist backends with Proxy Compatible Forge, one MySQL database and one Redis. Plain Forge backends work too, using the MySQL driver in BSP-Core's full jar. Runs on a single server with no database too, and in a single-player or LAN world the network features switch off by themselves, whatever the config says.
 - MIT licence, source on [GitHub](https://github.com/Build-Secure-Protect/BSP-Teleport).
 
 ---
 
 ## 1. Setting it up (admins first)
 
-1. Put the jar in `mods/` on every backend and on every client, next to BSP-Core 1.3.0 or newer.
+1. Put the jar in `mods/` on every backend and on every client, next to BSP-Core (1.4.5 recommended).
 2. Start each server once. The config appears at `<world>/serverconfig/bsp_teleport-server.toml`, and the database and Redis connection at `config/bsp_teleport-network.toml`. That second file holds the passwords and is never sent to players (Forge sends the server config to everyone who joins); keep it out of any client pack.
 3. On a network: `storage.mode = "mysql"` and `redis.enabled = true` in the server config, your database (BSP-Core's can be shared, the tables are prefixed) and Redis in `bsp_teleport-network.toml`, and `network.serverName` set to this server's Velocity name on every backend. Without a database the mod keeps everything in the world save and works on one server.
 4. Behind BSP-Velocity Additions, set `network.suppressJoinLeaveMessages = true` on every backend so the proxy's one join line is the only one (more below).
 5. Set `access.enabled = true` if you want the server access system, and `access.lobbyServer` to the network's main spawn server.
-6. `/bsptp status` shows the storage and Redis state and whether Redis is listening; `/bsptp reload` re-reads the file. The values admins change often are also on the panel's SETTINGS tab.
+6. `/bsptp status` shows the storage and Redis state and whether Redis is listening; `/bsptp reload` re-reads the server config (and moves any password put back in it into the network file). The values admins change often are also on the panel's SETTINGS tab.
 
 Players get a client config at `config/bsp_teleport-client.toml` with the screen scale and the HUD layout.
 
@@ -34,7 +34,7 @@ The first thing you see: a tenth hotbar slot after the nine, drawn for every pla
 
 **Homes.** Set one where you stand, on any server, and go there from anywhere on the network. You start with three slots; the Extra Homes power on your Shatter Totem adds more. Lose the totem and the extra homes are not deleted, only locked until you earn the slots back. Homes can be public (`/phome <player>`), carry a description and show an icon you pick by clicking with an item in hand.
 
-**Warps.** Admin-set places with a coin cost and, if the admin says so, a permission node or a list of rules. **Players.** Everyone online across the network: ask to teleport to them, ask them to come to you, answer requests.
+**Warps.** Admin-set places with a coin cost and, if the admin says so, a permission node or a list of rules. A warp with open hours shows OPEN, or OPENS and the time, on its row. **Players.** Everyone online across the network: ask to teleport to them, ask them to come to you, answer requests.
 
 ![The TEAM tab](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/band-team.png)
 
@@ -42,9 +42,9 @@ The first thing you see: a tenth hotbar slot after the nine, drawn for every pla
 
 ![The MORE tab](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/band-more.png)
 
-**More.** Spawn and Back are one click. Random teleport lands you in a ring around spawn, inside the world border, never in lava or on a cactus, never near a raid; pick another server and that server finds the spot. Pay Shatter Coins to skip a cooldown, switch request ignoring on, pick your HUD layout, and see your server access. **Admin** opens the panel, for admins and moderators.
+**More.** Spawn and Back are one click. Random teleport lands you in a ring around spawn (or anywhere inside the world border, if the admin sets `randomTeleport.useBorder`), never closer than 16 blocks to the border's edge, never in lava or on a cactus, never near a raid; pick another server and that server finds the spot. Pay Shatter Coins to skip a cooldown, switch request ignoring on, pick your HUD layout, and see your server access. **Admin** opens the panel, for admins and moderators.
 
-Every move has a warm-up with a countdown and sounds, cancelled if you move or get hit, and a cooldown that the Swift Travel power shortens. Cross-server moves go through the proxy and land you exactly where you asked; a landing waits for you in the shared database, so even a dropped connection during the switch puts you where you were going once you are back. `/back` is saved on every move, even the forced ones, so after a restart evacuation one command brings you home.
+Every move has a warm-up with a countdown and sounds, cancelled if you move or get hit, and a cooldown that the Swift Travel power shortens. Cross-server moves go through the proxy and land you exactly where you asked, after a one-second stop with your movement keys off so the switch is clean; a landing waits for you in the shared database, so even a dropped connection during the switch puts you where you were going once you are back. `/back` is saved on every move, even the forced ones, so after a restart evacuation one command brings you home.
 
 Commands do the same as the screen: `/home`, `/sethome`, `/warp`, `/spawn`, `/back`, `/rtp [server]`, `/tpa`, `/tpahere`, `/tpaall`, `/tpaccept`, `/tpdeny`, `/tpignore`, `/tpnow`, `/edithome`, `/phome`.
 
@@ -104,7 +104,7 @@ Closed portals grow hangar doors that slide in from both ends of every row and m
 
 ![Portals on the panel](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/admin-portals.png)
 
-The panel's PORTALS tab lists every portal on the network under its server, or draws them as a map with the links between them. Go to any of them, open, close, lock or unlock it, even on another server. `/bsptp portal <name> open|close|lock|unlock|tp|info|forget` does the same from a command block (forget removes a portal that is gone from the list), and `/bsptp portal dest add|del|label|clear|list` edits the looked-at core's destinations (`dest add back` adds Back); `/bsptp portal warmup <seconds>` sets its warm-up.
+The panel's PORTALS tab lists every portal on the network under its server, or draws them as a map with the links between them. Go to any of them, open, close, lock or unlock it, even on another server. Each server checks the list for its own portals at start and every few minutes, and drops any whose core is gone, so pickers never offer a portal that leads nowhere. `/bsptp portal <name> open|close|lock|unlock|tp|info|forget` does the same from a command block (forget removes a portal that is gone from the list), and `/bsptp portal dest add|del|label|clear|list` edits the looked-at core's destinations (`dest add back` adds Back); `/bsptp portal warmup <seconds>` sets its warm-up and `/bsptp portal mode realclock 15:00-17:00 03:00-05:00` its open hours.
 
 ---
 

@@ -242,3 +242,11 @@ Set `portals.timeZone` (for example `Europe/London`) and pick hours a few minute
 - [ ] A portal with several destinations, one a closed warp: in the chooser that entry is greyed with the closed line. A portal whose only destination is that warp refuses with the same line on the action bar.
 - [ ] A TIME rule on a portal's ACCESS tab: outside the hours players are refused at the portal (doors stay as they are).
 - [ ] Clients and servers all on this jar (network protocol 4).
+
+## Random teleports and the world border (T83, D160, 2026-10-28)
+
+- [ ] A Region Guard border of about 2000 across with `randomTeleport.maxRadius = 1000000` and `useBorder = false`: `/rtp` ten times finds a spot each time (before, most tries fell outside the border), never outside the border or within 16 blocks of its edge.
+- [ ] `useBorder = true` (config or the panel's SETTINGS tab, "Random: whole border as range"): spots spread over the whole border, out to its corners; none closer to spawn than `minRadius`.
+- [ ] No Region Guard border but a vanilla `/worldborder set 3000`: the same, with the vanilla border as the limit.
+- [ ] No border at all and `useBorder = true`: `maxRadius` still limits the range.
+- [ ] A random portal and a remote `/rtp <server>` behave the same way on the target server.
