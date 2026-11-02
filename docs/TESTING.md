@@ -250,3 +250,26 @@ Set `portals.timeZone` (for example `Europe/London`) and pick hours a few minute
 - [ ] No Region Guard border but a vanilla `/worldborder set 3000`: the same, with the vanilla border as the limit.
 - [ ] No border at all and `useBorder = true`: `maxRadius` still limits the range.
 - [ ] A random portal and a remote `/rtp <server>` behave the same way on the target server.
+
+## Paid warps on the band (B23, 2026-10-31)
+
+- [ ] `/setwarp market 100`, then with fewer than 100 coins in your inventory: GO has a gold outline and a grey label. Pressing it closes the band and chat says "This warp costs 100 coins and you are carrying ...". No warm-up, nothing taken.
+- [ ] With 100 coins or more in your inventory: the label is gold, the warm-up runs, the coins are taken at the end and you arrive.
+
+## Warp cost on the admin panel (B24, 2026-10-31)
+
+- [ ] WARPS tab: a free warp's row has a gold FREE key where the minus and plus keys were. A warp set with `/setwarp market 100` shows 100C, and the same amount is no longer repeated in the small text under its name.
+- [ ] Press the key: the bottom strip reads COST OF MARKET with a box holding the cost, selected, and SAVE and CANCEL. The name box and Set warp here are gone until it closes.
+- [ ] Type 25 and press SAVE: the key reads 25C, chat confirms "Cost: 25", and the band's row and `/warp` charge 25. Pressing Enter saves the same way.
+- [ ] Set it to 0: the key reads FREE and the warp costs nothing.
+- [ ] Letters cannot be typed in the box. An empty box and SAVE leaves the cost alone.
+- [ ] Esc or CANCEL closes the strip with no change and leaves the panel open. Changing tab, or pressing Rules, closes it too.
+- [ ] Press E while the box has focus: the panel stays open.
+- [ ] A long warp name: the label is cut with "..." and does not run into the box. The row's keys do not cover the name's first letters.
+- [ ] As a moderator: no cost key, and the cost still shows in the small text.
+
+## /warp tab completion (B25, 2026-11-02)
+
+- [ ] As a player without `bsp_teleport.warp.<name>`: `/warp ` and Tab lists the warps the band lists, and no restricted warp or portal warp.
+- [ ] Give the player's group the node in LuckPerms: the restricted warp is offered at once (no relog).
+- [ ] As an admin: restricted warps are offered; portal warps are not. `/delwarp ` still offers every warp, portal warps included.

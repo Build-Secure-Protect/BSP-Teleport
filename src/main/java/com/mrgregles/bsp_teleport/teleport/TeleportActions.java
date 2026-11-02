@@ -139,7 +139,7 @@ public final class TeleportActions {
             return fail(player, "warp.no_permission", warp.name());
         }
         if (warp.cost() > 0 && BspCore.coins(player) < warp.cost()) {
-            return fail(player, "warp.cannot_afford", warp.cost());
+            return fail(player, "warp.cannot_afford", warp.cost(), BspCore.coins(player));
         }
         // D86: the warp's own rules, all of which must pass; charges happen with the move.
         com.mrgregles.bsp_teleport.access.AccessChecks.Result rules = com.mrgregles.bsp_teleport.access.AccessChecks.evaluate(player,
@@ -152,7 +152,7 @@ public final class TeleportActions {
         }
         // Audit: the warp's cost and its COINS rules are one price; checking them apart let a player pay the cost and then be refused.
         if (warp.cost() + rules.coins() > 0 && BspCore.coins(player) < warp.cost() + rules.coins()) {
-            return fail(player, "warp.cannot_afford", warp.cost() + rules.coins());
+            return fail(player, "warp.cannot_afford", warp.cost() + rules.coins(), BspCore.coins(player));
         }
         String warpName = warp.name();
         return Teleports.start(player, warp.position().toDestination(""), Component.literal(warp.name()), TeleportKind.WARP, () -> {
@@ -173,11 +173,11 @@ public final class TeleportActions {
             }
             int total = now.cost() + fresh.coins();
             if (total > 0 && BspCore.coins(player) < total) {
-                tell(player, "warp.cannot_afford", total);
+                tell(player, "warp.cannot_afford", total, BspCore.coins(player));
                 return false;
             }
             if (now.cost() > 0 && !BspCore.pay(player, now.cost())) {
-                tell(player, "warp.cannot_afford", now.cost());
+                tell(player, "warp.cannot_afford", now.cost(), BspCore.coins(player));
                 return false;
             }
             if (now.cost() > 0) {

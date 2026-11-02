@@ -26,6 +26,12 @@ Minecraft 1.20.1, Forge 47.4, Java 17. Needed on the client and the server, and 
 
 **No more kicks when walking into a portal to another server.** A client still walking when the proxy switch began could be thrown out with "Can't serialize unregistered packet". Every move to another server now holds the player still for one second with their movement keys off before the switch starts (`network.departureHoldTicks`, 20).
 
+**Paid warps on the band.** GO on a warp you cannot pay for used to do nothing. It now tells you what the warp costs and what you are carrying; coins must be in your inventory.
+
+**Warp cost on the admin panel.** Each warp's row now has a gold key showing its cost, or FREE, in place of the small minus and plus keys. Press it and type any amount in the strip at the bottom; 0 makes the warp free.
+
+**Warp names in tab completion.** `/warp` now offers only the warps you may use, so restricted warps and portal warps are no longer listed to players who cannot reach them.
+
 **Coins.** A warp with both a cost and a coin rule now asks for one total and takes nothing unless all of it can be paid; rules are checked again when the warm-up ends; `/tpnow` charges only once the teleport has started; a portal checks its landing world before charging. Setting an existing warp again keeps its icon, rules and portal-only setting.
 
 **Smoother servers.** Redis messages are sent from their own thread; a random teleport loads at most four new chunks per search and remote requests are limited; portal change notices are grouped; access data is only sent when it changed; the TEAM tab cannot be refreshed faster than every 3 seconds; fewer database round trips; the cooldown reaches the next server before the player does.

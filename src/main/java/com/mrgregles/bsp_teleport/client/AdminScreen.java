@@ -49,6 +49,9 @@ public class AdminScreen extends Screen {
     private String accessWarp;
     private String warpRuleKind = "RANK";
     private boolean warpRuleConsume;
+    /** WARPS tab: the warp whose cost is being typed in the bottom strip (B24), or null for the Set warp strip. */
+    @Nullable
+    private String costWarp;
     private int scroll;
     private int left, top;
     /** Everything is drawn this many times bigger than vanilla's GUI scale; mouse positions are divided by it. */
@@ -98,15 +101,43 @@ public class AdminScreen extends Screen {
         textBox = new EditBox(font, left + 10, top + H - 40, 120, 14, Component.literal("value"));
         textBox.setMaxLength(16);
         addRenderableWidget(textBox);
+        // A resize makes new boxes, so what was typed is gone: the cost strip closes with it.
+        costWarp = null;
         refreshBoxes();
     }
 
     private void refreshBoxes() {
-        nameBox.visible = (tab == Tab.WARPS || tab == Tab.TOKENS) && !data.readOnly();
-        textBox.visible = (tab == Tab.SETTINGS || tab == Tab.TOKENS || (tab == Tab.WARPS && accessWarp != null)) && !data.readOnly();
+        nameBox.visible = (tab == Tab.WARPS || tab == Tab.TOKENS) && !data.readOnly() && costWarp == null;
+        textBox.visible = (tab == Tab.SETTINGS || tab == Tab.TOKENS || (tab == Tab.WARPS && (accessWarp != null || costWarp != null))) && !data.readOnly();
         nameBox.setHint(Component.translatable(tab == Tab.TOKENS ? "screen.bsp_teleport.admin.region_id" : "screen.bsp_teleport.band.name_hint"));
         nameBox.setMaxLength(tab == Tab.TOKENS ? 64 : 16);
-        textBox.setMaxLength(tab == Tab.TOKENS ? 64 : 16);
+        textBox.setMaxLength(tab == Tab.TOKENS ? 64 : costWarp != null ? 9 : 16);
+        textBox.setFilter(costWarp != null ? text -> text.chars().allMatch(Character::isDigit) : text -> true);
+    }
+
+    /** B24: the cost key opens the bottom strip with the warp's cost selected, so typing replaces it. */
+    private void openCost(AdminData.WarpRow w) {
+        costWarp = w.name();
+        refreshBoxes();
+        textBox.setValue(String.valueOf(w.cost()));
+        textBox.setHighlightPos(0);
+        setFocused(textBox);
+    }
+
+    private void closeCost() {
+        costWarp = null;
+        textBox.setValue("");
+        setFocused(null);
+        refreshBoxes();
+    }
+
+    /** An empty box changes nothing; 0 makes the warp free. */
+    private void saveCost() {
+        String value = textBox.getValue().trim();
+        if (!value.isEmpty()) {
+            send(AdminAction.WARP_COST, costWarp + ";" + value);
+        }
+        closeCost();
     }
 
     @Override
@@ -156,6 +187,9 @@ public class AdminScreen extends Screen {
             }
             Tab t = tabs[i];
             hits.add(new Hit(tx, top + 5, TAB_W, 13, () -> {
+                if (costWarp != null) {
+                    closeCost();
+                }
                 tab = t;
                 scroll = 0;
                 pickingTarget = false;
@@ -364,6 +398,9 @@ public class AdminScreen extends Screen {
                 return;
             }
         }
+        if (costWarp != null && data.warps().stream().noneMatch(w -> w.name().equals(costWarp))) {
+            closeCost();
+        }
         int y = top + 28;
         int bottom = top + H - 44;
         int i = 0;
@@ -380,7 +417,8 @@ public class AdminScreen extends Screen {
             if (!data.readOnly()) {
                 hits.add(new Hit(left + 11, y, 18, 16, () -> send(AdminAction.WARP_ICON, w.name())));
             }
-            String sub = (w.server().equals(data.server()) ? "" : w.server() + "  ") + (w.cost() > 0 ? w.cost() + "c  " : "")
+            // B24: an admin reads the cost on its key; a moderator has no keys, so it stays in the details.
+            String sub = (w.server().equals(data.server()) ? "" : w.server() + "  ") + (data.readOnly() && w.cost() > 0 ? w.cost() + "c  " : "")
                     + Component.translatable(w.restricted() ? "screen.bsp_teleport.admin.restricted" : "screen.bsp_teleport.admin.open").getString()
                     + (w.portal() ? "  " + Component.translatable("screen.bsp_teleport.admin.portal").getString() : "");
             int bx = left + W - 14;
@@ -388,14 +426,17 @@ public class AdminScreen extends Screen {
                 bx = button(g, bx, y + 2, Component.translatable("screen.bsp_teleport.admin.del").getString(), BAD, BAD, () -> ask(
                         Component.translatable("screen.bsp_teleport.admin.confirm_del", w.name()).getString(), () -> send(AdminAction.DEL_WARP, w.name()))) - 2;
                 bx = button(g, bx, y + 2, Component.translatable("screen.bsp_teleport.admin.access_btn").getString(), w.rules().isEmpty() ? DIM : VIO, w.rules().isEmpty() ? MUTED : VIO, () -> {
+                    if (costWarp != null) {
+                        closeCost();
+                    }
                     accessWarp = w.name();
                     scroll = 0;
                     refreshBoxes();
                 }) - 2;
                 bx = button(g, bx, y + 2, "P", w.portal() ? VIO : DIM, w.portal() ? VIO : MUTED, () -> send(AdminAction.WARP_PORTAL, w.name() + ";" + !w.portal())) - 2;
                 bx = button(g, bx, y + 2, w.restricted() ? "R" : "O", w.restricted() ? VIO : DIM, w.restricted() ? VIO : MUTED, () -> send(AdminAction.WARP_RESTRICT, w.name() + ";" + !w.restricted())) - 2;
-                bx = button(g, bx, y + 2, "+", DIM, GOLD, () -> send(AdminAction.WARP_COST, w.name() + ";" + (w.cost() + 10))) - 2;
-                bx = button(g, bx, y + 2, "-", DIM, GOLD, () -> send(AdminAction.WARP_COST, w.name() + ";" + Math.max(0, w.cost() - 10))) - 2;
+                String cost = w.cost() > 0 ? w.cost() + "c" : Component.translatable("screen.bsp_teleport.admin.free").getString();
+                bx = button(g, bx, y + 2, cost, GOLD, GOLD, () -> openCost(w)) - 2;
                 bx = button(g, bx, y + 2, Component.translatable("screen.bsp_teleport.admin.move_here").getString(), DIM, MUTED, () -> send(AdminAction.MOVE_WARP, w.name())) - 2;
             }
             int gx = button(g, bx, y + 2, Component.translatable("screen.bsp_teleport.admin.go").getString(), TQ, TQ, () -> go(AdminAction.GO_WARP, w.name()));
@@ -403,6 +444,18 @@ public class AdminScreen extends Screen {
             small(g, clip(w.name(), gx - (left + 30) - 4), left + 30, y + 2, TEXT);
             small(g, clip(sub, gx - (left + 30) - 4), left + 30, y + 9, w.portal() ? VIO : w.server().equals(data.server()) ? MUTED : VIO);
             y += 18;
+        }
+        if (costWarp != null) {
+            int sy = top + H - 42;
+            small(g, clip(Component.translatable("screen.bsp_teleport.admin.cost_of", costWarp).getString().toUpperCase(), 92), left + 10, sy + 4, GOLD);
+            textBox.setX(left + 104);
+            textBox.setY(sy);
+            textBox.setWidth(44);
+            textBox.setHint(Component.literal("0"));
+            int sx = button(g, left + W - 10, sy + 1, Component.translatable("screen.bsp_teleport.admin.cancel").getString(), DIM, MUTED, this::closeCost) - 3;
+            sx = button(g, sx, sy + 1, Component.translatable("screen.bsp_teleport.admin.save").getString(), TQ, TQ, this::saveCost);
+            small(g, clip(Component.translatable("screen.bsp_teleport.admin.cost_help").getString(), sx - (left + 152) - 4), left + 152, sy + 4, MUTED);
+            return;
         }
         // Audit: placed in full here, since the warp-rules and TOKENS views move this box too.
         nameBox.setX(left + 10);
@@ -895,6 +948,16 @@ public class AdminScreen extends Screen {
         if (confirm != null && key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
             confirm = null;
             return true;
+        }
+        if (costWarp != null && confirm == null) {
+            if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
+                closeCost();
+                return true;
+            }
+            if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER || key == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_ENTER) {
+                saveCost();
+                return true;
+            }
         }
         if (!nameBox.isFocused() && !textBox.isFocused() && minecraft.options.keyInventory.matches(key, scan)) {
             onClose();

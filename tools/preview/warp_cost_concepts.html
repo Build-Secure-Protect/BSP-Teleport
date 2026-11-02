@@ -1,0 +1,198 @@
+<title>Warp Cost Keys</title>
+<style>
+/* Layout: today's row, then three concept panels (A, B, C), each a working copy of the WARPS tab in the Holo HUD look. */
+:root {
+  --bg: #0B0F14; --panel: #10151C; --inset: #0C0E12; --line: #2A2F3A; --hint: #5A6272;
+  --accent: #19D3B0; --violet: #B58CFF; --gold: #FFD23A; --bad: #FF6B5C; --ok: #8FE04A;
+  --text: #E6EAF2; --muted: #9AA3B5;
+  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif; --mono: Menlo, Monaco, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--sans); margin: 0; padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 28px; margin: 0 0 6px; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; }
+p, li { color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 72ch; }
+.today { margin: 16px 0 28px; max-width: 760px; }
+.sheets { display: flex; flex-wrap: wrap; gap: 28px 20px; align-items: flex-start; }
+.sheet { flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.sheet p { margin: 0; }
+.hud { background: var(--panel); border: 2px solid var(--violet); padding: 12px 14px 14px; font-size: 13px; display: flex; flex-direction: column; gap: 6px; }
+.title { font-weight: bold; letter-spacing: 2px; text-transform: uppercase; font-size: 13px; color: var(--violet); }
+.help { color: var(--muted); font-size: 11px; line-height: 1.4; }
+.row { border: 1px solid var(--line); background: var(--inset); padding: 5px 8px; display: flex; align-items: center; gap: 8px; min-height: 30px; flex-wrap: wrap; }
+.grow { flex: 1 1 90px; min-width: 0; }
+.name { font-weight: bold; }
+.sub { color: var(--muted); font-size: 11px; display: block; }
+.keys { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+.key { font: inherit; border: 1px solid var(--line); color: var(--muted); background: var(--inset); font-size: 10px; font-weight: bold; letter-spacing: 1px; padding: 3px 6px; text-transform: uppercase; white-space: nowrap; }
+button.key { cursor: pointer; }
+button.key:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.key.tq { border-color: var(--accent); color: var(--accent); }
+.key.r { border-color: var(--bad); color: var(--bad); }
+.key.g { border-color: var(--gold); color: var(--gold); }
+.key.flag { outline: 2px solid var(--gold); outline-offset: 2px; }
+.amount { color: var(--gold); font-family: var(--mono); font-size: 11px; font-variant-numeric: tabular-nums; min-width: 3ch; text-align: center; }
+input { font-family: var(--mono); font-size: 11px; background: var(--inset); color: var(--text); border: 1px solid var(--line); padding: 3px 6px; width: 7ch; }
+input.wide { width: 14ch; }
+.strip { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-top: 6px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); }
+.strip .gold { color: var(--gold); font-weight: bold; letter-spacing: 1px; text-transform: uppercase; font-size: 10px; }
+.push { margin-left: auto; }
+.label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+.facts { margin: 0; padding-left: 18px; }
+.facts li { font-size: 13px; }
+</style>
+
+<h1>Setting a warp's cost on the admin panel</h1>
+<p>Today the WARPS tab does have cost keys: the two small keys with a minus and a plus. They have no label, move the cost in steps of 10, and nothing on the row shows the cost while it is 0. All three options below can be tried: press the keys.</p>
+
+<div class="today">
+  <div class="label">Today</div>
+  <div class="row">
+    <div class="grow"><span class="name">market</span><span class="sub">Open</span></div>
+    <div class="keys">
+      <span class="key tq">Go</span><span class="key">Move here</span><span class="key flag">-</span><span class="key flag">+</span><span class="key">O</span><span class="key">P</span><span class="key">Rules</span><span class="key r">Del</span>
+    </div>
+  </div>
+</div>
+
+<div class="sheets">
+  <section class="sheet">
+    <h2>A: Cost key on the row</h2>
+    <div class="hud">
+      <div class="title">Warps</div>
+      <div class="row">
+        <div class="grow"><span class="name">market</span><span class="sub">Open</span></div>
+        <div class="keys">
+          <span class="key tq">Go</span><span class="key">Move here</span>
+          <button class="key g" id="a-key" type="button">Free</button>
+          <span class="key">O</span><span class="key">P</span><span class="key">Rules</span><span class="key r">Del</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="grow"><span class="name">arena</span><span class="sub">Restricted</span></div>
+        <div class="keys">
+          <span class="key tq">Go</span><span class="key">Move here</span>
+          <span class="key g">250c</span>
+          <span class="key">R</span><span class="key">P</span><span class="key">Rules</span><span class="key r">Del</span>
+        </div>
+      </div>
+      <div class="strip" id="a-new">
+        <input class="wide" id="a-name" placeholder="Name" aria-label="New warp name">
+        <span class="key g push">Set warp here</span>
+      </div>
+      <div class="strip" id="a-edit" hidden>
+        <span class="gold">Cost of market</span>
+        <input id="a-box" inputmode="numeric" aria-label="Cost of market in coins">
+        <span>coins, 0 is free</span>
+        <button class="key tq push" id="a-save" type="button">Save</button>
+        <button class="key" id="a-cancel" type="button">Cancel</button>
+      </div>
+    </div>
+    <ul class="facts">
+      <li>The key always shows the cost, or FREE, so it is easy to find.</li>
+      <li>Press it and the bottom strip asks for the amount. Type any number. Enter saves.</li>
+      <li>Replaces the minus and plus keys. The name keeps its room (about 16 characters).</li>
+    </ul>
+  </section>
+
+  <section class="sheet">
+    <h2>B: Cost on the warp's own screen</h2>
+    <div class="hud">
+      <div id="b-list">
+        <div class="title">Warps</div>
+        <div class="row" style="margin-top:6px">
+          <div class="grow"><span class="name">market</span><span class="sub" id="b-sub">Open</span></div>
+          <div class="keys">
+            <span class="key tq">Go</span><span class="key">Move here</span><span class="key">O</span><span class="key">P</span>
+            <button class="key g" id="b-edit" type="button">Edit</button>
+            <span class="key r">Del</span>
+          </div>
+        </div>
+      </div>
+      <div id="b-screen" hidden>
+        <div class="row" style="border:0;background:none;padding:0">
+          <div class="title grow">Market</div>
+          <button class="key" id="b-back" type="button">Back</button>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <span class="grow">Cost per use, in coins</span>
+          <input id="b-box" inputmode="numeric" aria-label="Cost of market in coins">
+          <button class="key tq" id="b-set" type="button">Set</button>
+        </div>
+        <div class="help" style="margin-top:8px">Rules: every rule must pass.</div>
+        <div class="row" style="margin-top:4px"><span class="grow">time 15:00-17:00</span><span class="key r">Del</span></div>
+      </div>
+    </div>
+    <ul class="facts">
+      <li>Rules becomes Edit, and cost sits above the rules on the same screen.</li>
+      <li>The row is the tidiest of the three: the name gets about 23 characters of room.</li>
+      <li>Cost takes two presses to reach, and the row shows it only as small text once it is above 0.</li>
+    </ul>
+  </section>
+
+  <section class="sheet">
+    <h2>C: Labelled stepper on the row</h2>
+    <div class="hud">
+      <div class="title">Warps</div>
+      <div class="row">
+        <div class="grow"><span class="name">market</span><span class="sub">Open</span></div>
+        <div class="keys">
+          <span class="key tq">Go</span><span class="key">Move here</span>
+          <button class="key g" id="c-minus" type="button">-</button>
+          <span class="amount" id="c-amount">Free</span>
+          <button class="key g" id="c-plus" type="button">+</button>
+          <span class="key">O</span><span class="key">P</span><span class="key">Rules</span><span class="key r">Del</span>
+        </div>
+      </div>
+    </div>
+    <ul class="facts">
+      <li>The smallest change: today's keys, gold, with the amount between them.</li>
+      <li>Steps of 10, or 100 with Shift held. No typing, so 25 needs the command.</li>
+      <li>The name loses room, to about 13 characters, and warp names may be 16.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+(function () {
+  function $(id) { return document.getElementById(id); }
+  function read(box, old) {
+    var n = parseInt(box.value, 10);
+    return isNaN(n) || n < 0 ? old : n;
+  }
+  function label(n) { return n > 0 ? n + "c" : "Free"; }
+
+  var a = 0;
+  function aOpen(open) {
+    $("a-new").hidden = open;
+    $("a-edit").hidden = !open;
+    if (open) { $("a-box").value = a; $("a-box").focus(); $("a-box").select(); }
+  }
+  function aSave() { a = read($("a-box"), a); $("a-key").textContent = label(a); aOpen(false); }
+  $("a-key").addEventListener("click", function () { aOpen(true); });
+  $("a-save").addEventListener("click", aSave);
+  $("a-cancel").addEventListener("click", function () { aOpen(false); });
+  $("a-box").addEventListener("keydown", function (e) { if (e.key === "Enter") { aSave(); } });
+
+  var b = 0;
+  function bOpen(open) {
+    $("b-list").hidden = open;
+    $("b-screen").hidden = !open;
+    if (open) { $("b-box").value = b; }
+  }
+  function bSet() { b = read($("b-box"), b); $("b-box").value = b; $("b-sub").textContent = (b > 0 ? b + "c  " : "") + "Open"; }
+  $("b-edit").addEventListener("click", function () { bOpen(true); });
+  $("b-back").addEventListener("click", function () { bOpen(false); });
+  $("b-set").addEventListener("click", bSet);
+  $("b-box").addEventListener("keydown", function (e) { if (e.key === "Enter") { bSet(); } });
+
+  var c = 0;
+  function cStep(e, sign) {
+    c = Math.max(0, c + sign * (e.shiftKey ? 100 : 10));
+    $("c-amount").textContent = label(c);
+  }
+  $("c-minus").addEventListener("click", function (e) { cStep(e, -1); });
+  $("c-plus").addEventListener("click", function (e) { cStep(e, 1); });
+})();
+</script>

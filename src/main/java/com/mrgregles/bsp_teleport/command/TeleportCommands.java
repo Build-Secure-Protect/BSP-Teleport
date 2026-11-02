@@ -52,6 +52,12 @@ public final class TeleportCommands {
     };
     private static final SuggestionProvider<CommandSourceStack> WARPS = (ctx, builder) ->
             SharedSuggestionProvider.suggest(TeleportData.get(ctx.getSource().getServer()).warps().stream().map(Warp::name), builder);
+    /** /warp offers only what the band lists: no portal warps, no restricted warps without their node. */
+    private static final SuggestionProvider<CommandSourceStack> USABLE_WARPS = (ctx, builder) -> {
+        ServerPlayer player = ctx.getSource().getPlayer();
+        return player == null ? builder.buildFuture()
+                : SharedSuggestionProvider.suggest(TeleportActions.usableWarps(player).stream().map(Warp::name), builder);
+    };
     private static final SuggestionProvider<CommandSourceStack> PLAYERS = (ctx, builder) ->
             SharedSuggestionProvider.suggest(TeleportRequests.suggestions(ctx.getSource().getServer()), builder);
     private static final SuggestionProvider<CommandSourceStack> SERVERS = (ctx, builder) ->
@@ -93,7 +99,7 @@ public final class TeleportCommands {
         d.register(player("phomes").executes(TeleportCommands::publicHomes));
 
         d.register(player("warp").executes(TeleportCommands::warps)
-                .then(Commands.argument("name", StringArgumentType.word()).suggests(WARPS)
+                .then(Commands.argument("name", StringArgumentType.word()).suggests(USABLE_WARPS)
                         .executes(ctx -> warp(ctx, StringArgumentType.getString(ctx, "name")))));
         d.register(player("warps").executes(TeleportCommands::warps));
         d.register(admin("setwarp")

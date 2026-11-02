@@ -217,8 +217,9 @@ public class BandScreen extends Screen {
             } else {
                 boolean afford = w.cost() <= data.coins();
                 // A closed warp's key stays pressable but dim: admins pass the hours, and everyone else is told when it opens.
+                // B23: the same for a warp the player cannot pay for: the server says what it costs, where a dead key said nothing.
                 int keyX = button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.go").getString(), closed ? DIM : w.cost() > 0 ? GOLD : TQ,
-                        closed || !afford ? MUTED : w.cost() > 0 ? GOLD : TQ, afford ? () -> go(BandAction.WARP, w.name()) : null);
+                        closed || !afford ? MUTED : w.cost() > 0 ? GOLD : TQ, () -> go(BandAction.WARP, w.name()));
                 if (chip != null) {
                     button(g, keyX - 2, y + 4, chip, closed ? BAD : OK, closed ? BAD : OK, null);
                 }
