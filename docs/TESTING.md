@@ -399,3 +399,16 @@ Setup: as for B38, with `access.refuseAtLogin = true` (the default) on Moongrove
 4. An admin (operator, a name in BSP-Core's `admins`, or `bsp_teleport.admin` in LuckPerms) logs in to Moongrove without a grant: let in as before.
 5. A player who rents Moongrove, or has it as their main server, logs in there: let in.
 6. While on BSP-Spawn, `/server BSP-Moongrove` (the proxy's own command) without access: the proxy says they could not join and they stay on Spawn, or, if Ambassador cannot put the client back, they are asked to reconnect and land on Spawn. Tell me which.
+
+## Set home asks before moving or replacing a home (B40, 2026-11-03)
+
+Setup: a player with three home slots and homes `base`, `farm`, `mine`, standing somewhere new. The client needs this jar too (band protocol 6).
+
+1. Band, HOMES tab: type `base` (or `BASE`), press Set home. The Set home strip turns into "Move base here?" with MOVE and KEEP above a gold line; the home list above still works.
+2. KEEP (or Esc): nothing changes, and `base` is back in the name box. MOVE: chat says "Home base moved here." and its row shows the new spot.
+3. Empty name box with a home called `home`: Set home asks "Move home here?" the same way.
+4. Type `tower`, press Set home: "All 3 homes used. Replace one with tower:" with a gold key per home and KEEP. Press FARM: chat says "Home farm replaced by tower.", and `tower` is in farm's place (second in the list), with the default icon.
+5. With more homes than slots (locked homes), only the unlocked ones are offered.
+6. Chat: `/sethome base` says "You already have a home base. [Move it here]"; clicking runs `/sethome base confirm`. `/sethome tower` with every slot used lists `[base] [farm] [mine]`; clicking one runs `/sethome tower replace <home>`.
+7. On a second server: the band and `/homes` there show the replaced home (the change reaches other servers).
+8. Where homes may not be set (Region Guard, a raid zone), the band still asks first, then MOVE or a replace key says "You cannot set a home here." and nothing changes.

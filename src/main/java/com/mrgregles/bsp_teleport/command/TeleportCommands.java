@@ -75,7 +75,13 @@ public final class TeleportCommands {
         d.register(player("homes").executes(TeleportCommands::homes));
         d.register(player("sethome").executes(ctx -> setHome(ctx, "home"))
                 .then(Commands.argument("name", StringArgumentType.word())
-                        .executes(ctx -> setHome(ctx, StringArgumentType.getString(ctx, "name")))));
+                        .executes(ctx -> setHome(ctx, StringArgumentType.getString(ctx, "name")))
+                        // B40: the answers to the chat questions /sethome asks.
+                        .then(Commands.literal("confirm").executes(ctx -> TeleportActions.setHome(ctx.getSource().getPlayerOrException(),
+                                StringArgumentType.getString(ctx, "name"), true) ? 1 : 0))
+                        .then(Commands.literal("replace").then(Commands.argument("old", StringArgumentType.word()).suggests(HOMES)
+                                .executes(ctx -> TeleportActions.replaceHome(ctx.getSource().getPlayerOrException(),
+                                        StringArgumentType.getString(ctx, "old"), StringArgumentType.getString(ctx, "name")) ? 1 : 0)))));
         d.register(player("delhome")
                 .then(Commands.literal("all").then(Commands.literal("confirm").executes(TeleportCommands::delAllHomes)))
                 .then(Commands.argument("name", StringArgumentType.word()).suggests(HOMES)

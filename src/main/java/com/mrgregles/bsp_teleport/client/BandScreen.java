@@ -2,6 +2,7 @@ package com.mrgregles.bsp_teleport.client;
 
 import com.mrgregles.bsp_teleport.band.BandAction;
 import com.mrgregles.bsp_teleport.band.BandData;
+import com.mrgregles.bsp_teleport.data.TeleportData;
 import com.mrgregles.bsp_teleport.ClientConfig;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -21,6 +22,8 @@ import java.util.List;
  */
 public class BandScreen extends Screen {
     private static final int W = 248, H = 196, ROW_H = 20, LIST_TOP = 30, FOOT_H = 22;
+    /** B40: the replace question's key rows at most, so the list above keeps three rows even during a raid. */
+    private static final int ASK_ROWS = 3;
     private static final int TQ = BandClient.TQ, BG = BandClient.BG, SLOT = BandClient.SLOT, DIM = BandClient.DIM, MUTED = BandClient.MUTED,
             TEXT = BandClient.TEXT, VIO = BandClient.VIO, GOLD = BandClient.GOLD, BAD = BandClient.BAD, OK = BandClient.OK;
 
@@ -40,9 +43,17 @@ public class BandScreen extends Screen {
     private record Confirm(String question, Runnable yes) {
     }
 
+    /** B40: Set home with a name in use ({@code full} false) or with every slot used; the Set home strip asks instead (option C). */
+    private record SetAsk(String name, String typed, boolean full) {
+    }
+
     private BandData data;
     @Nullable
     private Confirm confirm;
+    @Nullable
+    private SetAsk setAsk;
+    /** Where the replace keys start in the unlocked homes, when they need more than {@link #ASK_ROWS} rows (MORE pages on). */
+    private int askFrom;
     private Tab tab = Tab.HOMES;
     private int scroll;
     private int left, top;
@@ -59,6 +70,19 @@ public class BandScreen extends Screen {
 
     public void update(BandData data) {
         this.data = data;
+        // B40: a question whose reason went away (the home was deleted, a slot came free) closes, and the name comes back.
+        if (setAsk != null && !asks(setAsk.name(), setAsk.full())) {
+            keepHome();
+        }
+    }
+
+    /** Whether Set home with this name asks: {@code full} false for a name in use, true for every slot used. */
+    private boolean asks(String name, boolean full) {
+        boolean taken = data.homes().stream().anyMatch(h -> h.name().equals(name));
+        if (!full) {
+            return taken;
+        }
+        return !taken && TeleportData.validName(name) && data.used() >= data.slots() && data.homes().stream().anyMatch(h -> !h.locked());
     }
 
     @Override
@@ -96,7 +120,7 @@ public class BandScreen extends Screen {
         g.pose().pushPose();
         g.pose().scale(scale, scale, 1f);
         hits.clear();
-        nameBox.visible = tab == Tab.HOMES && confirm == null;
+        nameBox.visible = tab == Tab.HOMES && confirm == null && setAsk == null;
         g.fill(left - 1, top - 1, left + W + 1, top + H + 1, TQ);
         g.fill(left, top, left + W, top + H, BG);
         Tab[] tabs = data.admin() ? Tab.values() : new Tab[] {Tab.HOMES, Tab.WARPS, Tab.PLAYERS, Tab.TEAM, Tab.MORE};
@@ -130,11 +154,12 @@ public class BandScreen extends Screen {
                 tab = t;
                 scroll = 0;
                 teamTicks = 0;
+                setAsk = null;
                 nameBox.visible = tab == Tab.HOMES;
             }));
         }
 
-        int listBottom = top + H - FOOT_H - (tab == Tab.HOMES ? 24 : 4);
+        int listBottom = top + H - FOOT_H - (tab == Tab.HOMES ? 24 + askRows().size() * 14 : 4);
         if (data.raid()) {
             small(g, clip(Component.translatable("screen.bsp_teleport.band.raid", data.raidDistance()).getString(), W - 20), left + 10, top + LIST_TOP - 4, BAD);
         }
@@ -214,10 +239,133 @@ public class BandScreen extends Screen {
         // Set home here: name box plus button, above the footer.
         int sy = top + H - FOOT_H - 20;
         nameBox.setY(sy);
-        button(g, left + W - 10, sy + 1, Component.translatable("screen.bsp_teleport.band.set_here").getString(), GOLD, GOLD, () -> {
-            send(BandAction.SET_HOME, nameBox.getValue().trim());
-            nameBox.setValue("");
-        });
+        if (setAsk != null) {
+            drawSetAsk(g, sy);
+            return;
+        }
+        button(g, left + W - 10, sy + 1, Component.translatable("screen.bsp_teleport.band.set_here").getString(), GOLD, GOLD, this::setHomeHere);
+    }
+
+    /** B40: asks first when the name is in use or every slot is used; the server checks again either way. */
+    private void setHomeHere() {
+        String typed = nameBox.getValue().trim();
+        nameBox.setValue("");
+        String name = TeleportData.normalise(typed.isEmpty() ? "home" : typed);
+        boolean taken = asks(name, false);
+        if (taken || asks(name, true)) {
+            setAsk = new SetAsk(name, typed, !taken);
+            askFrom = 0;
+            nameBox.setFocused(false);
+            setFocused(null);
+        } else {
+            send(BandAction.SET_HOME, typed);
+        }
+    }
+
+    /** KEEP (or Esc): nothing changes and the typed name comes back. */
+    private void keepHome() {
+        if (setAsk != null) {
+            nameBox.setValue(setAsk.typed());
+        }
+        setAsk = null;
+    }
+
+    /** Marks the MORE key in {@link #askRows}. */
+    private static final String MORE = "\u0000more";
+
+    /**
+     * The replace question's keys in rows that fit the band: unlocked homes from {@link #askFrom}, then MORE when the
+     * rest do not fit in {@link #ASK_ROWS} rows, then KEEP (null). Empty when not asking that.
+     */
+    private List<List<String>> askRows() {
+        if (tab != Tab.HOMES || setAsk == null || !setAsk.full()) {
+            return new ArrayList<>();
+        }
+        List<String> homes = new ArrayList<>();
+        data.homes().stream().filter(h -> !h.locked()).forEach(h -> homes.add(h.name()));
+        if (askFrom >= homes.size()) {
+            askFrom = 0;
+        }
+        List<String> rest = homes.subList(askFrom, homes.size());
+        List<List<String>> rows = layoutKeys(rest, askFrom > 0);
+        for (int n = rest.size() - 1; rows.size() > ASK_ROWS && n >= 1; n--) {
+            rows = layoutKeys(rest.subList(0, n), true);
+        }
+        return rows;
+    }
+
+    /** Lays keys out left to right in rows no wider than the list; {@code more} adds MORE before KEEP. */
+    private List<List<String>> layoutKeys(List<String> homes, boolean more) {
+        List<String> keys = new ArrayList<>(homes);
+        if (more) {
+            keys.add(MORE);
+        }
+        keys.add(null);
+        List<List<String>> rows = new ArrayList<>();
+        List<String> row = new ArrayList<>();
+        int used = 0;
+        for (String k : keys) {
+            int w = keyW(askLabel(k)) + 3;
+            if (!row.isEmpty() && used + w > W - 20) {
+                rows.add(row);
+                row = new ArrayList<>();
+                used = 0;
+            }
+            row.add(k);
+            used += w;
+        }
+        rows.add(row);
+        return rows;
+    }
+
+    private String askLabel(@Nullable String key) {
+        return key == null ? keepLabel() : key.equals(MORE) ? Component.translatable("screen.bsp_teleport.band.ask_more").getString() : key;
+    }
+
+    private String keepLabel() {
+        return Component.translatable("screen.bsp_teleport.band.keep").getString();
+    }
+
+    /** B40 option C: the Set home strip becomes the question, with a gold line above it; the list above stays usable. */
+    private void drawSetAsk(GuiGraphics g, int sy) {
+        SetAsk ask = setAsk;
+        if (!ask.full()) {
+            g.fill(left + 10, sy - 3, left + W - 10, sy - 2, GOLD);
+            int bx = button(g, left + W - 10, sy + 1, keepLabel(), DIM, MUTED, this::keepHome) - 3;
+            bx = button(g, bx, sy + 1, Component.translatable("screen.bsp_teleport.band.move").getString(), GOLD, GOLD, () -> {
+                setAsk = null;
+                send(BandAction.MOVE_HOME, ask.name());
+            });
+            small(g, clip(Component.translatable("screen.bsp_teleport.band.ask_move", ask.name()).getString(), bx - left - 16), left + 10, sy + 4, TEXT);
+            return;
+        }
+        List<List<String>> rows = askRows();
+        int qy = sy - rows.size() * 14;
+        g.fill(left + 10, qy, left + W - 10, qy + 1, GOLD);
+        small(g, clip(Component.translatable("screen.bsp_teleport.band.ask_replace", data.slots(), ask.name()).getString(), W - 20), left + 10, qy + 4, TEXT);
+        int ry = qy + 14;
+        int shown = (int) rows.stream().flatMap(List::stream).filter(k -> k != null && !k.equals(MORE)).count();
+        for (List<String> row : rows) {
+            int x = left + 10;
+            for (String k : row) {
+                String label = askLabel(k);
+                Runnable action;
+                if (k == null) {
+                    action = this::keepHome;
+                } else if (k.equals(MORE)) {
+                    action = () -> askFrom += shown; // past the last home it starts again at the first
+                } else {
+                    action = () -> {
+                        setAsk = null;
+                        send(BandAction.REPLACE_HOME, k + " " + ask.name());
+                    };
+                }
+                boolean home = k != null && !k.equals(MORE);
+                button(g, x + keyW(label), ry, label, home ? GOLD : DIM, home ? GOLD : MUTED, action);
+                x += keyW(label) + 3;
+            }
+            ry += 14;
+        }
     }
 
     private void drawWarps(GuiGraphics g, int y, int bottom) {
@@ -587,6 +735,10 @@ public class BandScreen extends Screen {
 
     @Override
     public boolean keyPressed(int key, int scan, int mods) {
+        if (confirm == null && setAsk != null && key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
+            keepHome(); // B40: Esc answers KEEP and leaves the band open
+            return true;
+        }
         if (confirm != null) {
             if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
                 confirm = null; // Esc answers No and leaves the band open
@@ -596,9 +748,8 @@ public class BandScreen extends Screen {
                 return true; // never a Yes by keyboard
             }
         }
-        if (nameBox.isFocused() && key == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER) {
-            send(BandAction.SET_HOME, nameBox.getValue().trim());
-            nameBox.setValue("");
+        if (setAsk == null && nameBox.isFocused() && key == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER) {
+            setHomeHere();
             return true;
         }
         if (!nameBox.isFocused() && (BandClient.OPEN_KEY.matches(key, scan) || minecraft.options.keyInventory.matches(key, scan))) {

@@ -71,22 +71,83 @@ public final class TeleportActions {
     }
 
     public static boolean setHome(ServerPlayer player, String name) {
+        return setHome(player, name, false);
+    }
+
+    /**
+     * Sets a home here. B40: a name already in use is only moved with {@code move}, and with every slot used a new name
+     * asks which home to replace; both questions go to chat with keys that run the answering command.
+     */
+    public static boolean setHome(ServerPlayer player, String name, boolean move) {
         if (!TeleportData.validName(name)) {
             return fail(player, "home.bad_name");
         }
+        name = TeleportData.normalise(name);
         TeleportData data = TeleportData.get(player.server);
         boolean exists = data.home(player.getUUID(), name) != null;
         int slots = HomeLimits.slots(player);
-        if (!exists && data.homesOf(player.getUUID()).size() >= slots) {
-            return fail(player, "home.full", slots);
-        }
         if (!Rules.canSetHome(player.serverLevel(), player.blockPosition(), player)) {
             return fail(player, "home.blocked_here");
+        }
+        if (exists && !move) {
+            player.displayClientMessage(Component.translatable("message.bsp_teleport.home.taken", name,
+                    chatKey("message.bsp_teleport.home.taken_move", "/sethome " + name + " confirm")), false);
+            return false;
+        }
+        List<Home> homes = data.homesOf(player.getUUID());
+        if (!exists && homes.size() >= slots) {
+            List<Component> keys = new java.util.ArrayList<>();
+            for (int i = 0; i < Math.min(slots, homes.size()); i++) {
+                keys.add(chatKey(homes.get(i).name(), "/sethome " + name + " replace " + homes.get(i).name()));
+            }
+            player.displayClientMessage(Component.translatable(keys.isEmpty() ? "message.bsp_teleport.home.full" : "message.bsp_teleport.home.full_pick",
+                    slots, name, net.minecraft.network.chat.ComponentUtils.formatList(keys, Component.literal(" "))), false);
+            return false;
         }
         Home home = data.setHome(player.getUUID(), name, Position.of(player));
         Storage.homeSaved(player.getUUID(), home);
         tell(player, exists ? "home.updated" : "home.set", home.name());
         return true;
+    }
+
+    /** B40: a new home here takes the place in the list of an unlocked home, which is deleted; its icon and description go with it. */
+    public static boolean replaceHome(ServerPlayer player, String oldName, String name) {
+        if (!TeleportData.validName(name)) {
+            return fail(player, "home.bad_name");
+        }
+        name = TeleportData.normalise(name);
+        TeleportData data = TeleportData.get(player.server);
+        Home old = data.home(player.getUUID(), oldName);
+        if (old == null) {
+            return fail(player, "home.unknown", oldName);
+        }
+        if (old.name().equals(name)) {
+            return setHome(player, name, true);
+        }
+        if (!HomeLimits.unlocked(player, data.homeIndex(player.getUUID(), old.name()))) {
+            return fail(player, "home.replace_locked", old.name());
+        }
+        if (data.home(player.getUUID(), name) != null) {
+            return fail(player, "home.exists", name);
+        }
+        if (!Rules.canSetHome(player.serverLevel(), player.blockPosition(), player)) {
+            return fail(player, "home.blocked_here");
+        }
+        Home home = new Home(name, Position.of(player), old.createdAt());
+        data.putHome(player.getUUID(), old.name(), home);
+        Storage.homeDeleted(player.getUUID(), old.name());
+        Storage.homeSaved(player.getUUID(), home);
+        tell(player, "home.replaced", old.name(), home.name());
+        return true;
+    }
+
+    /** A gold chat key that runs {@code command} when clicked; the label is a lang key or a plain name. */
+    static Component chatKey(String label, String command) {
+        Component text = label.startsWith("message.") ? Component.translatable(label) : Component.literal(label);
+        return Component.literal("[").append(text).append("]").withStyle(style -> style
+                .withColor(net.minecraft.ChatFormatting.GOLD)
+                .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, command))
+                .withHoverEvent(new net.minecraft.network.chat.HoverEvent(net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT, Component.literal(command))));
     }
 
     public static boolean delHome(ServerPlayer player, String name) {

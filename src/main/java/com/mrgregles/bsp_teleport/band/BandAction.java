@@ -10,5 +10,9 @@ public enum BandAction {
     /** uuid: teleport to that teammate (D91) */
     TEAM_GO,
     /** the TEAM tab is open: send fresh data without opening the screen (D92) */
-    TEAM_REFRESH
+    TEAM_REFRESH,
+    /** name: move that home here, after the band asked (B40) */
+    MOVE_HOME,
+    /** "old new": a new home here takes the old one's place, after the band asked (B40) */
+    REPLACE_HOME
 }

@@ -1,0 +1,203 @@
+<title>Set Home Confirmation Options</title>
+<style>
+/* Layout: one short intro, then three concept panels (A, B, C), each a working copy of the band's HOMES tab in the Holo HUD look. Single dark look on purpose: it copies the game screen. */
+:root {
+  --bg: #0B0F14; --panel: #10151C; --inset: #0C0E12; --line: #2A2F3A;
+  --accent: #19D3B0; --violet: #B58CFF; --gold: #FFD23A; --bad: #FF6B5C; --ok: #8FE04A;
+  --text: #E6EAF2; --muted: #9AA3B5; --dim: #5A6272; --veil: rgba(0, 0, 0, 0.63); --goldfill: rgba(255, 210, 58, 0.10);
+  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif; --mono: Menlo, Monaco, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--sans); margin: 0; padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 28px; margin: 0 0 6px; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; }
+p, li { color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 72ch; }
+code { font-family: var(--mono); color: var(--text); font-size: 13px; }
+.sheets { display: flex; flex-wrap: wrap; gap: 28px 20px; align-items: flex-start; margin-top: 20px; }
+.sheet { flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.sheet p { margin: 0; }
+.hud { position: relative; background: var(--panel); border: 2px solid var(--violet); padding: 12px 14px 14px; font-size: 13px; display: flex; flex-direction: column; gap: 6px; min-height: 230px; }
+.title { font-weight: bold; letter-spacing: 2px; text-transform: uppercase; font-size: 13px; color: var(--violet); display: flex; justify-content: space-between; }
+.title span { color: var(--muted); letter-spacing: 1px; font-size: 11px; font-variant-numeric: tabular-nums; }
+.row { border: 1px solid var(--line); background: var(--inset); padding: 5px 8px; display: flex; align-items: center; gap: 8px; min-height: 32px; flex-wrap: wrap; }
+.row.marked { border-color: var(--gold); background: var(--goldfill); }
+.icon { width: 18px; height: 18px; background: var(--line); border: 1px solid var(--dim); flex: none; }
+.grow { flex: 1 1 90px; min-width: 0; }
+.name { font-weight: bold; }
+.sub { color: var(--muted); font-size: 11px; display: block; font-family: var(--mono); }
+.keys { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+.key { font: inherit; border: 1px solid var(--line); color: var(--muted); background: var(--inset); font-size: 10px; font-weight: bold; letter-spacing: 1px; padding: 3px 6px; text-transform: uppercase; white-space: nowrap; }
+button.key { cursor: pointer; }
+button.key:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.key.tq { border-color: var(--accent); color: var(--accent); }
+.key.g { border-color: var(--gold); color: var(--gold); }
+.key.gg { background: var(--gold); color: var(--inset); border-color: var(--gold); }
+.key.ok { border-color: var(--ok); color: var(--ok); }
+.foot { margin-top: auto; display: flex; gap: 6px; align-items: center; padding-top: 6px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); flex-wrap: wrap; }
+.foot.ask { border-top-color: var(--gold); }
+.foot b { color: var(--text); }
+.foot .push { margin-left: auto; }
+input { font-family: var(--mono); font-size: 11px; background: var(--inset); color: var(--text); border: 1px solid var(--line); padding: 3px 6px; width: 14ch; }
+.veil { position: absolute; inset: 0; background: var(--veil); display: flex; align-items: center; justify-content: center; padding: 12px; }
+.box { background: var(--panel); border: 1px solid var(--gold); padding: 10px 12px; width: min(260px, 100%); display: flex; flex-direction: column; gap: 10px; }
+.box .q { color: var(--text); font-size: 13px; line-height: 1.4; }
+.box .keys { justify-content: flex-end; }
+.box .pick { justify-content: flex-start; }
+.case { color: var(--gold); font-size: 12px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+.case code { color: var(--gold); }
+.said { color: var(--ok); font-size: 12px; min-height: 16px; }
+.facts { margin: 0; padding-left: 18px; }
+.facts li { font-size: 13px; }
+.chat { font-family: var(--mono); font-size: 12px; background: var(--inset); border: 1px solid var(--line); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; overflow-x: auto; }
+.chat .y { color: var(--gold); } .chat .c { color: var(--accent); } .chat .m { color: var(--muted); }
+</style>
+
+<h1>Asking before a home is replaced</h1>
+<p>Today, Set home with a name you already use (or with an empty box, which means <code>home</code>) moves that home to where you stand without asking. With every slot used and a new name, it says "Delete one first." Each option below asks instead. Every option is shown twice, already asking: once for a taken name, once for a new name with every slot used. Answer it to see the result, or type your own name and press Set home.</p>
+
+<div class="sheets">
+  <section class="sheet">
+    <h2>A: The popup</h2>
+    <div class="case">Name already used: <code>base</code></div>
+    <div class="hud" id="a1"></div>
+    <div class="case">All 3 slots used, new name: <code>tower</code></div>
+    <div class="hud" id="a2"></div>
+    <ul class="facts">
+      <li>The same gold box as the delete question. A taken name asks "Move the home Base here?"</li>
+      <li>With every slot used, the box lists your homes. Picking one replaces it with the new name in the same slot.</li>
+      <li>Nothing else on the band works while it shows. Esc or No closes it.</li>
+    </ul>
+  </section>
+
+  <section class="sheet">
+    <h2>B: The rows answer</h2>
+    <div class="case">Name already used: <code>base</code></div>
+    <div class="hud" id="b1"></div>
+    <div class="case">All 3 slots used, new name: <code>tower</code></div>
+    <div class="hud" id="b2"></div>
+    <ul class="facts">
+      <li>A taken name turns that row gold, with MOVE HERE and KEEP on it.</li>
+      <li>With every slot used, each row shows REPLACE, and the footer says what will happen, with CANCEL.</li>
+      <li>You see each home's place while you choose.</li>
+    </ul>
+  </section>
+
+  <section class="sheet">
+    <h2>C: The footer asks</h2>
+    <div class="case">Name already used: <code>base</code></div>
+    <div class="hud" id="c1"></div>
+    <div class="case">All 3 slots used, new name: <code>tower</code></div>
+    <div class="hud" id="c2"></div>
+    <ul class="facts">
+      <li>The Set home strip turns into the question, the same way a home delete asks in option C of the last set.</li>
+      <li>With every slot used, it shows one key per home to replace, plus KEEP.</li>
+      <li>The smallest change, but the keys get tight with many homes.</li>
+    </ul>
+  </section>
+</div>
+
+<h2 style="margin-top:28px">Commands (the same for every option)</h2>
+<div class="chat">
+  <span class="m">&gt; /sethome base</span>
+  <span>You already have a home <span class="y">base</span>. <span class="c">[Move it here]</span> <span class="c">[Keep it]</span></span>
+  <span class="m">&gt; /sethome tower</span>
+  <span>All 3 homes are used. Replace one with <span class="y">tower</span>: <span class="c">[base]</span> <span class="c">[farm]</span> <span class="c">[mine]</span></span>
+</div>
+<p>Clicking runs <code>/sethome base confirm</code> or <code>/sethome tower replace farm</code>, which players can also type.</p>
+
+<script>
+(function () {
+  var START = [
+    { name: "base", where: "BSP-Moongrove  120 64 -40" },
+    { name: "farm", where: "BSP-Moongrove  -310 70 88" },
+    { name: "mine", where: "BSP-Frostwarf  44 -12 905" }
+  ];
+  var SLOTS = 3, HERE = "BSP-Moongrove  8 72 15";
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) { e.className = cls; } if (text) { e.textContent = text; } return e; }
+  function key(text, cls, fn) { var b = el("button", "key " + (cls || ""), text); b.type = "button"; if (fn) { b.addEventListener("click", fn); } return b; }
+
+  function makeDemo(id, style, first) {
+    var hud = document.getElementById(id), homes = START.slice(), ask = first, said = "", typed = "";
+    function close() { ask = null; draw(); }
+    function move(name) { homes = homes.map(function (h) { return h.name === name ? { name: name, where: HERE } : h; }); said = "Home " + name + " moved here."; close(); }
+    function replace(old, name) { homes = homes.map(function (h) { return h.name === old ? { name: name, where: HERE } : h; }); said = "Home " + old + " replaced by " + name + "."; close(); }
+    function setHome() {
+      var name = (typed.trim() || "home").toLowerCase();
+      said = "";
+      if (homes.some(function (h) { return h.name === name; })) { ask = { kind: "taken", name: name }; }
+      else if (homes.length >= SLOTS) { ask = { kind: "full", name: name }; }
+      else { homes.push({ name: name, where: HERE }); said = "Home " + name + " set."; }
+      typed = ""; draw();
+    }
+    function draw() {
+      hud.innerHTML = "";
+      var t = el("div", "title", "Homes"); t.appendChild(el("span", "", homes.length + " / " + SLOTS)); hud.appendChild(t);
+      homes.forEach(function (h) {
+        var marked = style === "b" && ask && (ask.kind === "full" || ask.name === h.name);
+        var row = el("div", "row" + (marked ? " marked" : ""));
+        row.appendChild(el("span", "icon"));
+        var g = el("div", "grow"); g.appendChild(el("span", "name", h.name)); g.appendChild(el("span", "sub", h.where)); row.appendChild(g);
+        var keys = el("div", "keys");
+        if (style === "b" && ask && ask.kind === "taken" && ask.name === h.name) {
+          keys.appendChild(key("Move here", "gg", function () { move(h.name); }));
+          keys.appendChild(key("Keep", "", close));
+        } else if (style === "b" && ask && ask.kind === "full") {
+          keys.appendChild(key("Replace", "g", function () { replace(h.name, ask.name); }));
+        } else {
+          keys.appendChild(key("Go", "tq"));
+          keys.appendChild(key("Del"));
+        }
+        row.appendChild(keys); hud.appendChild(row);
+      });
+      hud.appendChild(el("div", "said", said));
+      var foot = el("div", "foot");
+      if (ask && style === "c") {
+        foot.className = "foot ask";
+        var q = el("span");
+        if (ask.kind === "taken") {
+          q.appendChild(document.createTextNode("Move ")); q.appendChild(el("b", "", ask.name)); q.appendChild(document.createTextNode(" here?"));
+          foot.appendChild(q);
+          foot.appendChild(key("Move", "gg push", function () { move(ask.name); }));
+        } else {
+          q.appendChild(document.createTextNode("All " + SLOTS + " used. Replace with ")); q.appendChild(el("b", "", ask.name)); q.appendChild(document.createTextNode(":"));
+          foot.appendChild(q);
+          homes.forEach(function (h, i) { foot.appendChild(key(h.name, "g" + (i === 0 ? " push" : ""), function () { replace(h.name, ask.name); })); });
+        }
+        foot.appendChild(key("Keep", "", close));
+      } else if (ask && style === "b" && ask.kind === "full") {
+        foot.className = "foot ask";
+        var p = el("span"); p.appendChild(document.createTextNode("Pick a home to replace with ")); p.appendChild(el("b", "", ask.name));
+        foot.appendChild(p); foot.appendChild(key("Cancel", "push", close));
+      } else {
+        var i = el("input"); i.id = id + "-new"; i.placeholder = "name"; i.setAttribute("aria-label", "Home name"); i.value = typed;
+        i.addEventListener("input", function () { typed = i.value; });
+        i.addEventListener("keydown", function (e) { if (e.key === "Enter") { setHome(); } });
+        foot.appendChild(i); foot.appendChild(key("Set home", "g", setHome));
+        foot.appendChild(key("Ask again", "push", function () { homes = START.slice(); said = ""; ask = first; draw(); }));
+      }
+      hud.appendChild(foot);
+      if (ask && style === "a") {
+        var veil = el("div", "veil"), box = el("div", "box"), k = el("div", "keys");
+        if (ask.kind === "taken") {
+          box.appendChild(el("div", "q", "You already have a home " + ask.name + ". Move it here?"));
+          k.appendChild(key("Yes", "ok", function () { move(ask.name); }));
+        } else {
+          box.appendChild(el("div", "q", "All " + SLOTS + " homes are used. Pick one to replace with " + ask.name + ":"));
+          var pick = el("div", "keys pick");
+          homes.forEach(function (h) { pick.appendChild(key(h.name, "g", function () { replace(h.name, ask.name); })); });
+          box.appendChild(pick);
+        }
+        k.appendChild(key("No", "", close));
+        box.appendChild(k); veil.appendChild(box); hud.appendChild(veil);
+      }
+    }
+    hud.addEventListener("keydown", function (e) { if (e.key === "Escape" && ask) { close(); } });
+    draw();
+  }
+  ["a", "b", "c"].forEach(function (s) {
+    makeDemo(s + "1", s, { kind: "taken", name: "base" });
+    makeDemo(s + "2", s, { kind: "full", name: "tower" });
+  });
+})();
+</script>

@@ -46,6 +46,17 @@ public final class BandService {
                 TeleportActions.setHome(player, arg.isEmpty() ? "home" : arg);
                 open(player);
             }
+            case MOVE_HOME -> {
+                TeleportActions.setHome(player, arg, true);
+                open(player);
+            }
+            case REPLACE_HOME -> {
+                String[] names = arg.split(" ", 2);
+                if (names.length == 2) {
+                    TeleportActions.replaceHome(player, names[0], names[1]);
+                }
+                open(player);
+            }
             case WARP -> TeleportActions.warp(player, arg);
             case TPA -> {
                 TeleportRequests.send(player, arg, false);
