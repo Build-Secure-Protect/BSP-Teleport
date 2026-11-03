@@ -52,6 +52,8 @@ public class AdminScreen extends Screen {
     /** WARPS tab: the warp whose cost is being typed in the bottom strip (B24), or null for the Set warp strip. */
     @Nullable
     private String costWarp;
+    /** D163: the currency picked in the cost strip; a free warp starts on pieces. */
+    private boolean costPieces = true;
     private int scroll;
     private int left, top;
     /** Everything is drawn this many times bigger than vanilla's GUI scale; mouse positions are divided by it. */
@@ -118,6 +120,7 @@ public class AdminScreen extends Screen {
     /** B24: the cost key opens the bottom strip with the warp's cost selected, so typing replaces it. */
     private void openCost(AdminData.WarpRow w) {
         costWarp = w.name();
+        costPieces = w.cost() <= 0 || w.pieces();
         refreshBoxes();
         textBox.setValue(String.valueOf(w.cost()));
         textBox.setHighlightPos(0);
@@ -131,13 +134,16 @@ public class AdminScreen extends Screen {
         refreshBoxes();
     }
 
-    /** An empty box changes nothing; 0 makes the warp free. */
+    /** An empty box keeps the amount (the currency still changes); 0 makes the warp free. */
     private void saveCost() {
-        String value = textBox.getValue().trim();
-        if (!value.isEmpty()) {
-            send(AdminAction.WARP_COST, costWarp + ";" + value);
-        }
+        send(AdminAction.WARP_COST, costWarp + ";" + textBox.getValue().trim() + ";" + (costPieces ? "pieces" : "coins"));
         closeCost();
+    }
+
+    /** A cost as the admin reads it on a key: {@code 250c}, {@code 50,000p}, or Free. */
+    private static String costLabel(int cost, boolean pieces) {
+        return cost <= 0 ? Component.translatable("screen.bsp_teleport.admin.free").getString()
+                : pieces ? String.format(java.util.Locale.ROOT, "%,dp", cost) : cost + "c";
     }
 
     @Override
@@ -418,7 +424,7 @@ public class AdminScreen extends Screen {
                 hits.add(new Hit(left + 11, y, 18, 16, () -> send(AdminAction.WARP_ICON, w.name())));
             }
             // B24: an admin reads the cost on its key; a moderator has no keys, so it stays in the details.
-            String sub = (w.server().equals(data.server()) ? "" : w.server() + "  ") + (data.readOnly() && w.cost() > 0 ? w.cost() + "c  " : "")
+            String sub = (w.server().equals(data.server()) ? "" : w.server() + "  ") + (data.readOnly() && w.cost() > 0 ? costLabel(w.cost(), w.pieces()) + "  " : "")
                     + Component.translatable(w.restricted() ? "screen.bsp_teleport.admin.restricted" : "screen.bsp_teleport.admin.open").getString()
                     + (w.portal() ? "  " + Component.translatable("screen.bsp_teleport.admin.portal").getString() : "");
             int bx = left + W - 14;
@@ -435,8 +441,7 @@ public class AdminScreen extends Screen {
                 }) - 2;
                 bx = button(g, bx, y + 2, "P", w.portal() ? VIO : DIM, w.portal() ? VIO : MUTED, () -> send(AdminAction.WARP_PORTAL, w.name() + ";" + !w.portal())) - 2;
                 bx = button(g, bx, y + 2, w.restricted() ? "R" : "O", w.restricted() ? VIO : DIM, w.restricted() ? VIO : MUTED, () -> send(AdminAction.WARP_RESTRICT, w.name() + ";" + !w.restricted())) - 2;
-                String cost = w.cost() > 0 ? w.cost() + "c" : Component.translatable("screen.bsp_teleport.admin.free").getString();
-                bx = button(g, bx, y + 2, cost, GOLD, GOLD, () -> openCost(w)) - 2;
+                bx = button(g, bx, y + 2, costLabel(w.cost(), w.pieces()), GOLD, GOLD, () -> openCost(w)) - 2;
                 bx = button(g, bx, y + 2, Component.translatable("screen.bsp_teleport.admin.move_here").getString(), DIM, MUTED, () -> send(AdminAction.MOVE_WARP, w.name())) - 2;
             }
             int gx = button(g, bx, y + 2, Component.translatable("screen.bsp_teleport.admin.go").getString(), TQ, TQ, () -> go(AdminAction.GO_WARP, w.name()));
@@ -454,7 +459,17 @@ public class AdminScreen extends Screen {
             textBox.setHint(Component.literal("0"));
             int sx = button(g, left + W - 10, sy + 1, Component.translatable("screen.bsp_teleport.admin.cancel").getString(), DIM, MUTED, this::closeCost) - 3;
             sx = button(g, sx, sy + 1, Component.translatable("screen.bsp_teleport.admin.save").getString(), TQ, TQ, this::saveCost);
-            small(g, clip(Component.translatable("screen.bsp_teleport.admin.cost_help").getString(), sx - (left + 152) - 4), left + 152, sy + 4, MUTED);
+            // D163: what players pay in, bank pieces or coins carried; the lit pill is the one saved.
+            String pieces = Component.translatable("screen.bsp_teleport.admin.pieces").getString();
+            String coins = Component.translatable("screen.bsp_teleport.admin.coins").getString();
+            int px = left + 152 + keyWidth(pieces);
+            button(g, px, sy + 1, pieces, costPieces ? TQ : DIM, costPieces ? TQ : MUTED, () -> costPieces = true);
+            px += 3 + keyWidth(coins);
+            button(g, px, sy + 1, coins, costPieces ? DIM : GOLD, costPieces ? MUTED : GOLD, () -> costPieces = false);
+            int room = sx - (px + 4) - 4;
+            if (room > 24) {
+                small(g, clip(Component.translatable("screen.bsp_teleport.admin.cost_help").getString(), room), px + 4, sy + 4, MUTED);
+            }
             return;
         }
         // Audit: placed in full here, since the warp-rules and TOKENS views move this box too.
@@ -515,7 +530,7 @@ public class AdminScreen extends Screen {
         }
         y += 4;
         int px = left + 10;
-        for (String kind : new String[]{"RANK", "ITEM", "NODE", "COINS", "TOKEN", "TIME"}) {
+        for (String kind : new String[]{"RANK", "ITEM", "NODE", "COINS", "PIECES", "TOKEN", "TIME"}) {
             boolean on = kind.equals(warpRuleKind);
             String label = Component.translatable("screen.bsp_teleport.portal.rule." + kind.toLowerCase()).getString();
             int pw = (int) (font.width(label.toUpperCase()) * 0.75f) + 8;
@@ -536,7 +551,7 @@ public class AdminScreen extends Screen {
         textBox.setHint(Component.translatable("screen.bsp_teleport.portal.rule_count"));
         boolean time = warpRuleKind.equals("TIME");
         nameBox.visible = time || warpRuleKind.equals("RANK") || warpRuleKind.equals("NODE") || warpRuleKind.equals("ITEM");
-        textBox.visible = time || warpRuleKind.equals("ITEM") || warpRuleKind.equals("COINS");
+        textBox.visible = time || warpRuleKind.equals("ITEM") || warpRuleKind.equals("COINS") || warpRuleKind.equals("PIECES");
         if (time) {
             // T82: from and to, one window per Add; a second window joins the warp's TIME rule (D158).
             nameBox.setWidth(44);
@@ -849,8 +864,12 @@ public class AdminScreen extends Screen {
 
     // Pieces
 
+    private int keyWidth(String label) {
+        return (int) (font.width(label.toUpperCase()) * 0.75f) + 8;
+    }
+
     private int button(GuiGraphics g, int rightX, int y, String label, int border, int colour, @Nullable Runnable action) {
-        int w = (int) (font.width(label.toUpperCase()) * 0.75f) + 8;
+        int w = keyWidth(label);
         int x = rightX - w;
         g.fill(x, y, x + w, y + 12, border);
         g.fill(x + 1, y + 1, x + w - 1, y + 11, SLOT);

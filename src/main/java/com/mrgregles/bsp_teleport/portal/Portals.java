@@ -72,6 +72,8 @@ public final class Portals {
     private static final Map<UUID, Map<String, Long>> COOLDOWNS = new HashMap<>();
     /** Where a player just landed on this server: a field there does not fire again until they walk away. */
     private static final Map<UUID, BlockPos> ARRIVED = new HashMap<>();
+    /** Players whose payment for a portal the bank has not answered yet (D163); their field does not fire meanwhile. */
+    private static final Set<UUID> PAYING = new HashSet<>();
     /** Cores whose doors are moving or still have a cell to fill (D60); ticked every tick. */
     private static final Set<PortalCoreBlockEntity> MOTION = new LinkedHashSet<>();
     private static final int WATCH_TICKS = 100;
@@ -164,6 +166,7 @@ public final class Portals {
         COOLDOWNS.remove(player);
         TOLD.remove(player);
         ARRIVED.remove(player);
+        PAYING.remove(player);
     }
 
     /** The core block was broken: its field, doors and row go with it; a linked partner turns unready (D62). */
@@ -554,6 +557,15 @@ public final class Portals {
     /** Where a linked partner lands its players (D56): one block in front of the opening on the core's facing side, feet on the lowest row, facing away. */
     @Nullable
     static Destination exitOf(PortalCoreBlockEntity core) {
+        return sideOf(core, 1);
+    }
+
+    /**
+     * B32: a spot {@code steps} blocks off the opening's middle, feet on its lowest row: positive in front (the side
+     * {@link #exitOf} uses, facing away), negative behind (facing the other way). Null when the frame is not whole.
+     */
+    @Nullable
+    private static Destination sideOf(PortalCoreBlockEntity core, int steps) {
         PortalShape.Result shape = core.shape();
         if (shape == null || !shape.status().frameOk() || core.opening().isEmpty()) {
             return null;
@@ -569,10 +581,11 @@ public final class Portals {
         Direction facing = core.getBlockState().getValue(PortalCoreBlock.FACING);
         Direction normal = facing.getAxis() != (alongX ? Direction.Axis.X : Direction.Axis.Z) ? facing : (alongX ? Direction.SOUTH : Direction.EAST);
         double centre = (minU + maxU + 1) / 2.0;
-        double x = alongX ? centre : shape.fixed() + 0.5 + normal.getStepX();
-        double z = alongX ? shape.fixed() + 0.5 + normal.getStepZ() : centre;
+        double x = alongX ? centre : shape.fixed() + 0.5 + normal.getStepX() * steps;
+        double z = alongX ? shape.fixed() + 0.5 + normal.getStepZ() * steps : centre;
         ServerLevel level = (ServerLevel) core.getLevel();
-        return new Destination(TeleportConfig.serverName(), level.dimension().location().toString(), x, minY, z, normal.toYRot(), 0f, "", -1);
+        float yaw = (steps > 0 ? normal : normal.getOpposite()).toYRot();
+        return new Destination(TeleportConfig.serverName(), level.dimension().location().toString(), x, minY, z, yaw, 0f, "", -1);
     }
 
     // Destinations (D55, D57)
@@ -771,7 +784,8 @@ public final class Portals {
     /** A player stands in a field cell. */
     public static void touched(ServerLevel level, BlockPos pos, ServerPlayer player) {
         PortalCoreBlockEntity core = coreFor(level, pos);
-        if (core == null || PortalChooser.isChoosing(player) || PortalWarmup.isWarming(player) || TeleportService.isDeparting(player)) {
+        if (core == null || PortalChooser.isChoosing(player) || PortalWarmup.isWarming(player) || TeleportService.isDeparting(player)
+                || PAYING.contains(player.getUUID())) {
             return;
         }
         UUID id = player.getUUID();
@@ -1044,6 +1058,71 @@ public final class Portals {
         return fieldAt(player) != null;
     }
 
+    /** B32: tries to step a player out of the field they logged in to, every half second for this many tries. */
+    private static final int STEP_OUT_TRIES = 10;
+
+    /**
+     * B32: a player who logs in standing in a portal's field (they crashed or lost the connection while going through,
+     * or the switch failed and the proxy put them back) is moved out in front of the portal, so they are not left in it
+     * with only the arrival mark between them and the next fire. The front, then behind, then two and three blocks out
+     * on either side, whichever the player fits in: a totem placed at the departure point can block the front, which
+     * left a player unable to step out and caught in a join and leave loop. With nowhere free, this server's spawn.
+     * Runs a little after the login, so a landing or another mod's placement comes first, and again while the core's
+     * chunk is still loading. The move leaves /back alone (B31).
+     */
+    public static void stepOutAfterLogin(ServerPlayer player) {
+        if (standsInFieldBlock(player)) {
+            Scheduler.later(10, () -> stepOut(player, player.blockPosition(), STEP_OUT_TRIES));
+        }
+    }
+
+    private static void stepOut(ServerPlayer player, BlockPos loginAt, int triesLeft) {
+        if (player.hasDisconnected() || player.isRemoved() || player.isDeadOrDying()
+                || player.blockPosition().distSqr(loginAt) > 4 || !standsInFieldBlock(player)) {
+            return; // gone, or something else has moved them already
+        }
+        PortalCoreBlockEntity core = fieldAt(player);
+        if (core == null) {
+            if (triesLeft > 1) {
+                Scheduler.later(10, () -> stepOut(player, loginAt, triesLeft - 1));
+            }
+            return;
+        }
+        String name = player.getGameProfile().getName();
+        for (int steps : new int[]{1, -1, 2, -2, 3, -3}) {
+            Destination spot = sideOf(core, steps);
+            if (spot != null && fits(player, spot)) {
+                BSPTeleport.LOGGER.info("{} logged in inside portal {}; moved {} it", name, core.name(), steps > 0 ? "in front of" : "behind");
+                TeleportService.INSTANCE.place(player, spot);
+                return;
+            }
+        }
+        // Audit: this server's own spot, not /spawn's, which since B35 may be the network spawn on another server.
+        Position spawn = com.mrgregles.bsp_teleport.teleport.NetworkSpawn.localSpot(player.server);
+        BSPTeleport.LOGGER.warn("{} logged in inside portal {} and every spot beside it is blocked; sent to the spawn", name, core.name());
+        if (spawn != null) {
+            TeleportService.INSTANCE.place(player, spawn.toDestination(""));
+        }
+    }
+
+    /** Whether the block at the player's feet or head is a portal field, whether or not its core is loaded yet. */
+    private static boolean standsInFieldBlock(ServerPlayer player) {
+        BlockPos feet = player.blockPosition();
+        return player.level().getBlockState(feet).getBlock() instanceof PortalFieldBlock
+                || player.level().getBlockState(feet.above()).getBlock() instanceof PortalFieldBlock;
+    }
+
+    /** Whether the player, standing, fits at the spot (no block, totem or field in the way). */
+    private static boolean fits(ServerPlayer player, Destination spot) {
+        AABB box = player.getDimensions(net.minecraft.world.entity.Pose.STANDING).makeBoundingBox(spot.x(), spot.y(), spot.z());
+        if (!player.level().noCollision(player, box)) {
+            return false;
+        }
+        BlockPos feet = BlockPos.containing(spot.x(), spot.y(), spot.z());
+        return !(player.level().getBlockState(feet).getBlock() instanceof PortalFieldBlock)
+                && !(player.level().getBlockState(feet.above()).getBlock() instanceof PortalFieldBlock);
+    }
+
     @Nullable
     private static PortalCoreBlockEntity fieldAt(ServerPlayer player) {
         BlockPos feet = player.blockPosition();
@@ -1119,10 +1198,21 @@ public final class Portals {
             PortalWarmup.start(player, core, destination, warmup, hold, entry);
             return;
         }
-        if (!com.mrgregles.bsp_teleport.access.AccessChecks.charge(player, rules)) {
-            hold(player, core, 3);
-            return;
-        }
+        // D163: a PIECES rule is paid at the bank, which answers a moment later on a network; the move waits for it.
+        UUID id = player.getUUID();
+        PAYING.add(id);
+        com.mrgregles.bsp_teleport.access.AccessChecks.charge(player, rules, 0, 0, "Portal " + core.name(), paid -> {
+            PAYING.remove(id);
+            if (paid == null) {
+                hold(player, core, 3);
+                return;
+            }
+            send(core, player, destination, paid);
+        });
+    }
+
+    /** The move through a portal once everything is paid; what was paid goes back when the move does not happen (B34). */
+    private static void send(PortalCoreBlockEntity core, ServerPlayer player, Destination destination, com.mrgregles.bsp_teleport.access.AccessChecks.Paid paid) {
         hold(player, core, core.cooldownSeconds());
         if (!core.arrivalLine().isEmpty() && destination.message().isEmpty()) {
             destination = new Destination(destination.server(), destination.world(), destination.x(), destination.y(), destination.z(), destination.yaw(), destination.pitch(), core.arrivalLine(), destination.protect());
@@ -1130,7 +1220,11 @@ public final class Portals {
         player.displayClientMessage(Component.translatable("message.bsp_teleport.portal.through", core.name()), true);
         if (!TeleportService.INSTANCE.teleport(player, destination)) {
             tell(player, "failed");
+            com.mrgregles.bsp_teleport.access.AccessChecks.refund(player.server, paid, player);
             return;
+        }
+        if (TeleportService.leavesServer(destination)) {
+            com.mrgregles.bsp_teleport.teleport.PaidTrips.watch(player, paid, destination.server(), null);
         }
         if (!destination.crossServer() || destination.server().equals(TeleportConfig.serverName())) {
             ARRIVED.put(player.getUUID(), BlockPos.containing(destination.x(), destination.y(), destination.z()));
@@ -1296,5 +1390,6 @@ public final class Portals {
         TOLD.clear();
         COOLDOWNS.clear();
         ARRIVED.clear();
+        PAYING.clear();
     }
 }

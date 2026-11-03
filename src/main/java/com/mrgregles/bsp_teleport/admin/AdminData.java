@@ -14,7 +14,8 @@ public record AdminData(String server, boolean readOnly, String storage, String 
     public record Setting(String id, String value, String kind, int min, int max, int step) {
     }
 
-    public record WarpRow(String name, String server, int cost, boolean restricted, String icon, boolean portal, String rules) {
+    /** @param pieces D163: the cost is paid in bank pieces, else in coins */
+    public record WarpRow(String name, String server, int cost, boolean restricted, String icon, boolean portal, String rules, boolean pieces) {
     }
 
     /** One Access Token's assignment (D74); kind and target empty when free. */
@@ -47,6 +48,7 @@ public record AdminData(String server, boolean readOnly, String storage, String 
             buf.writeBoolean(w.restricted());
             buf.writeBoolean(w.portal());
             buf.writeUtf(w.rules());
+            buf.writeBoolean(w.pieces());
         }
         buf.writeVarInt(servers.size());
         for (ServerRow s : servers) {
@@ -94,7 +96,8 @@ public record AdminData(String server, boolean readOnly, String storage, String 
             String wn = buf.readUtf(), ws = buf.readUtf(), wi = buf.readUtf();
             int cost = buf.readVarInt();
             boolean restricted = buf.readBoolean(), portal = buf.readBoolean();
-            warps.add(new WarpRow(wn, ws, cost, restricted, wi, portal, buf.readUtf()));
+            String rules = buf.readUtf();
+            warps.add(new WarpRow(wn, ws, cost, restricted, wi, portal, rules, buf.readBoolean()));
         }
         n = buf.readVarInt();
         List<ServerRow> servers = new ArrayList<>(n);

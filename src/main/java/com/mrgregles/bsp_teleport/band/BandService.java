@@ -124,26 +124,32 @@ public final class BandService {
         for (Warp w : TeleportActions.usableWarps(player)) {
             Position p = w.position();
             warps.add(new BandData.WarpEntry(w.name(), p.server(), p.world(), (int) Math.floor(p.x()), (int) Math.floor(p.y()), (int) Math.floor(p.z()),
-                    w.cost(), raid && nearRaid(player, p, raidDistance), w.icon(),
-                    com.mrgregles.bsp_teleport.access.AccessChecks.opensAt(com.mrgregles.bsp_teleport.access.AccessRule.parseList(w.rules()))));
+                    TeleportActions.costFor(player, w), raid && nearRaid(player, p, raidDistance), w.icon(),
+                    com.mrgregles.bsp_teleport.access.AccessChecks.opensAt(com.mrgregles.bsp_teleport.access.AccessRule.parseList(w.rules())),
+                    w.pieces(), TeleportActions.affords(player, w)));
         }
+        // B27: only teammates and admins see where a player is; for the rest the server is sent empty, and the list
+        // is sorted by name so its order does not tell who is on this server either.
+        java.util.function.Predicate<String> seesServer = seesServerOf(player);
         List<BandData.PlayerEntry> players = new ArrayList<>();
         for (ServerPlayer other : player.server.getPlayerList().getPlayers()) {
             if (other != player) {
-                players.add(new BandData.PlayerEntry(other.getGameProfile().getName(), TeleportConfig.serverName()));
+                String name = other.getGameProfile().getName();
+                players.add(new BandData.PlayerEntry(name, seesServer.test(name) ? TeleportConfig.serverName() : ""));
             }
         }
         for (String name : PlayerDirectory.allNames(player.server)) {
             String server = PlayerDirectory.serverOf(name);
             if (server != null && players.stream().noneMatch(e -> e.name().equalsIgnoreCase(name))) {
-                players.add(new BandData.PlayerEntry(name, server));
+                players.add(new BandData.PlayerEntry(name, seesServer.test(name) ? server : ""));
             }
         }
+        players.sort(java.util.Comparator.comparing(BandData.PlayerEntry::name, String.CASE_INSENSITIVE_ORDER));
         List<String> rtpServers = new ArrayList<>(PlayerDirectory.servers());
         rtpServers.remove(TeleportConfig.serverName());
 
         BandData.RequestEntry request = TeleportRequests.peek(player).map(r ->
-                new BandData.RequestEntry(r.fromName(), r.fromServer(), r.here(), r.secondsLeft())).orElse(null);
+                new BandData.RequestEntry(r.fromName(), seesServer.test(r.fromName()) ? r.fromServer() : "", r.here(), r.secondsLeft())).orElse(null);
         BandData.TeamEntry team = team(player, raidDistance);
 
         return new BandData(TeleportConfig.serverName(), slots, mine.size(), BspCore.extraHomeSlots(player), BspCore.swiftTravelLevel(player),
@@ -153,6 +159,16 @@ public final class BandService {
                 homes, warps, players, rtpServers, request, com.mrgregles.bsp_teleport.admin.AdminService.mayOpen(player),
                 com.mrgregles.bsp_teleport.access.AccessService.enabled(), com.mrgregles.bsp_teleport.access.AccessService.bandEntries(player),
                 false, team);
+    }
+
+    /** B27: whose server this player may see: an admin everyone's, anyone else only their teammates'. */
+    private static java.util.function.Predicate<String> seesServerOf(ServerPlayer player) {
+        if (com.mrgregles.bsp_teleport.perm.Permissions.isAdmin(player)) {
+            return name -> true;
+        }
+        java.util.Set<String> mates = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        BspCore.teamOf(player.server, player.getUUID()).ifPresent(t -> BspCore.teamMembers(player.server, t.id()).forEach(m -> mates.add(m.name())));
+        return mates::contains;
     }
 
     /** The TEAM tab's data (D92): the player's team and each teammate's state, or null when they are in none. */

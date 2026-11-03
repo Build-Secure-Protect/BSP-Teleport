@@ -20,6 +20,15 @@ public final class AdminActions {
     private AdminActions() {
     }
 
+    /**
+     * B28: the admin's spot with this server named, for a move run on another server. {@code toDestination} leaves a
+     * local spot's server empty, and the other server read empty as itself: the player went to these coordinates there.
+     */
+    private static Destination hereForOthers(ServerPlayer admin) {
+        Position p = Position.of(admin);
+        return new Destination(p.server(), p.world(), p.x(), p.y(), p.z(), p.yaw(), p.pitch(), "");
+    }
+
     /** {@code /tpall}: "here" = this server, "all" = every server, else one server's name. Everyone comes to the admin. */
     public static boolean bringAll(ServerPlayer admin, String scope) {
         Destination here = Position.of(admin).toDestination("");
@@ -49,7 +58,7 @@ public final class AdminActions {
             if (server != null && !PlayerDirectory.isOnline(server)) {
                 return fail(admin, "admin.server_offline", server);
             }
-            Messenger.moveAll(server, here, by, by);
+            Messenger.moveAll(server, hereForOthers(admin), by, by);
             tell(admin, "admin.moved_all_remote", server == null ? "every server" : server);
         }
         tell(admin, "admin.moved_all", moved);
@@ -98,7 +107,7 @@ public final class AdminActions {
         if (PlayerDirectory.serverOf(name) == null) {
             return fail(admin, "request.unknown_player", name);
         }
-        Messenger.forceMove(name, here, admin.getGameProfile().getName(), "");
+        Messenger.forceMove(name, hereForOthers(admin), admin.getGameProfile().getName(), "");
         tell(admin, "admin.brought", Component.literal(name));
         return true;
     }

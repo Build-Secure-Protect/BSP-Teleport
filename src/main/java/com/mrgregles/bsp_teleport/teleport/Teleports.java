@@ -25,7 +25,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 
 /**
  * Player teleports: the warm-up, the cancel rules, the cooldown and {@code /back}.
@@ -38,13 +41,39 @@ public final class Teleports {
     private static final Map<UUID, Position> BACK = new HashMap<>();
     /** The last teleport refused for a cooldown, so {@code /tpnow} can pay for it. */
     private static final Map<UUID, Pending> REFUSED = new HashMap<>();
+    /**
+     * B37: a refused {@code /rtp}'s search, run again by {@code /tpnow} instead of the stand-in spot in {@link #REFUSED}
+     * (the player's own, kept only so the cooldown could be explained).
+     */
+    private static final Map<UUID, BooleanSupplier> RETRY = new HashMap<>();
+
+    /**
+     * {@code /tpnow} paid for skipping the cooldown of the next teleport of this kind (B34, B37): that start skips it and
+     * takes the price with its move. Short-lived, because a remote {@code /rtp} answers a moment later or not at all.
+     */
+    private record Skip(TeleportKind kind, int price, long until) {
+    }
+
+    private static final Map<UUID, Skip> SKIP_NEXT = new HashMap<>();
+    private static final long SKIP_MS = 30_000;
+    /** Players whose warm-up has ended and whose payment the bank has not answered yet (D163). */
+    private static final Set<UUID> PAYING = new HashSet<>();
+
+    /**
+     * Runs just before the move (charging a warp's cost) and answers through {@code then}, perhaps a moment later, with
+     * what was paid; null aborts the teleport. A move that then fails gives it back (B34).
+     */
+    @FunctionalInterface
+    public interface BeforeMove {
+        void run(Consumer<com.mrgregles.bsp_teleport.access.AccessChecks.Paid> then);
+    }
 
     /**
      * @param label      what the player is going to, for the arrival message
      * @param beforeMove runs just before the move (charging a warp's cost); false aborts the teleport
      */
     private record Pending(ServerPlayer player, Destination destination, Component label, TeleportKind kind,
-                           @Nullable BooleanSupplier beforeMove, Vec3 start, int ticksLeft) {
+                           @Nullable BeforeMove beforeMove, Vec3 start, int ticksLeft) {
         Pending tick() {
             return new Pending(player, destination, label, kind, beforeMove, start, ticksLeft - 1);
         }
@@ -54,19 +83,25 @@ public final class Teleports {
     }
 
     /** Starts a teleport for the player, with warm-up and cooldown unless they may skip them. */
-    public static boolean start(ServerPlayer player, Destination destination, Component label, TeleportKind kind, @Nullable BooleanSupplier beforeMove) {
+    public static boolean start(ServerPlayer player, Destination destination, Component label, TeleportKind kind, @Nullable BeforeMove beforeMove) {
         UUID id = player.getUUID();
         if (player.isDeadOrDying() || player.isRemoved()) {
             return false;
         }
-        if (PENDING.containsKey(id)) {
+        if (PENDING.containsKey(id) || PAYING.contains(id)) {
             tell(player, "already_waiting");
             return false;
         }
-        long left = cooldownLeft(player);
+        Skip skip = skipFor(player, kind);
+        if (skip != null) {
+            SKIP_NEXT.remove(id);
+            beforeMove = withPrice(player, skip.price(), beforeMove);
+        }
+        long left = skip != null ? 0 : cooldownLeft(player);
         if (left > 0) {
             int price = TeleportConfig.getOr(TeleportConfig.SKIP_COOLDOWN_COINS, 0);
             if (price > 0) {
+                RETRY.remove(id);
                 REFUSED.put(id, new Pending(player, destination, label, kind, beforeMove, player.position(), 0));
                 tell(player, "cooldown_pay", left, price);
             } else {
@@ -138,42 +173,93 @@ public final class Teleports {
         return true;
     }
 
-    /** {@code /tpnow}: pays the configured coins and runs the teleport the cooldown refused. */
+    /**
+     * B37: {@code /rtp} refused before its search (busy, or cooling down): the engine explains with a stand-in move to the
+     * player's own spot, and a {@code /tpnow} after it runs {@code search} again rather than paying to stand still.
+     */
+    public static boolean refuseRandom(ServerPlayer player, BooleanSupplier search) {
+        UUID id = player.getUUID();
+        Pending before = REFUSED.get(id);
+        boolean started = start(player, Position.of(player).toDestination(""), Component.empty(), TeleportKind.RANDOM, null);
+        Pending after = REFUSED.get(id);
+        if (after != null && after != before) {
+            RETRY.put(id, search);
+        }
+        return started;
+    }
+
+    /** Whether the cooldown stops a teleport of this kind now, which a paid {@code /tpnow} lifts (B37). */
+    public static boolean cooldownBlocks(ServerPlayer player, TeleportKind kind) {
+        return cooldownLeft(player) > 0 && skipFor(player, kind) == null;
+    }
+
+    @Nullable
+    private static Skip skipFor(ServerPlayer player, TeleportKind kind) {
+        Skip skip = SKIP_NEXT.get(player.getUUID());
+        if (skip == null || skip.kind() != kind) {
+            return null;
+        }
+        if (skip.until() < System.currentTimeMillis()) {
+            SKIP_NEXT.remove(player.getUUID());
+            return null;
+        }
+        return skip;
+    }
+
+    /** {@code /tpnow}: runs the teleport the cooldown refused, the price to be taken with its move. */
     public static boolean payAndRetry(ServerPlayer player) {
         int price = TeleportConfig.getOr(TeleportConfig.SKIP_COOLDOWN_COINS, 0);
-        Pending refused = REFUSED.get(player.getUUID());
+        UUID id = player.getUUID();
+        Pending refused = REFUSED.get(id);
         if (price <= 0 || refused == null) {
             tell(player, "tpnow.nothing");
             return false;
         }
+        BooleanSupplier retry = RETRY.get(id);
         if (cooldownLeft(player) <= 0) {
-            REFUSED.remove(player.getUUID());
-            return start(player, refused.destination(), refused.label(), refused.kind(), refused.beforeMove());
+            REFUSED.remove(id);
+            RETRY.remove(id);
+            return retry != null ? retry.getAsBoolean() : start(player, refused.destination(), refused.label(), refused.kind(), refused.beforeMove());
         }
         if (BspCore.coins(player) < price) {
             tell(player, "tpnow.cannot_afford", price);
             return false;
         }
-        // Audit: pay only once the teleport has really started; a move refused by any later check costs nothing.
-        REFUSED.remove(player.getUUID());
-        Long until = COOLDOWN_UNTIL.remove(player.getUUID());
-        if (!start(player, refused.destination(), refused.label(), refused.kind(), refused.beforeMove())) {
-            if (until != null) {
-                COOLDOWN_UNTIL.put(player.getUUID(), until);
-            }
-            return false;
+        // B34: the price is taken with the move, at the end of the warm-up, with whatever the move itself costs: a
+        // warm-up cancelled or a move refused or failed costs nothing, and the cooldown stays until a move happens.
+        REFUSED.remove(id);
+        RETRY.remove(id);
+        SKIP_NEXT.put(id, new Skip(refused.kind(), price, System.currentTimeMillis() + SKIP_MS));
+        boolean started = retry != null ? retry.getAsBoolean() : start(player, refused.destination(), refused.label(), refused.kind(), refused.beforeMove());
+        if (!started) {
+            SKIP_NEXT.remove(id); // refused, or /rtp found no spot: nothing is owed, and a later move is not skipped
         }
-        if (!BspCore.pay(player, price)) {
-            PENDING.remove(player.getUUID());
-            if (until != null) {
-                COOLDOWN_UNTIL.put(player.getUUID(), until);
+        return started;
+    }
+
+    /** {@code inner} (what the move itself costs), then {@code price} coins on top; all of it, or none of it. */
+    private static BeforeMove withPrice(ServerPlayer player, int price, @Nullable BeforeMove inner) {
+        return then -> {
+            Consumer<com.mrgregles.bsp_teleport.access.AccessChecks.Paid> afterInner = paid -> {
+                if (paid == null) {
+                    then.accept(null);
+                    return;
+                }
+                if (!BspCore.pay(player, price)) {
+                    com.mrgregles.bsp_teleport.access.AccessChecks.refund(player.server, paid, player);
+                    tell(player, "tpnow.cannot_afford", price);
+                    then.accept(null);
+                    return;
+                }
+                tell(player, "tpnow.paid", price);
+                then.accept(paid.plusCoins(price));
+            };
+            if (inner == null) {
+                afterInner.accept(new com.mrgregles.bsp_teleport.access.AccessChecks.Paid(player.getUUID(), "Cooldown skip", 0, 0, java.util.List.of()));
+            } else {
+                inner.run(afterInner);
             }
-            tell(player, "tpnow.cannot_afford", price);
-            return false;
-        }
-        Storage.cooldownSet(player.getUUID(), 0);
-        tell(player, "tpnow.paid", price);
-        return true;
+        };
     }
 
     public static boolean cancel(ServerPlayer player, String reasonKey) {
@@ -188,6 +274,12 @@ public final class Teleports {
 
     public static boolean isWaiting(ServerPlayer player) {
         return PENDING.containsKey(player.getUUID());
+    }
+
+    /** Takes back a cooldown written for a move that did not happen. */
+    static void clearCooldown(UUID id) {
+        COOLDOWN_UNTIL.remove(id);
+        Storage.cooldownSet(id, 0);
     }
 
     /** Seconds left on the player's cooldown, 0 when none. */
@@ -232,7 +324,25 @@ public final class Teleports {
         if (player.isDeadOrDying() || player.hasDisconnected()) {
             return;
         }
-        if (pending.beforeMove() != null && !pending.beforeMove().getAsBoolean()) {
+        if (pending.beforeMove() == null) {
+            move(pending, null);
+            return;
+        }
+        UUID id = player.getUUID();
+        PAYING.add(id);
+        pending.beforeMove().run(paid -> {
+            PAYING.remove(id);
+            if (paid != null) {
+                move(pending, paid);
+            }
+        });
+    }
+
+    /** The move itself; {@code paid} goes back when it fails here, or is watched until a move to another server is made (B34). */
+    private static void move(Pending pending, @Nullable com.mrgregles.bsp_teleport.access.AccessChecks.Paid paid) {
+        ServerPlayer player = pending.player();
+        if (player.isDeadOrDying() || player.hasDisconnected()) {
+            com.mrgregles.bsp_teleport.access.AccessChecks.refund(player.server, paid, player);
             return;
         }
         // T80: the cooldown is written before the move, so a cross-server landing's login read (queued after it on the
@@ -245,11 +355,16 @@ public final class Teleports {
         }
         if (!BspTeleportApi.get().teleport(player, pending.destination())) {
             if (cooldown > 0) {
-                COOLDOWN_UNTIL.remove(player.getUUID());
-                Storage.cooldownSet(player.getUUID(), 0);
+                clearCooldown(player.getUUID());
             }
             tell(player, "failed");
+            com.mrgregles.bsp_teleport.access.AccessChecks.refund(player.server, paid, player);
             return;
+        }
+        if (paid != null && TeleportService.leavesServer(pending.destination())) {
+            // B34: the switch is still to come; a switch that does not happen gives the payment and the cooldown back.
+            UUID id = player.getUUID();
+            PaidTrips.watch(player, paid, pending.destination().server(), cooldown > 0 ? () -> clearCooldown(id) : null);
         }
         if (!pending.destination().crossServer()) {
             player.displayClientMessage(Component.translatable("message.bsp_teleport.teleported", pending.label()), false);
@@ -318,6 +433,9 @@ public final class Teleports {
         COOLDOWN_UNTIL.values().removeIf(until -> until < now);
         com.mrgregles.bsp_teleport.portal.Portals.playerLeft(event.getEntity().getUUID());
         REFUSED.remove(event.getEntity().getUUID());
+        RETRY.remove(event.getEntity().getUUID());
+        SKIP_NEXT.remove(event.getEntity().getUUID());
+        PAYING.remove(event.getEntity().getUUID());
     }
 
     private static void tell(ServerPlayer player, String key, Object... args) {

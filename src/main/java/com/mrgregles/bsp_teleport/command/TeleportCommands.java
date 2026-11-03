@@ -356,7 +356,7 @@ public final class TeleportCommands {
                 : old.withPosition(Position.of(player)).withCost(cost).withRestricted(restricted);
         TeleportData.get(player.server).setWarp(warp);
         Storage.warpSaved(warp);
-        tell(player, "warp.set", warp.name(), restricted ? Permissions.warpNode(warp.name()) : "-", cost);
+        tell(player, "warp.set", warp.name(), restricted ? Permissions.warpNode(warp.name()) : "-", cost <= 0 ? "free" : TeleportActions.costText(warp, cost));
         return 1;
     }
 

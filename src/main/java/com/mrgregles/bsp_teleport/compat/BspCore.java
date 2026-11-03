@@ -1,6 +1,7 @@
 package com.mrgregles.bsp_teleport.compat;
 
 import com.mrgregles.bsp_core.BSPConfig;
+import com.mrgregles.bsp_core.api.BspBank;
 import com.mrgregles.bsp_core.api.BspBoards;
 import com.mrgregles.bsp_core.api.BspPlayers;
 import com.mrgregles.bsp_core.api.BspTeams;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -145,6 +147,63 @@ public final class BspCore {
     /** Takes coins worth {@code value} from the player; false when they cannot pay. */
     public static boolean pay(ServerPlayer player, int value) {
         return value <= 0 || BspPlayers.payCoins(player, value);
+    }
+
+    // Shatter Pieces, the bank (D163)
+
+    /** Who the bank's log names as the other side of a teleport payment. */
+    private static final String BANK_PARTY = "BSP Teleport";
+
+    /** The player's bank balance in pieces (on a network: the last value this server read). */
+    public static long pieces(ServerPlayer player) {
+        return BspBank.balance(player.server, player.getUUID());
+    }
+
+    /**
+     * Takes pieces from the player's bank. {@code then} runs on the server thread with true when they were taken: at once
+     * on a single server, once the database has answered on a network. Nothing to pay is a success.
+     */
+    public static void payPieces(ServerPlayer player, long pieces, String reason, Consumer<Boolean> then) {
+        if (pieces <= 0) {
+            then.accept(true);
+            return;
+        }
+        BspBank.charge(player.server, player.getUUID(), pieces, BANK_PARTY, reason, then);
+    }
+
+    /** Gives pieces back (a move that could not go on after the bank was paid); works while they are offline. */
+    public static void refundPieces(net.minecraft.server.MinecraftServer server, UUID player, long pieces, String reason) {
+        // B34: also used for coins turned into pieces, so the amount may pass an int.
+        if (pieces > 0) {
+            BspBank.credit(server, player, pieces, BANK_PARTY, reason, ok -> {
+                if (!ok) {
+                    BSPTeleport.LOGGER.warn("Could not give {} pieces back to {} ({})", pieces, player, reason);
+                }
+            });
+        }
+    }
+
+    /** Gives coins worth {@code value} Copper back into the inventory (B34: a move that did not happen). */
+    public static void giveCoins(ServerPlayer player, int value) {
+        if (value > 0) {
+            BspPlayers.giveCoins(player, value);
+        }
+    }
+
+    /** What coins worth {@code copper} turn into at the bank, for a refund to a player who is no longer here (B34). */
+    public static long coinsAsPieces(int copper) {
+        long rate;
+        try {
+            rate = BSPConfig.getOr(BSPConfig.BANK_PIECES_PER_COPPER, 1000);
+        } catch (LinkageError e) {
+            rate = 1000; // an older BSP-Core without the setting
+        }
+        return (long) Math.max(0, copper) * Math.max(1, rate);
+    }
+
+    /** An amount of pieces as players read it, for example {@code 12,500 pieces}. */
+    public static String piecesText(long pieces) {
+        return BspBank.format(pieces);
     }
 
     // Totem upgrades (R3): one home slot per Extra Homes level, 25 % off the cooldown per Swift Travel level

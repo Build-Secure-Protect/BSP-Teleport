@@ -1,0 +1,193 @@
+<title>Cost Currency Keys</title>
+<style>
+/* Layout: what pieces and coins are, then three concept panels (A, B, C), each a working copy of the WARPS tab and the portal's ACCESS rules in the Holo HUD look. */
+:root {
+  --bg: #0B0F14; --panel: #10151C; --inset: #0C0E12; --line: #2A2F3A; --hint: #5A6272;
+  --accent: #19D3B0; --violet: #B58CFF; --gold: #FFD23A; --bad: #FF6B5C; --ok: #8FE04A; --bank: #6FB7FF;
+  --text: #E6EAF2; --muted: #9AA3B5;
+  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif; --mono: Menlo, Monaco, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--sans); margin: 0; padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 28px; margin: 0 0 6px; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; }
+p, li { color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 72ch; }
+.money { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 28px; }
+.money div { border: 1px solid var(--line); background: var(--panel); padding: 8px 12px; font-size: 13px; color: var(--muted); flex: 1 1 260px; min-width: 0; line-height: 1.45; }
+.money b { color: var(--text); }
+.sheets { display: flex; flex-wrap: wrap; gap: 28px 20px; align-items: flex-start; }
+.sheet { flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.sheet p { margin: 0; }
+.hud { background: var(--panel); border: 2px solid var(--violet); padding: 12px 14px 14px; font-size: 13px; display: flex; flex-direction: column; gap: 6px; }
+.title { font-weight: bold; letter-spacing: 2px; text-transform: uppercase; font-size: 13px; color: var(--violet); }
+.title.sub2 { margin-top: 10px; }
+.row { border: 1px solid var(--line); background: var(--inset); padding: 5px 8px; display: flex; align-items: center; gap: 8px; min-height: 30px; flex-wrap: wrap; }
+.grow { flex: 1 1 90px; min-width: 0; }
+.name { font-weight: bold; }
+.sub { color: var(--muted); font-size: 11px; display: block; }
+.keys { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+.key { font: inherit; border: 1px solid var(--line); color: var(--muted); background: var(--inset); font-size: 10px; font-weight: bold; letter-spacing: 1px; padding: 3px 6px; text-transform: uppercase; white-space: nowrap; }
+button.key { cursor: pointer; }
+button.key:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.key.tq { border-color: var(--accent); color: var(--accent); }
+.key.r { border-color: var(--bad); color: var(--bad); }
+.key.g { border-color: var(--gold); color: var(--gold); }
+.key.b { border-color: var(--bank); color: var(--bank); }
+.key.on { background: var(--accent); color: var(--inset); border-color: var(--accent); }
+input { font-family: var(--mono); font-size: 11px; background: var(--inset); color: var(--text); border: 1px solid var(--line); padding: 3px 6px; width: 9ch; }
+.strip { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-top: 6px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); }
+.strip .gold { color: var(--gold); font-weight: bold; letter-spacing: 1px; text-transform: uppercase; font-size: 10px; }
+.push { margin-left: auto; }
+.rule { font-family: var(--mono); font-size: 11px; }
+.facts { margin: 0; padding-left: 18px; }
+.facts li { font-size: 13px; }
+</style>
+
+<h1>Paying for warps and portals in pieces or coins</h1>
+<p>Today every warp cost and every cost rule on a portal is paid in Shatter Coins from the inventory. Each option below adds pieces from the bank. Press the keys to try them.</p>
+
+<div class="money">
+  <div><b>Coins</b> are Shatter Coin items the player carries. Amounts are in Copper value, so <span class="rule">250c</span> means coins worth 250 Copper.</div>
+  <div><b>Pieces</b> are the BSP-Core bank balance. One Copper converts to 1,000 pieces by default, so the same price in pieces is a much bigger number.</div>
+</div>
+
+<div class="sheets">
+  <section class="sheet">
+    <h2>A: Pick the money in the cost strip</h2>
+    <div class="hud">
+      <div class="title">Warps</div>
+      <div class="row">
+        <div class="grow"><span class="name">market</span><span class="sub">Open</span></div>
+        <div class="keys">
+          <span class="key tq">Go</span><span class="key">Move here</span>
+          <button class="key g" id="a-key" type="button">50,000p</button>
+          <span class="key">O</span><span class="key">P</span><span class="key">Rules</span><span class="key r">Del</span>
+        </div>
+      </div>
+      <div class="strip" id="a-edit" hidden>
+        <span class="gold">Cost of market</span>
+        <input id="a-box" inputmode="numeric" aria-label="Cost of market">
+        <button class="key" id="a-pieces" type="button">Pieces</button>
+        <button class="key" id="a-coins" type="button">Coins</button>
+        <button class="key tq push" id="a-save" type="button">Save</button>
+        <button class="key" id="a-cancel" type="button">Cancel</button>
+      </div>
+      <div class="title sub2">Portal access rules</div>
+      <div class="row"><span class="grow rule">pieces 2000</span><span class="key r">Del</span></div>
+      <div class="keys">
+        <span class="key">Rank</span><span class="key">Item</span><span class="key">Node</span><span class="key g">Coins</span><span class="key b on">Pieces</span><span class="key">Token</span><span class="key">Time</span>
+      </div>
+    </div>
+    <ul class="facts">
+      <li>The cost key opens the strip from last time, with two pills for the money. The key then reads 250c or 50,000p.</li>
+      <li>Portal and warp rules get a PIECES rule beside COINS. Old COINS rules keep working.</li>
+      <li>One extra press for the admin, and nothing to learn: the pill that is lit is what players pay.</li>
+    </ul>
+  </section>
+
+  <section class="sheet">
+    <h2>B: A money key on the row</h2>
+    <div class="hud">
+      <div class="title">Warps</div>
+      <div class="row">
+        <div class="grow"><span class="name">market</span><span class="sub">Open</span></div>
+        <div class="keys">
+          <span class="key tq">Go</span><span class="key">Move here</span>
+          <span class="key g" id="b-amount">250</span>
+          <button class="key b" id="b-flip" type="button">Pieces</button>
+          <span class="key">O</span><span class="key">P</span><span class="key">Rules</span><span class="key r">Del</span>
+        </div>
+      </div>
+      <div class="title sub2">Portal access rules</div>
+      <div class="row"><span class="grow rule" id="b-rule">cost 2000 pieces</span><span class="key r">Del</span></div>
+      <div class="keys">
+        <span class="key">Rank</span><span class="key">Item</span><span class="key">Node</span><span class="key on">Cost</span><span class="key">Token</span><span class="key">Time</span>
+      </div>
+      <div class="strip">
+        <input value="2000" aria-label="Rule amount" id="b-rbox">
+        <button class="key b" id="b-rflip" type="button">Pieces</button>
+        <span class="key tq push">Add</span>
+      </div>
+    </div>
+    <ul class="facts">
+      <li>A second key on the row flips the money with one press, Pieces to Coins and back.</li>
+      <li>The COINS rule becomes a COST rule with the same flip key next to its amount.</li>
+      <li>Fastest to change, but the row loses about 5 more characters of name room, down to about 11.</li>
+    </ul>
+  </section>
+
+  <section class="sheet">
+    <h2>C: One switch for the whole network</h2>
+    <div class="hud">
+      <div class="title">Settings</div>
+      <div class="row">
+        <div class="grow"><span class="name">Warp and portal costs paid in</span><span class="sub">Every warp cost and every cost rule</span></div>
+        <div class="keys">
+          <button class="key on" id="c-pieces" type="button">Pieces</button>
+          <button class="key" id="c-coins" type="button">Coins</button>
+        </div>
+      </div>
+      <div class="title sub2">Warps</div>
+      <div class="row">
+        <div class="grow"><span class="name">market</span><span class="sub">Open</span></div>
+        <div class="keys">
+          <span class="key tq">Go</span><span class="key">Move here</span>
+          <span class="key g" id="c-key">50,000p</span>
+          <span class="key">O</span><span class="key">P</span><span class="key">Rules</span><span class="key r">Del</span>
+        </div>
+      </div>
+    </div>
+    <ul class="facts">
+      <li>One setting on the SETTINGS tab, saved to the network config, decides the money for every cost.</li>
+      <li>Nothing changes on the warp row or the rules screen, except the letter after the amount.</li>
+      <li>No mixing: one warp in coins and another in pieces is not possible.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+(function () {
+  function $(id) { return document.getElementById(id); }
+  function fmt(n, pieces) { return n > 0 ? n.toLocaleString("en-GB") + (pieces ? "p" : "c") : "Free"; }
+
+  var a = { n: 50000, pieces: true }, aPick = true;
+  function aPills() { $("a-pieces").classList.toggle("on", aPick); $("a-coins").classList.toggle("on", !aPick); }
+  function aOpen(open) {
+    $("a-edit").hidden = !open;
+    if (open) { aPick = a.pieces; aPills(); $("a-box").value = a.n; $("a-box").focus(); $("a-box").select(); }
+  }
+  function aSave() {
+    var n = parseInt($("a-box").value, 10);
+    if (!isNaN(n) && n >= 0) { a.n = n; a.pieces = aPick; }
+    $("a-key").textContent = fmt(a.n, a.pieces);
+    aOpen(false);
+  }
+  $("a-key").addEventListener("click", function () { aOpen(true); });
+  $("a-pieces").addEventListener("click", function () { aPick = true; aPills(); });
+  $("a-coins").addEventListener("click", function () { aPick = false; aPills(); });
+  $("a-save").addEventListener("click", aSave);
+  $("a-cancel").addEventListener("click", function () { aOpen(false); });
+  $("a-box").addEventListener("keydown", function (e) { if (e.key === "Enter") { aSave(); } });
+
+  var bPieces = true, bRule = true;
+  function bDraw() {
+    $("b-flip").textContent = bPieces ? "Pieces" : "Coins";
+    $("b-flip").className = "key " + (bPieces ? "b" : "g");
+    $("b-rflip").textContent = bRule ? "Pieces" : "Coins";
+    $("b-rflip").className = "key " + (bRule ? "b" : "g");
+    $("b-rule").textContent = "cost " + ($("b-rbox").value || "0") + (bRule ? " pieces" : " coins");
+  }
+  $("b-flip").addEventListener("click", function () { bPieces = !bPieces; bDraw(); });
+  $("b-rflip").addEventListener("click", function () { bRule = !bRule; bDraw(); });
+  $("b-rbox").addEventListener("input", bDraw);
+
+  function cSet(pieces) {
+    $("c-pieces").classList.toggle("on", pieces);
+    $("c-coins").classList.toggle("on", !pieces);
+    $("c-key").textContent = pieces ? "50,000p" : "50c";
+  }
+  $("c-pieces").addEventListener("click", function () { cSet(true); });
+  $("c-coins").addEventListener("click", function () { cSet(false); });
+})();
+</script>

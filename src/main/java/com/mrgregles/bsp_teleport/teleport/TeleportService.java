@@ -64,6 +64,10 @@ public final class TeleportService implements BspTeleportApi {
             BSPTeleport.LOGGER.info("{} logged in inside a portal's field; it will not fire for them until they step off",
                     player.getGameProfile().getName());
         }
+        // B32: and they are moved out in front of it.
+        if (event.getEntity() instanceof ServerPlayer player) {
+            com.mrgregles.bsp_teleport.portal.Portals.stepOutAfterLogin(player);
+        }
     }
 
     public static void onPlayerLoggedOut(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
@@ -101,20 +105,58 @@ public final class TeleportService implements BspTeleportApi {
         return true;
     }
 
+    /** Players being moved by {@link #place}: their move leaves /back as it is. */
+    private static final Set<UUID> PLACING = new HashSet<>();
+
+    /**
+     * B31: a move the server makes on its own, not one the player or an admin asked for: the respawn fix (D143), the
+     * first placement on a server or the network (D141), an access bounce. /back is left alone, so it still holds the
+     * death spot or the last real departure. Before, the respawn fix saved the spot vanilla had respawned the player at
+     * (in the air above the world spawn), and the band's Back took them there.
+     */
+    public boolean place(ServerPlayer player, Destination destination) {
+        PLACING.add(player.getUUID());
+        try {
+            return teleport(player, destination);
+        } finally {
+            PLACING.remove(player.getUUID());
+        }
+    }
+
+    /** {@link #sendToServer} as a {@link #place}. */
+    public boolean placeOnServer(ServerPlayer player, String server) {
+        PLACING.add(player.getUUID());
+        try {
+            return sendToServer(player, server);
+        } finally {
+            PLACING.remove(player.getUUID());
+        }
+    }
+
     @Override
     public boolean teleport(ServerPlayer player, Destination destination) {
         if (player.isDeadOrDying() || player.hasDisconnected()) {
             return false;
         }
-        // Every move, forced ones included, is a place /back can return to (an evacuated player comes home with it).
-        Teleports.recordBack(player);
-        if (!destination.crossServer() || destination.server().equals(serverName()) || TeleportConfig.singlePlayer()) {
+        // Every move, forced ones included, is a place /back can return to (an evacuated player comes home with it),
+        // except one the server makes on its own (B31).
+        boolean placing = PLACING.contains(player.getUUID());
+        if (!placing) {
+            Teleports.recordBack(player);
+        }
+        if (!leavesServer(destination)) {
             return moveHere(player, destination);
         }
         if (player.connection == null) {
             return false;
         }
-        if (deferWhileFresh(player, destination.server(), () -> teleport(player, destination))) {
+        if (deferWhileFresh(player, destination.server(), () -> {
+            if (placing) {
+                place(player, destination);
+            } else {
+                teleport(player, destination);
+            }
+        })) {
             return true;
         }
         UUID uuid = player.getUUID();
@@ -134,8 +176,17 @@ public final class TeleportService implements BspTeleportApi {
         if (player.connection == null || server.isEmpty() || player.hasDisconnected() || TeleportConfig.singlePlayer()) {
             return false;
         }
-        Teleports.recordBack(player);
-        if (deferWhileFresh(player, server, () -> sendToServer(player, server))) {
+        boolean placing = PLACING.contains(player.getUUID());
+        if (!placing) {
+            Teleports.recordBack(player);
+        }
+        if (deferWhileFresh(player, server, () -> {
+            if (placing) {
+                placeOnServer(player, server);
+            } else {
+                sendToServer(player, server);
+            }
+        })) {
             return true;
         }
         leave(player, server);
@@ -248,7 +299,14 @@ public final class TeleportService implements BspTeleportApi {
         dismount(player);
         BspCore.beginTransfer(player);
         BspInventorySync.beginTransfer(player, server);
-        ProxyMessenger.connect(player, server);
+        if (ProxyMessenger.connect(player, server)) {
+            PaidTrips.asked(player); // B34: from here, leaving this server is the move
+        }
+    }
+
+    /** Whether a move to {@code destination} goes through the proxy to another server, rather than a move on this one. */
+    public static boolean leavesServer(Destination destination) {
+        return destination.crossServer() && !destination.server().equals(TeleportConfig.serverName()) && !TeleportConfig.singlePlayer();
     }
 
     private static void dismount(ServerPlayer player) {

@@ -20,17 +20,43 @@ Minecraft 1.20.1, Forge 47.4, Java 17. Needed on the client and the server, and 
 
 **Network spawn.** `/bsptp setnetworkspawn` saves the network spawn where you stand: one shared warp (the one `spawn.globalWarp` names, or `spawn`). Players new to the whole network are sent there once their first login settles, on whichever server it is. A first visit to a server, and a respawn with no bed or anchor, go to that server's own `/setspawn` point, or to the network spawn when it is on that server; neither ever moves a player to another server.
 
+**Warp and portal costs in pieces.** A warp's cost, and a portal's or warp's money rules, may now be paid in Shatter Pieces from the bank instead of Shatter Coins carried. On the panel's WARPS tab the cost key opens the cost strip with Pieces and Coins to choose from, and the key then reads `250c` or `50,000p`; the rules lists on the core screen's ACCESS tab and on a warp's rules get a **Pieces** rule beside Coins. New warp costs start in pieces; warps and Coins rules set before keep charging coins until changed. The band shows "50,000 pieces" or "250 coins" on each warp and greys GO when the player's bank or pockets are short. On a network the bank answers a moment after the warm-up ends and the move waits for it; if the money cannot be taken, nothing is taken and the player stays. Admins and operators still pay nothing.
+
 ## Fixed
 
 **Portals that no longer exist.** Each server now checks the portal list for its own portals at start and every few minutes, and removes any whose core is no longer there, so pickers stop offering portals that lead nowhere. `/bsptp portal <name> forget` removes one by hand (for a server that is gone for good).
 
 **No more kicks when walking into a portal to another server.** A client still walking when the proxy switch began could be thrown out with "Can't serialize unregistered packet". Every move to another server now holds the player still for one second with their movement keys off before the switch starts (`network.departureHoldTicks`, 20).
 
+**Deleting a home asks first.** DEL on the band's HOMES tab now opens a box asking "Delete the home Base?" with Yes and No, like deleting a warp on the admin panel, so a home cannot be removed by a stray click. Esc or No keeps it. `/delhome` is unchanged.
+
+**/spawn goes to the network spawn.** `/spawn` and the band's Spawn now take players to the network spawn (the warp `spawn.globalWarp` names, or `spawn` when that is empty), across servers if needed. Before, an empty `globalWarp` made each server's `/spawn` use its own `/setspawn` point, which is usually at that world's spawn. A server's own point is still used by `/spawn` while no network spawn is set, and still decides first visits and bedless respawns there.
+
+**/tpnow after a refused /rtp.** Paying with `/tpnow` after `/rtp` was refused for the cooldown now searches for a random spot and takes you there; before, it took the price and left you where you stood. With `/rtp <server>` it asks that server for the spot. The price is taken with the move, so a search that finds nothing costs nothing.
+
+**No charge for a move that does not happen.** A warp's cost, a portal's or warp's money and item rules, and the `/tpnow` price are now given back when the move fails: a missing world, a switch to another server that never goes through, or a crash or disconnect before the switch starts. On the same server it is given back at once; for another server the payment waits until the player has left through the proxy, and comes back if they are still here 45 seconds after the switch was asked (or a minute after paying when the switch never started). A player who is already gone gets the pieces back in the bank, the coins as pieces at the bank's rate, and any used-up items at their next login on that server. The warm-up's cooldown is taken back as well. `/tpnow` now takes its price together with the move at the end of the warm-up, so a cancelled warm-up costs nothing and the cooldown stays.
+
 **Paid warps on the band.** GO on a warp you cannot pay for used to do nothing. It now tells you what the warp costs and what you are carrying; coins must be in your inventory.
 
 **Warp cost on the admin panel.** Each warp's row now has a gold key showing its cost, or FREE, in place of the small minus and plus keys. Press it and type any amount in the strip at the bottom; 0 makes the warp free.
 
 **Warp names in tab completion.** `/warp` now offers only the warps you may use, so restricted warps and portal warps are no longer listed to players who cannot reach them.
+
+**No way round server access.** A player who reached a restricted server without access (the proxy's `/server`, their last server on login, rent running out) was "sent to the lobby", and with no lobby set that meant the same server's spawn, so they stayed. They now go to the lobby, their main server, or the first open server that is up, and are disconnected only when nowhere else is up. A server with access on and no lobby warns at start.
+
+**One switch for the network.** On servers sharing the database, the restricted server list now turns access on everywhere: a server whose own `access.enabled` was left off still checks players leaving for a restricted server. To turn access off for the whole network, un-restrict every server on the panel's NETWORK tab.
+
+**Bring works across servers.** Bringing a player, or everyone, from another server put them at the admin's coordinates on their own server, often in the air. They now come to the admin's server, beside the admin.
+
+**Free warps for admins.** Admins and operators no longer pay a warp's cost; the band shows those warps as free to them.
+
+**Config edits stick after `/bsptp reload`.** After a reload, later edits to `bsp_teleport-server.toml` were ignored until the next reload, and a change on the panel's SETTINGS tab wrote the old values back over them (for example `suppressJoinLeaveMessages` turned itself off again). The reload now re-reads the same file Forge watches.
+
+**Back after dying.** After a death without a bed, the move to the server's spawn point saved Back as the spot vanilla had respawned you at, often in the air, so Back dropped you from there instead of taking you to where you died. Moves the server makes on its own (that respawn fix, the first placement on a server, an access bounce) no longer change Back.
+
+**No more waking up inside a portal.** A player who crashed or lost the connection while going through a portal, or whose switch failed, logged in again standing in the portal's field. They are now moved in front of it (behind it, or a few blocks out, when something such as their totem is in the way), so they can walk off and the portal does not catch them again.
+
+**Players' servers are private.** The band's PLAYERS tab and teleport requests show which server a player is on only to their teammates and to admins. The list is sorted by name.
 
 **Coins.** A warp with both a cost and a coin rule now asks for one total and takes nothing unless all of it can be paid; rules are checked again when the warm-up ends; `/tpnow` charges only once the teleport has started; a portal checks its landing world before charging. Setting an existing warp again keeps its icon, rules and portal-only setting.
 

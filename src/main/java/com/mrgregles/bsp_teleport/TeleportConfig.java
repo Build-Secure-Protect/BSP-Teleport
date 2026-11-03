@@ -118,8 +118,8 @@ public final class TeleportConfig {
         b.pop();
 
         b.push("spawn");
-        GLOBAL_SPAWN_WARP = b.comment("Name of a warp that /spawn uses on every server, or empty to use each server's own /setspawn point.",
-                        "It is also the network spawn new players start at (/bsptp setnetworkspawn); when empty, the warp named 'spawn' is.")
+        GLOBAL_SPAWN_WARP = b.comment("Name of the network spawn warp (/bsptp setnetworkspawn): where /spawn goes on every server and where new players start.",
+                        "When empty, the warp named 'spawn' is. A server's own /setspawn point is used by /spawn only while that warp does not exist.")
                 .define("globalWarp", "spawn");
         b.pop();
 
@@ -164,7 +164,7 @@ public final class TeleportConfig {
         b.pop();
 
         b.push("access");
-        ACCESS_ENABLED = b.comment("The server access system (main server, rented and full access through Access Tokens). Off: no checks, no HUD, no board.").define("enabled", false);
+        ACCESS_ENABLED = b.comment("The server access system (main server, rented and full access through Access Tokens). Off: no checks, no HUD, no board. On a network sharing the database, any restricted server turns it on here too; to turn it off for the network, un-restrict every server on the panel's NETWORK tab.").define("enabled", false);
         ACCESS_LOBBY = b.comment("The network's main spawn server, where a player without access is sent. Empty: the server of the global spawn warp, else the server they came from.").define("lobbyServer", "");
         ACCESS_RENT_HOURS = b.comment("Rent length in hours a token grants when its assignment gives none.").defineInRange("rentHours", 168, 1, 8760);
         b.pop();
@@ -188,11 +188,38 @@ public final class TeleportConfig {
         return getOr(SERVER_NAME, "server-1");
     }
 
+    /** The file Forge loaded the server config from and watches (B30); null while no world is loaded. */
+    @javax.annotation.Nullable
+    private static volatile com.electronwill.nightconfig.core.CommentedConfig forgeFile;
+
+    /** The GameTests' view of {@link #forgeFile}. */
+    @javax.annotation.Nullable
+    public static com.electronwill.nightconfig.core.CommentedConfig forgeFileForTest() {
+        return forgeFile;
+    }
+
+    /** Mod bus: remembers {@link #forgeFile} as Forge loads and unloads the server config. */
+    public static void onConfigEvent(net.minecraftforge.fml.event.config.ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+        forgeFile = event instanceof net.minecraftforge.fml.event.config.ModConfigEvent.Unloading ? null : event.getConfig().getConfigData();
+    }
+
     /**
      * Re-reads the config file from disk ({@code /bsptp reload}). Forge also does this by itself when the file changes. Connection
      * settings put back in it are moved out again at once (D149); the connection itself only changes at the next start.
      */
     public static void reload(net.minecraft.server.MinecraftServer server) {
+        // B30: re-read Forge's own file object. A new one bound here was watched by nobody, so later edits to the file
+        // were not seen until the next reload, and a panel setting saved its stale values back over those edits.
+        com.electronwill.nightconfig.core.CommentedConfig forge = forgeFile;
+        if (forge instanceof com.electronwill.nightconfig.core.file.CommentedFileConfig own) {
+            own.load();
+            SPEC.setConfig(own);
+            com.mrgregles.bsp_teleport.storage.NetworkConfig.moveFromServerConfig();
+            return;
+        }
         java.nio.file.Path path = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).resolve("serverconfig").resolve("bsp_teleport-server.toml");
         com.electronwill.nightconfig.core.file.CommentedFileConfig file = com.electronwill.nightconfig.core.file.CommentedFileConfig.builder(path)
                 .sync().autosave().writingMode(com.electronwill.nightconfig.core.io.WritingMode.REPLACE).build();

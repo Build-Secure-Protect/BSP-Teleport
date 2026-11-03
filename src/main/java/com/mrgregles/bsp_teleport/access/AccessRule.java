@@ -7,22 +7,23 @@ import java.util.List;
  * One rule on a portal or warp (D86); every rule in the list must pass.
  *
  * @param value   the LuckPerms group, the item id, the permission node, the open hours for TIME ({@link OpenHours#encode}), or empty
- *                for COINS and TOKEN
- * @param count   the item count, or the coins charged per pass
+ *                for COINS, PIECES and TOKEN
+ * @param count   the item count, or the coins (Copper value) or bank pieces (D163) charged per pass
  * @param consume ITEM only: whether the items are used up on the move
  */
 public record AccessRule(Kind kind, String value, int count, boolean consume) {
-    public enum Kind { RANK, ITEM, NODE, COINS, TOKEN, TIME }
+    public enum Kind { RANK, ITEM, NODE, COINS, PIECES, TOKEN, TIME }
 
     public static final int MAX = 8;
 
-    /** A one-line description for screens: "rank Warden", "item minecraft:ender_pearl x4 (used up)", "coins 50", "token". */
+    /** A one-line description for screens: "rank Warden", "item minecraft:ender_pearl x4 (used up)", "coins 50", "pieces 2000", "token". */
     public String describe() {
         return switch (kind) {
             case RANK -> "rank " + value;
             case ITEM -> "item " + value + " x" + Math.max(1, count) + (consume ? " (used up)" : "");
             case NODE -> "node " + value;
             case COINS -> "coins " + count;
+            case PIECES -> "pieces " + count;
             case TOKEN -> "token";
             case TIME -> "time " + value.replace(",", ", ");
         };
@@ -122,7 +123,7 @@ public record AccessRule(Kind kind, String value, int count, boolean consume) {
         return switch (kind) {
             case RANK, NODE -> v.isEmpty() ? null : new AccessRule(kind, v, 0, false);
             case ITEM -> v.isEmpty() ? null : new AccessRule(kind, v, Math.max(1, count), consume);
-            case COINS -> count <= 0 ? null : new AccessRule(kind, "", count, false);
+            case COINS, PIECES -> count <= 0 ? null : new AccessRule(kind, "", count, false);
             case TOKEN -> new AccessRule(kind, "", 0, false);
             case TIME -> {
                 OpenHours h = OpenHours.parse(v);

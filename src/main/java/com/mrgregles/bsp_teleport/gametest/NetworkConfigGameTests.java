@@ -88,4 +88,31 @@ public class NetworkConfigGameTests {
         }
         h.succeed();
     }
+    /**
+     * B30: after {@code /bsptp reload} the config must still be Forge's own file object, the one its watcher reloads when
+     * the file changes and the panel saves. Before, reload bound a new object: Forge's later reloads were not seen and a
+     * panel save wrote the stale values back over an edit (suppressJoinLeaveMessages stayed off).
+     */
+    @GameTest(template = EMPTY)
+    public static void reload_keeps_forges_own_config_file(GameTestHelper h) {
+        boolean before = TeleportConfig.SUPPRESS_JOIN_LEAVE.get();
+        try {
+            TeleportConfig.reload(h.getLevel().getServer());
+            com.electronwill.nightconfig.core.CommentedConfig forge = TeleportConfig.forgeFileForTest();
+            h.assertTrue(forge != null, "Forge's server config file is known");
+            // What Forge's watcher does when the file changes: load into its own object, then clear the cached values.
+            forge.set(List.of("network", "suppressJoinLeaveMessages"), !before);
+            TeleportConfig.SPEC.afterReload();
+            h.assertTrue(TeleportConfig.SUPPRESS_JOIN_LEAVE.get() == !before, "a change Forge loads after a reload is seen");
+            TeleportConfig.SPEC.save();
+            h.assertTrue(serverFile(h).contains("suppressJoinLeaveMessages = " + !before), "and a save writes it, not the old value");
+        } catch (IOException e) {
+            h.fail("could not read the server config: " + e);
+            return;
+        } finally {
+            TeleportConfig.SUPPRESS_JOIN_LEAVE.set(before);
+            TeleportConfig.SPEC.save();
+        }
+        h.succeed();
+    }
 }

@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 /** The mod's own channel: the band screen's data down, its actions up. */
 public final class BandPackets {
     /** "2" since T69 and T73 changed packets 2, 11 and added 13; "3" added 14 (B21); "4" since T82 changed the band and core screen data. An older client is told to update instead of misreading them. */
-    private static final String PROTOCOL = "4";
+    private static final String PROTOCOL = "5"; // 5: D163 added the cost currency to the band and panel packets
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(new ResourceLocation(BSPTeleport.MODID, "main"), () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
 
     private BandPackets() {

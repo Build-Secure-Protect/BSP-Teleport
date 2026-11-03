@@ -22,8 +22,12 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
     public record HomeEntry(String name, String server, String world, int x, int y, int z, boolean locked, boolean nearRaid, String icon) {
     }
 
-    /** @param opensAt D150: -1 with no open hours, -2 when open now, else the minute of the day it next opens (server's zone) */
-    public record WarpEntry(String name, String server, String world, int x, int y, int z, int cost, boolean nearRaid, String icon, int opensAt) {
+    /**
+     * @param opensAt D150: -1 with no open hours, -2 when open now, else the minute of the day it next opens (server's zone)
+     * @param pieces  D163: the cost is in bank pieces, else in coins
+     * @param afford  whether the player holds the cost (and the warp's money rules) in the right currency now */
+    public record WarpEntry(String name, String server, String world, int x, int y, int z, int cost, boolean nearRaid, String icon, int opensAt,
+                            boolean pieces, boolean afford) {
     }
 
     public record PlayerEntry(String name, String server) {
@@ -79,6 +83,8 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
             buf.writeVarInt(w.cost());
             buf.writeBoolean(w.nearRaid());
             buf.writeVarInt(w.opensAt());
+            buf.writeBoolean(w.pieces());
+            buf.writeBoolean(w.afford());
         }
         buf.writeVarInt(players.size());
         for (PlayerEntry p : players) {
@@ -129,7 +135,10 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
         List<WarpEntry> warps = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
             String wn = buf.readUtf(), ws = buf.readUtf(), ww = buf.readUtf(), wi = buf.readUtf();
-            warps.add(new WarpEntry(wn, ws, ww, buf.readInt(), buf.readInt(), buf.readInt(), buf.readVarInt(), buf.readBoolean(), wi, buf.readVarInt()));
+            int wx = buf.readInt(), wy = buf.readInt(), wz = buf.readInt(), cost = buf.readVarInt();
+            boolean nearRaid = buf.readBoolean();
+            int opensAt = buf.readVarInt();
+            warps.add(new WarpEntry(wn, ws, ww, wx, wy, wz, cost, nearRaid, wi, opensAt, buf.readBoolean(), buf.readBoolean()));
         }
         n = buf.readVarInt();
         List<PlayerEntry> players = new ArrayList<>(n);

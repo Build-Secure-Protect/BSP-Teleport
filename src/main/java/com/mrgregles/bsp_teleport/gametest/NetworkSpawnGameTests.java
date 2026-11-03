@@ -6,6 +6,7 @@ import com.mrgregles.bsp_teleport.data.Position;
 import com.mrgregles.bsp_teleport.data.TeleportData;
 import com.mrgregles.bsp_teleport.data.Warp;
 import com.mrgregles.bsp_teleport.teleport.NetworkSpawn;
+import com.mrgregles.bsp_teleport.teleport.TeleportActions;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.MinecraftServer;
@@ -57,6 +58,40 @@ public class NetworkSpawnGameTests {
         } finally {
             data.setSpawn(ownBefore);
             data.deleteWarp(NetworkSpawn.warpName());
+            if (warpBefore != null) {
+                data.setWarp(warpBefore);
+            }
+        }
+    }
+
+    /** B35: /spawn goes to the network spawn, on any server, even with an empty globalWarp; the own point only without one. */
+    @GameTest(template = "empty")
+    public static void spawn_goes_to_the_network_spawn_before_the_servers_own(GameTestHelper h) {
+        MinecraftServer server = h.getLevel().getServer();
+        TeleportData data = TeleportData.get(server);
+        String globalBefore = TeleportConfig.GLOBAL_SPAWN_WARP.get();
+        Position ownBefore = data.spawn();
+        Warp warpBefore = data.warp("spawn");
+        Position own = new Position(TeleportConfig.serverName(), "minecraft:overworld", -20.5, 70, 5.5, 90f, 0f);
+        Position network = new Position("BSP-Elsewhere", "minecraft:overworld", 0.5, 64, 0.5, 0f, 0f);
+        try {
+            TeleportConfig.GLOBAL_SPAWN_WARP.set("");
+            data.setSpawn(own);
+            data.deleteWarp("spawn");
+            if (!own.equals(TeleportActions.spawnPosition(server))) {
+                h.fail("with no network spawn, /spawn uses this server's own point");
+                return;
+            }
+            data.setWarp(new Warp("spawn", network, 0, false));
+            if (!network.equals(TeleportActions.spawnPosition(server))) {
+                h.fail("an empty globalWarp still sends /spawn to the warp 'spawn', on another server too");
+                return;
+            }
+            h.succeed();
+        } finally {
+            TeleportConfig.GLOBAL_SPAWN_WARP.set(globalBefore);
+            data.setSpawn(ownBefore);
+            data.deleteWarp("spawn");
             if (warpBefore != null) {
                 data.setWarp(warpBefore);
             }

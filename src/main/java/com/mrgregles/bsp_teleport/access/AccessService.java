@@ -2,19 +2,20 @@ package com.mrgregles.bsp_teleport.access;
 
 import com.mrgregles.bsp_teleport.BSPTeleport;
 import com.mrgregles.bsp_teleport.TeleportConfig;
-import com.mrgregles.bsp_teleport.api.BspTeleportApi;
 import com.mrgregles.bsp_teleport.compat.RegionGuard;
 import com.mrgregles.bsp_teleport.data.Position;
 import com.mrgregles.bsp_teleport.data.TeleportData;
 import com.mrgregles.bsp_teleport.data.Warp;
 import com.mrgregles.bsp_teleport.item.AccessTokenItem;
 import com.mrgregles.bsp_teleport.network.BandPackets;
+import com.mrgregles.bsp_teleport.network.PlayerDirectory;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import com.mrgregles.bsp_teleport.perm.Permissions;
 import com.mrgregles.bsp_teleport.storage.Storage;
 import com.mrgregles.bsp_teleport.teleport.TeleportActions;
+import com.mrgregles.bsp_teleport.teleport.TeleportService;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -52,8 +53,12 @@ public final class AccessService {
     private AccessService() {
     }
 
+    /**
+     * D162: on a network sharing the database the restricted list decides, so a server whose own switch was left off
+     * still checks, bounces and shows the HUD once any server is restricted. Without the database, the switch alone.
+     */
     public static boolean enabled() {
-        return TeleportConfig.getOr(TeleportConfig.ACCESS_ENABLED, false);
+        return TeleportConfig.getOr(TeleportConfig.ACCESS_ENABLED, false) || network() && !RESTRICTED.isEmpty();
     }
 
     private static boolean network() {
@@ -370,6 +375,7 @@ public final class AccessService {
         tokens.forEach(t -> TOKENS.put(t.token(), t));
         RESTRICTED.clear();
         RESTRICTED.addAll(servers);
+        warnNoLobby();
         MinecraftServer server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
             syncAll(server);
@@ -458,7 +464,32 @@ public final class AccessService {
         }
         tell(player, "access.bounced", here);
         deny(player, AccessGrant.Kind.SERVER, here);
-        sendTo(player, lobby(player.server), true);
+        bounce(player, false);
+    }
+
+    /**
+     * B26: moves a player who may not stay here to somewhere they may be: the lobby, their main server (first when
+     * {@code mainFirst}, for rent running out), then any server that is up and open to them, never this one. Before, an
+     * empty lobby meant this server's own spawn, so the player stayed. With nowhere up they are disconnected; a server
+     * without messaging has nowhere else, so it keeps the old move to its own spawn.
+     */
+    private static void bounce(ServerPlayer player, boolean mainFirst) {
+        if (!com.mrgregles.bsp_teleport.network.Messenger.enabled()) {
+            sendTo(player, "", true);
+            return;
+        }
+        String here = TeleportConfig.serverName();
+        String lobby = lobby(player.server), main = mainServer(player);
+        List<String> order = new ArrayList<>(mainFirst ? java.util.Arrays.asList(main, lobby) : java.util.Arrays.asList(lobby, main));
+        order.addAll(PlayerDirectory.servers());
+        for (String s : order) {
+            if (s != null && !s.isEmpty() && !s.equalsIgnoreCase(here) && PlayerDirectory.isOnline(s) && mayEnter(player, s)) {
+                sendTo(player, s, true);
+                return;
+            }
+        }
+        BSPTeleport.LOGGER.warn("{} has no access to {} and no other server is up for them; disconnected", player.getGameProfile().getName(), here);
+        player.connection.disconnect(Component.translatable("message.bsp_teleport.access.nowhere", here));
     }
 
     /** The network's main spawn: the config value, else the global spawn warp's server, else empty for this server. */
@@ -482,7 +513,7 @@ public final class AccessService {
         if (server.isEmpty() || server.equals(TeleportConfig.serverName())) {
             Position spawn = TeleportActions.spawnPosition(player);
             if (spawn != null) {
-                BspTeleportApi.get().teleport(player, spawn.toDestination(""));
+                TeleportService.INSTANCE.place(player, spawn.toDestination(""));
             } else if (lobbyFallback) {
                 BSPTeleport.LOGGER.warn("No spawn to send {} to on {}", player.getGameProfile().getName(), TeleportConfig.serverName());
             }
@@ -493,9 +524,9 @@ public final class AccessService {
                 return;
             }
             if (spawn != null) {
-                BspTeleportApi.get().teleport(player, spawn.toDestination(""));
+                TeleportService.INSTANCE.place(player, spawn.toDestination(""));
             } else {
-                BspTeleportApi.get().sendToServer(player, server);
+                TeleportService.INSTANCE.placeOnServer(player, server);
             }
         });
     }
@@ -526,8 +557,7 @@ public final class AccessService {
                     revoke(server, player.getUUID(), g.kind(), g.target());
                     tell(player, "access.ran_out", g.target());
                     if (g.kind() == AccessGrant.Kind.SERVER && g.target().equalsIgnoreCase(TeleportConfig.serverName()) && !Permissions.isAdmin(player)) {
-                        String main = mainServer(player);
-                        sendTo(player, main == null ? lobby(server) : main, true);
+                        bounce(player, true);
                     }
                     continue;
                 }
@@ -545,12 +575,24 @@ public final class AccessService {
 
     public static void onServerStarted(ServerStartedEvent event) {
         RegionGuard.registerAccessExemption();
+        warnNoLobby();
         if (!network()) {
             refreshCounts(event.getServer());
         }
     }
 
+    private static boolean warnedNoLobby;
+
+    /** B26: said once, at start or when the shared list first switches access on here. */
+    private static void warnNoLobby() {
+        if (!warnedNoLobby && enabled() && TeleportConfig.getOr(TeleportConfig.ACCESS_LOBBY, "").isEmpty() && TeleportConfig.getOr(TeleportConfig.GLOBAL_SPAWN_WARP, "").isEmpty()) {
+            warnedNoLobby = true;
+            BSPTeleport.LOGGER.warn("access.lobbyServer is empty and there is no global spawn warp: players without access here go to their main server or the first open server that is up. Set access.lobbyServer to choose.");
+        }
+    }
+
     public static void onServerStopping(ServerStoppingEvent event) {
+        warnedNoLobby = false;
         GRANTS.clear();
         WARNED.clear();
         TOKENS.clear();

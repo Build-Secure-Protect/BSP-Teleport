@@ -2,7 +2,6 @@ package com.mrgregles.bsp_teleport.teleport;
 
 import com.mrgregles.bsp_teleport.BSPTeleport;
 import com.mrgregles.bsp_teleport.TeleportConfig;
-import com.mrgregles.bsp_teleport.api.BspTeleportApi;
 import com.mrgregles.bsp_teleport.data.Position;
 import com.mrgregles.bsp_teleport.data.TeleportData;
 import com.mrgregles.bsp_teleport.data.Warp;
@@ -93,7 +92,7 @@ public final class NetworkSpawn {
             Position spawn = position(player.server);
             if (spawn != null) {
                 BSPTeleport.LOGGER.info("{} is new to the network: sent to the network spawn ({})", name, warpName());
-                BspTeleportApi.get().teleport(player, spawn.toDestination(""));
+                TeleportService.INSTANCE.place(player, spawn.toDestination(""));
                 return;
             }
         }
@@ -101,7 +100,7 @@ public final class NetworkSpawn {
             Position spot = localSpot(player.server);
             if (spot != null) {
                 BSPTeleport.LOGGER.info("{} is new to this server: placed at its spawn", name);
-                BspTeleportApi.get().teleport(player, spot.toDestination(""));
+                TeleportService.INSTANCE.place(player, spot.toDestination(""));
             }
         }
     }
@@ -121,7 +120,7 @@ public final class NetworkSpawn {
             }
             Position spot = localSpot(player.server);
             if (spot != null) {
-                BspTeleportApi.get().teleport(player, spot.toDestination(""));
+                TeleportService.INSTANCE.place(player, spot.toDestination(""));
             }
         });
     }

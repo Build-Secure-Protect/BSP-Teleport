@@ -12,6 +12,7 @@ import com.mrgregles.bsp_teleport.network.PlayerDirectory;
 import com.mrgregles.bsp_teleport.perm.Permissions;
 import com.mrgregles.bsp_teleport.storage.Storage;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 import javax.annotation.Nullable;
@@ -113,6 +114,16 @@ public final class TeleportActions {
 
     // Warps
 
+    /** B29: admins and operators (permission level 2) use every warp without paying its cost. */
+    public static boolean warpsFree(ServerPlayer player) {
+        return Permissions.isAdmin(player) || player.hasPermissions(2);
+    }
+
+    /** What this player pays for the warp: its cost, or 0 when {@link #warpsFree}. */
+    public static int costFor(ServerPlayer player, Warp warp) {
+        return warpsFree(player) ? 0 : warp.cost();
+    }
+
     /** The warps this player may use. */
     public static List<Warp> usableWarps(ServerPlayer player) {
         return TeleportData.get(player.server).warps().stream()
@@ -127,7 +138,7 @@ public final class TeleportActions {
             fail(player, "warp.none");
             return;
         }
-        tell(player, "warp.list", usable.stream().map(w -> w.cost() > 0 ? w.name() + " (" + w.cost() + ")" : w.name()).collect(Collectors.joining(", ")));
+        tell(player, "warp.list", usable.stream().map(w -> costFor(player, w) > 0 ? w.name() + " (" + costText(w, w.cost()) + ")" : w.name()).collect(Collectors.joining(", ")));
     }
 
     public static boolean warp(ServerPlayer player, String name) {
@@ -138,9 +149,7 @@ public final class TeleportActions {
         if (warp.restricted() && !Permissions.has(player, Permissions.warpNode(warp.name()))) {
             return fail(player, "warp.no_permission", warp.name());
         }
-        if (warp.cost() > 0 && BspCore.coins(player) < warp.cost()) {
-            return fail(player, "warp.cannot_afford", warp.cost(), BspCore.coins(player));
-        }
+        int cost = costFor(player, warp);
         // D86: the warp's own rules, all of which must pass; charges happen with the move.
         com.mrgregles.bsp_teleport.access.AccessChecks.Result rules = com.mrgregles.bsp_teleport.access.AccessChecks.evaluate(player,
                 com.mrgregles.bsp_teleport.access.AccessRule.parseList(warp.rules()), com.mrgregles.bsp_teleport.access.AccessGrant.Kind.WARP, warp.name());
@@ -150,18 +159,19 @@ public final class TeleportActions {
             }
             return false;
         }
-        // Audit: the warp's cost and its COINS rules are one price; checking them apart let a player pay the cost and then be refused.
-        if (warp.cost() + rules.coins() > 0 && BspCore.coins(player) < warp.cost() + rules.coins()) {
-            return fail(player, "warp.cannot_afford", warp.cost() + rules.coins(), BspCore.coins(player));
+        // Audit: the warp's cost and its COINS and PIECES rules are one price; checking them apart let a player pay the cost and then be refused.
+        if (!canAfford(player, warp, cost, rules)) {
+            return false;
         }
         String warpName = warp.name();
-        return Teleports.start(player, warp.position().toDestination(""), Component.literal(warp.name()), TeleportKind.WARP, () -> {
+        return Teleports.start(player, warp.position().toDestination(""), Component.literal(warp.name()), TeleportKind.WARP, then -> {
             // Audit: the warp and its rules are read again when the warm-up ends, so an item swapped out meanwhile or a
             // changed warp is not charged from the old answer; nothing is paid unless all of it can be.
             Warp now = TeleportData.get(player.server).warp(warpName);
             if (now == null) {
                 tell(player, "warp.unknown", warpName);
-                return false;
+                then.accept(null);
+                return;
             }
             com.mrgregles.bsp_teleport.access.AccessChecks.Result fresh = com.mrgregles.bsp_teleport.access.AccessChecks.evaluate(player,
                     com.mrgregles.bsp_teleport.access.AccessRule.parseList(now.rules()), com.mrgregles.bsp_teleport.access.AccessGrant.Kind.WARP, now.name());
@@ -169,45 +179,76 @@ public final class TeleportActions {
                 if (!fresh.refusal().getString().isEmpty()) {
                     player.displayClientMessage(fresh.refusal(), false);
                 }
-                return false;
+                then.accept(null);
+                return;
             }
-            int total = now.cost() + fresh.coins();
-            if (total > 0 && BspCore.coins(player) < total) {
-                tell(player, "warp.cannot_afford", total, BspCore.coins(player));
-                return false;
+            int nowCost = costFor(player, now);
+            if (!canAfford(player, now, nowCost, fresh)) {
+                then.accept(null);
+                return;
             }
-            if (now.cost() > 0 && !BspCore.pay(player, now.cost())) {
-                tell(player, "warp.cannot_afford", now.cost(), BspCore.coins(player));
-                return false;
-            }
-            if (now.cost() > 0) {
-                tell(player, "warp.paid", now.cost());
-            }
-            return com.mrgregles.bsp_teleport.access.AccessChecks.charge(player, fresh);
+            // D163: the warp's cost goes with the rules' charges, in pieces from the bank or in coins carried.
+            com.mrgregles.bsp_teleport.access.AccessChecks.charge(player, fresh, now.pieces() ? 0 : nowCost, now.pieces() ? nowCost : 0, "Warp " + now.name(), then);
         });
+    }
+
+    /** Whether the player holds the warp's cost and its rules' charges together, in each currency; says so when not. */
+    private static boolean canAfford(ServerPlayer player, Warp warp, int cost, com.mrgregles.bsp_teleport.access.AccessChecks.Result rules) {
+        int coins = com.mrgregles.bsp_teleport.access.AccessChecks.sum(warp.pieces() ? 0 : cost, rules.coins());
+        int pieces = com.mrgregles.bsp_teleport.access.AccessChecks.sum(warp.pieces() ? cost : 0, rules.pieces());
+        if (coins > 0 && BspCore.coins(player) < coins) {
+            return fail(player, "warp.cannot_afford", coins, BspCore.coins(player));
+        }
+        if (pieces > 0 && BspCore.pieces(player) < pieces) {
+            return fail(player, "warp.cannot_afford_pieces", BspCore.piecesText(pieces), BspCore.piecesText(BspCore.pieces(player)));
+        }
+        return true;
+    }
+
+    /** For the band: whether the player holds the warp's cost and its rules' money now, saying nothing. */
+    public static boolean affords(ServerPlayer player, Warp warp) {
+        int cost = costFor(player, warp);
+        int coins = warp.pieces() ? 0 : cost, pieces = warp.pieces() ? cost : 0;
+        if (!Permissions.isAdmin(player)) {
+            for (com.mrgregles.bsp_teleport.access.AccessRule r : com.mrgregles.bsp_teleport.access.AccessRule.parseList(warp.rules())) {
+                if (r.kind() == com.mrgregles.bsp_teleport.access.AccessRule.Kind.COINS) {
+                    coins = com.mrgregles.bsp_teleport.access.AccessChecks.sum(coins, r.count());
+                } else if (r.kind() == com.mrgregles.bsp_teleport.access.AccessRule.Kind.PIECES) {
+                    pieces = com.mrgregles.bsp_teleport.access.AccessChecks.sum(pieces, r.count());
+                }
+            }
+        }
+        return (coins <= 0 || BspCore.coins(player) >= coins) && (pieces <= 0 || BspCore.pieces(player) >= pieces);
+    }
+
+    /** A warp's cost as players read it: {@code 250 coins} or {@code 50,000 pieces}. */
+    public static String costText(Warp warp, int cost) {
+        return warp.pieces() ? BspCore.piecesText(cost) : cost + " coins";
     }
 
     // Spawn, back, random
 
-    /** The spawn this server's players go to: the global warp when configured, else this server's own. */
+    /**
+     * B35: where /spawn and the band's Spawn go: the network spawn (the warp {@code spawn.globalWarp} names, or
+     * {@code spawn} when that is empty), across servers if needed; this server's own /setspawn point only while no
+     * network spawn is set. Before, an empty globalWarp (every live config) meant each server's own point, so /spawn
+     * never reached the network spawn.
+     */
     @Nullable
     public static Position spawnPosition(ServerPlayer player) {
-        String globalWarp = TeleportConfig.getOr(TeleportConfig.GLOBAL_SPAWN_WARP, "");
-        if (!globalWarp.isEmpty()) {
-            Warp warp = TeleportData.get(player.server).warp(globalWarp);
-            if (warp != null) {
-                return warp.position();
-            }
-            // T77: a named warp that does not exist yet (the default "spawn" on a fresh server) falls back to this server's own spawn.
-        }
-        return TeleportData.get(player.server).spawn();
+        return spawnPosition(player.server);
+    }
+
+    @Nullable
+    public static Position spawnPosition(MinecraftServer server) {
+        Position network = NetworkSpawn.position(server);
+        return network != null ? network : TeleportData.get(server).spawn();
     }
 
     public static boolean spawn(ServerPlayer player) {
-        String globalWarp = TeleportConfig.getOr(TeleportConfig.GLOBAL_SPAWN_WARP, "");
         Position spawn = spawnPosition(player);
         if (spawn == null) {
-            return globalWarp.isEmpty() ? fail(player, "spawn.none") : fail(player, "spawn.global_missing", globalWarp);
+            return fail(player, "spawn.global_missing", NetworkSpawn.warpName());
         }
         return Teleports.start(player, spawn.toDestination(""), Component.translatable("message.bsp_teleport.spawn.name"), TeleportKind.SPAWN, null);
     }
@@ -232,8 +273,8 @@ public final class TeleportActions {
             if (!com.mrgregles.bsp_teleport.access.AccessService.checkServer(player, server)) {
                 return false;
             }
-            if (Teleports.isWaiting(player) || Teleports.cooldownLeft(player) > 0) {
-                return Teleports.start(player, Position.of(player).toDestination(""), Component.empty(), TeleportKind.RANDOM, null);
+            if (Teleports.isWaiting(player) || Teleports.cooldownBlocks(player, TeleportKind.RANDOM)) {
+                return Teleports.refuseRandom(player, () -> rtp(player, server));
             }
             if (!Messenger.enabled()) {
                 return fail(player, "rtp.no_network");
@@ -251,9 +292,9 @@ public final class TeleportActions {
         if (!RandomTeleport.allowedIn(player.serverLevel())) {
             return fail(player, "rtp.wrong_world");
         }
-        if (Teleports.isWaiting(player) || Teleports.cooldownLeft(player) > 0) {
-            // Let the engine explain, without searching for a spot first.
-            return Teleports.start(player, Position.of(player).toDestination(""), Component.empty(), TeleportKind.RANDOM, null);
+        if (Teleports.isWaiting(player) || Teleports.cooldownBlocks(player, TeleportKind.RANDOM)) {
+            // Let the engine explain, without searching for a spot first; /tpnow then searches (B37).
+            return Teleports.refuseRandom(player, () -> rtp(player, server));
         }
         Position spot = RandomTeleport.find(player.serverLevel(), player);
         if (spot == null) {

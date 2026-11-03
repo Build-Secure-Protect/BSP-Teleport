@@ -1,0 +1,174 @@
+<title>Delete Confirmation Options</title>
+<style>
+/* Layout: one short intro, then three concept panels (A, B, C), each a working copy of the band's HOMES tab in the Holo HUD look. Single dark look on purpose: it copies the game screen. */
+:root {
+  --bg: #0B0F14; --panel: #10151C; --inset: #0C0E12; --line: #2A2F3A;
+  --accent: #19D3B0; --violet: #B58CFF; --gold: #FFD23A; --bad: #FF6B5C; --ok: #8FE04A;
+  --text: #E6EAF2; --muted: #9AA3B5; --dim: #5A6272; --veil: rgba(0, 0, 0, 0.63); --badfill: rgba(255, 107, 92, 0.10);
+  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif; --mono: Menlo, Monaco, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--sans); margin: 0; padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 28px; margin: 0 0 6px; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; }
+p, li { color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 72ch; }
+.sheets { display: flex; flex-wrap: wrap; gap: 28px 20px; align-items: flex-start; margin-top: 20px; }
+.sheet { flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.sheet p { margin: 0; }
+.hud { position: relative; background: var(--panel); border: 2px solid var(--violet); padding: 12px 14px 14px; font-size: 13px; display: flex; flex-direction: column; gap: 6px; min-height: 250px; }
+.title { font-weight: bold; letter-spacing: 2px; text-transform: uppercase; font-size: 13px; color: var(--violet); }
+.row { border: 1px solid var(--line); background: var(--inset); padding: 5px 8px; display: flex; align-items: center; gap: 8px; min-height: 32px; flex-wrap: wrap; }
+.row.marked { border-color: var(--bad); background: var(--badfill); }
+.icon { width: 18px; height: 18px; background: var(--line); border: 1px solid var(--dim); flex: none; }
+.grow { flex: 1 1 90px; min-width: 0; }
+.name { font-weight: bold; }
+.sub { color: var(--muted); font-size: 11px; display: block; font-family: var(--mono); }
+.keys { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+.key { font: inherit; border: 1px solid var(--line); color: var(--muted); background: var(--inset); font-size: 10px; font-weight: bold; letter-spacing: 1px; padding: 3px 6px; text-transform: uppercase; white-space: nowrap; }
+button.key { cursor: pointer; }
+button.key:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.key.tq { border-color: var(--accent); color: var(--accent); }
+.key.r { border-color: var(--bad); color: var(--bad); }
+.key.rr { background: var(--bad); color: var(--inset); border-color: var(--bad); }
+.key.ok { border-color: var(--ok); color: var(--ok); }
+.foot { margin-top: auto; display: flex; gap: 6px; align-items: center; padding-top: 6px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); flex-wrap: wrap; }
+.foot.ask { border-top-color: var(--bad); }
+.foot b { color: var(--text); }
+.foot .push { margin-left: auto; }
+input { font-family: var(--mono); font-size: 11px; background: var(--inset); color: var(--text); border: 1px solid var(--line); padding: 3px 6px; width: 14ch; }
+.veil { position: absolute; inset: 0; background: var(--veil); display: flex; align-items: center; justify-content: center; padding: 12px; }
+.box { background: var(--panel); border: 1px solid var(--gold); padding: 10px 12px; width: min(240px, 100%); display: flex; flex-direction: column; gap: 10px; }
+.box .q { color: var(--text); font-size: 13px; line-height: 1.4; }
+.box .keys { justify-content: flex-end; }
+.gone { color: var(--muted); font-size: 12px; font-style: italic; padding: 4px 0; }
+.reset { align-self: flex-start; }
+.facts { margin: 0; padding-left: 18px; }
+.facts li { font-size: 13px; }
+</style>
+
+<h1>Asking before a home is deleted</h1>
+<p>On the panel's WARPS tab, Del already asks "Delete the warp market?" with Yes and No. On the band's HOMES tab, Del removes the home straight away. Each option below adds a question there. Press DEL to try it; Esc answers No.</p>
+
+<div class="sheets">
+  <section class="sheet">
+    <h2>A: The panel's popup</h2>
+    <div class="hud" id="a">
+      <div class="title">Homes</div>
+      <div id="a-rows"></div>
+      <div class="foot"><input aria-label="Home name" placeholder="name" id="a-new"><span class="key tq">Set home</span></div>
+    </div>
+    <ul class="facts">
+      <li>The band dims and a gold box asks "Delete the home Base?" with Yes and No, the same box as a warp delete on the panel.</li>
+      <li>Nothing else on the band works while it shows. Esc or No closes it.</li>
+      <li>Players and admins learn one question that looks the same everywhere.</li>
+    </ul>
+  </section>
+
+  <section class="sheet">
+    <h2>B: Press Del twice</h2>
+    <div class="hud" id="b">
+      <div class="title">Homes</div>
+      <div id="b-rows"></div>
+      <div class="foot"><input aria-label="Home name" placeholder="name" id="b-new"><span class="key tq">Set home</span></div>
+    </div>
+    <ul class="facts">
+      <li>The first press turns the row red and its keys into SURE? and KEEP. SURE? deletes.</li>
+      <li>It goes back by itself after 4 seconds, or when anything else is pressed.</li>
+      <li>Fastest for someone tidying several homes, and nothing covers the list.</li>
+    </ul>
+  </section>
+
+  <section class="sheet">
+    <h2>C: A question in the footer</h2>
+    <div class="hud" id="c">
+      <div class="title">Homes</div>
+      <div id="c-rows"></div>
+      <div class="foot" id="c-foot"></div>
+    </div>
+    <ul class="facts">
+      <li>The row turns red and the Set home strip at the bottom becomes "Delete Base? This cannot be undone." with DELETE and KEEP.</li>
+      <li>The same way the server access card asks before a main server is chosen.</li>
+      <li>The list stays readable, so the player can see which home they picked.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+(function () {
+  var HOMES = [
+    { name: "Base", where: "BSP-Moongrove  120 64 -40" },
+    { name: "Farm", where: "BSP-Moongrove  -310 70 88" },
+    { name: "Mine", where: "BSP-Frostwarf  44 -12 905" }
+  ];
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) { e.className = cls; } if (text) { e.textContent = text; } return e; }
+  function key(text, cls, fn) { var b = el("button", "key " + (cls || ""), text); b.type = "button"; if (fn) { b.addEventListener("click", fn); } return b; }
+
+  function makeDemo(id, opts) {
+    var homes = HOMES.slice(), marked = null, timer = null;
+    var rowsBox = $(id + "-rows"), hud = $(id);
+    function close() { marked = null; clearTimeout(timer); draw(); }
+    function remove(name) { homes = homes.filter(function (h) { return h.name !== name; }); close(); }
+    function draw() {
+      rowsBox.innerHTML = "";
+      var old = hud.querySelector(".veil");
+      if (old) { old.remove(); }
+      homes.forEach(function (h) {
+        var row = el("div", "row" + (marked === h.name && opts.markRow ? " marked" : ""));
+        row.appendChild(el("span", "icon"));
+        var g = el("div", "grow"); g.appendChild(el("span", "name", h.name)); g.appendChild(el("span", "sub", h.where)); row.appendChild(g);
+        var keys = el("div", "keys");
+        if (opts.inline && marked === h.name) {
+          keys.appendChild(key("Sure?", "rr", function () { remove(h.name); }));
+          keys.appendChild(key("Keep", "", close));
+        } else {
+          keys.appendChild(key("Go", "tq"));
+          keys.appendChild(key("Del", "", function () { ask(h.name); }));
+        }
+        row.appendChild(keys);
+        rowsBox.appendChild(row);
+      });
+      if (!homes.length) {
+        var gone = el("div", "gone", "All three homes deleted. ");
+        gone.appendChild(key("Put them back", "reset", function () { homes = HOMES.slice(); close(); }));
+        rowsBox.appendChild(gone);
+      }
+      if (opts.popup && marked) {
+        var veil = el("div", "veil"), box = el("div", "box");
+        box.appendChild(el("div", "q", "Delete the home " + marked + "?"));
+        var k = el("div", "keys"), name = marked;
+        k.appendChild(key("Yes", "ok", function () { remove(name); }));
+        k.appendChild(key("No", "", close));
+        box.appendChild(k); veil.appendChild(box); hud.appendChild(veil);
+        k.lastChild.focus();
+      }
+      if (opts.footer) { opts.footer(marked, remove, close); }
+    }
+    function ask(name) {
+      marked = name; clearTimeout(timer);
+      if (opts.inline) { timer = setTimeout(close, 4000); }
+      draw();
+    }
+    hud.addEventListener("keydown", function (e) { if (e.key === "Escape" && marked) { close(); } });
+    draw();
+  }
+
+  makeDemo("a", { popup: true });
+  makeDemo("b", { inline: true, markRow: true });
+  makeDemo("c", { markRow: true, footer: function (marked, remove, close) {
+    var foot = $("c-foot");
+    foot.innerHTML = "";
+    foot.className = "foot" + (marked ? " ask" : "");
+    if (marked) {
+      var t = el("span"); t.appendChild(document.createTextNode("Delete ")); t.appendChild(el("b", "", marked));
+      t.appendChild(document.createTextNode("? This cannot be undone.")); foot.appendChild(t);
+      var d = key("Delete", "rr push", function () { remove(marked); });
+      foot.appendChild(d); foot.appendChild(key("Keep", "", close));
+    } else {
+      var i = el("input"); i.id = "c-new"; i.placeholder = "name"; i.setAttribute("aria-label", "Home name");
+      foot.appendChild(i); foot.appendChild(el("span", "key tq", "Set home"));
+    }
+  } });
+})();
+</script>

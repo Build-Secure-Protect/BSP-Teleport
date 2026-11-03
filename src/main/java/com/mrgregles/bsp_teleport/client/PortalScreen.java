@@ -655,7 +655,7 @@ public class PortalScreen extends Screen {
         }
         y += 4;
         int px = left + 10;
-        for (String kind : new String[]{"RANK", "ITEM", "NODE", "COINS", "TOKEN", "TIME"}) {
+        for (String kind : new String[]{"RANK", "ITEM", "NODE", "COINS", "PIECES", "TOKEN", "TIME"}) {
             boolean on = kind.equals(ruleKind);
             px = pill(g, px, y, Component.translatable("screen.bsp_teleport.portal.rule." + kind.toLowerCase()).getString(), on, () -> {
                 ruleKind = kind;
@@ -689,7 +689,7 @@ public class PortalScreen extends Screen {
                 box2.setHint(Component.translatable("screen.bsp_teleport.portal.rule_count"));
                 button(g, left + 230, y + 1, Component.translatable("screen.bsp_teleport.portal.rule_consume").getString(), ruleConsume ? OK : DIM, ruleConsume ? OK : MUTED, () -> ruleConsume = !ruleConsume);
             }
-            case "COINS" -> {
+            case "COINS", "PIECES" -> {
                 box2.setX(left + 12);
                 box2.setY(y);
                 box2.setWidth(60);

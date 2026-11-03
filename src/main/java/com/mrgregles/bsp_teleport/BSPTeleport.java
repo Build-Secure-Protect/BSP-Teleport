@@ -42,6 +42,10 @@ public class BSPTeleport {
         context.registerConfig(ModConfig.Type.SERVER, TeleportConfig.SPEC);
         context.registerConfig(ModConfig.Type.COMMON, NetworkConfig.SPEC, NetworkConfig.FILE);
         context.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
+        // Each kind on its own: the event bus may refuse a listener for the abstract ModConfigEvent.
+        context.getModEventBus().addListener((net.minecraftforge.fml.event.config.ModConfigEvent.Loading e) -> TeleportConfig.onConfigEvent(e));
+        context.getModEventBus().addListener((net.minecraftforge.fml.event.config.ModConfigEvent.Reloading e) -> TeleportConfig.onConfigEvent(e));
+        context.getModEventBus().addListener((net.minecraftforge.fml.event.config.ModConfigEvent.Unloading e) -> TeleportConfig.onConfigEvent(e));
         BspTeleportApiSetter.set(TeleportService.INSTANCE);
         ModBlocks.BLOCKS.register(context.getModEventBus());
         ModBlocks.BLOCK_ENTITIES.register(context.getModEventBus());
@@ -74,6 +78,11 @@ public class BSPTeleport {
         MinecraftForge.EVENT_BUS.addListener(com.mrgregles.bsp_teleport.portal.PortalWarmup::onLoggedOut);
         MinecraftForge.EVENT_BUS.addListener(Teleports::onDeath);
         MinecraftForge.EVENT_BUS.addListener(Teleports::onLoggedOut);
+        // B34: a paid move to another server is watched until the player has gone, and given back when they have not.
+        MinecraftForge.EVENT_BUS.addListener(com.mrgregles.bsp_teleport.teleport.PaidTrips::onLoggedOut);
+        MinecraftForge.EVENT_BUS.addListener(com.mrgregles.bsp_teleport.teleport.PaidTrips::onLoggedIn);
+        MinecraftForge.EVENT_BUS.addListener(com.mrgregles.bsp_teleport.teleport.PaidTrips::onServerTick);
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.server.ServerStoppedEvent e) -> com.mrgregles.bsp_teleport.teleport.PaidTrips.clear());
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, TeleportService::onPlayerLoggedIn);
         MinecraftForge.EVENT_BUS.addListener(TeleportService::onPlayerLoggedOut);
         MinecraftForge.EVENT_BUS.addListener(TeleportService::onServerTick);

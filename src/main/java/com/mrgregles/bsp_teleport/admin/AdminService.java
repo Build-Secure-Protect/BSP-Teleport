@@ -67,7 +67,7 @@ public final class AdminService {
                             : old.withPosition(Position.of(player)).withCost(parseInt(b, 0)).withRestricted(Boolean.parseBoolean(c));
                     TeleportData.get(player.server).setWarp(warp);
                     Storage.warpSaved(warp);
-                    tell(player, "warp.set", warp.name(), warp.restricted() ? Permissions.warpNode(warp.name()) : "-", warp.cost());
+                    tell(player, "warp.set", warp.name(), warp.restricted() ? Permissions.warpNode(warp.name()) : "-", costLine(warp));
                 } else {
                     tell(player, "warp.bad_name");
                 }
@@ -78,7 +78,8 @@ public final class AdminService {
                 open(player);
             }
             case WARP_COST -> {
-                editWarp(player, a, w -> w.withCost(Math.max(0, parseInt(b, w.cost()))));
+                // D163: "name;cost;pieces" or "name;cost;coins"; without the third part the warp keeps its currency.
+                editWarp(player, a, w -> w.withCost(Math.max(0, parseInt(b, w.cost())), c.isEmpty() ? w.pieces() : c.equals("pieces")));
                 open(player);
             }
             case WARP_RESTRICT -> {
@@ -234,7 +235,12 @@ public final class AdminService {
         Warp edited = edit.apply(warp);
         data.setWarp(edited);
         Storage.warpSaved(edited);
-        tell(player, "warp.set", edited.name(), edited.restricted() ? Permissions.warpNode(edited.name()) : "-", edited.cost());
+        tell(player, "warp.set", edited.name(), edited.restricted() ? Permissions.warpNode(edited.name()) : "-", costLine(edited));
+    }
+
+    /** A warp's cost for the admin's line: "free", or the amount in its currency. */
+    static String costLine(Warp warp) {
+        return warp.cost() <= 0 ? "free" : com.mrgregles.bsp_teleport.teleport.TeleportActions.costText(warp, warp.cost());
     }
 
     // Settings the panel may change. Credentials and names stay in the file.
@@ -300,7 +306,7 @@ public final class AdminService {
         }
         List<AdminData.WarpRow> warps = new ArrayList<>();
         for (Warp w : TeleportData.get(player.server).warps()) {
-            warps.add(new AdminData.WarpRow(w.name(), w.position().server(), w.cost(), w.restricted(), w.icon(), w.portal(), w.rules()));
+            warps.add(new AdminData.WarpRow(w.name(), w.position().server(), w.cost(), w.restricted(), w.icon(), w.portal(), w.rules(), w.pieces()));
         }
         List<AdminData.ServerRow> servers = new ArrayList<>();
         List<String> here = new ArrayList<>();

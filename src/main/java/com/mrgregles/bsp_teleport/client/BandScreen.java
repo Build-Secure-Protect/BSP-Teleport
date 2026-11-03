@@ -36,7 +36,13 @@ public class BandScreen extends Screen {
         }
     }
 
+    /** A question with Yes and No over the band (B36); only its keys answer while it shows. */
+    private record Confirm(String question, Runnable yes) {
+    }
+
     private BandData data;
+    @Nullable
+    private Confirm confirm;
     private Tab tab = Tab.HOMES;
     private int scroll;
     private int left, top;
@@ -90,6 +96,7 @@ public class BandScreen extends Screen {
         g.pose().pushPose();
         g.pose().scale(scale, scale, 1f);
         hits.clear();
+        nameBox.visible = tab == Tab.HOMES && confirm == null;
         g.fill(left - 1, top - 1, left + W + 1, top + H + 1, TQ);
         g.fill(left, top, left + W, top + H, BG);
         Tab[] tabs = data.admin() ? Tab.values() : new Tab[] {Tab.HOMES, Tab.WARPS, Tab.PLAYERS, Tab.TEAM, Tab.MORE};
@@ -143,6 +150,33 @@ public class BandScreen extends Screen {
         }
         drawFooter(g);
         super.render(g, (int) (mouseX / scale), (int) (mouseY / scale), partial);
+        if (confirm != null) {
+            drawConfirm(g);
+        }
+        g.pose().popPose();
+    }
+
+    /** B36: the admin panel's question box, over the whole band. */
+    private void drawConfirm(GuiGraphics g) {
+        int cw = Math.min(200, W - 20), ch = 50;
+        int cx = left + (W - cw) / 2, cy = top + (H - ch) / 2;
+        g.pose().pushPose();
+        g.pose().translate(0, 0, 200);
+        g.fill(left, top, left + W, top + H, 0xA0000000);
+        g.fill(cx - 1, cy - 1, cx + cw + 1, cy + ch + 1, GOLD);
+        g.fill(cx, cy, cx + cw, cy + ch, BG);
+        int ty = cy + 8;
+        for (net.minecraft.util.FormattedCharSequence line : font.split(Component.literal(confirm.question()), cw - 16)) {
+            g.drawString(font, line, cx + 8, ty, TEXT, false);
+            ty += 10;
+        }
+        hits.clear(); // only the box's keys answer while it is up
+        Confirm c = confirm;
+        int bx = button(g, cx + cw - 8, cy + ch - 18, Component.translatable("screen.bsp_teleport.admin.no").getString(), DIM, MUTED, () -> confirm = null) - 4;
+        button(g, bx, cy + ch - 18, Component.translatable("screen.bsp_teleport.admin.yes").getString(), OK, OK, () -> {
+            confirm = null;
+            c.yes().run();
+        });
         g.pose().popPose();
     }
 
@@ -165,7 +199,9 @@ public class BandScreen extends Screen {
             row(g, y, h.name(), sub, nameColour, h.server().equals(data.server()) ? MUTED : VIO, keysLeft);
             icon(g, y, h.icon(), com.mrgregles.bsp_teleport.util.Icons.DEFAULT_HOME, () -> send(BandAction.HOME_ICON, h.name()));
             int bx = left + W - 10;
-            bx = button(g, bx, y + 4, Component.translatable("screen.bsp_teleport.band.del").getString(), DIM, MUTED, () -> send(BandAction.DEL_HOME, h.name()));
+            bx = button(g, bx, y + 4, Component.translatable("screen.bsp_teleport.band.del").getString(), DIM, MUTED, 
+                    () -> confirm = new Confirm(Component.translatable("screen.bsp_teleport.band.confirm_del_home", h.name()).getString(),
+                            () -> send(BandAction.DEL_HOME, h.name())));
             if (h.locked()) {
                 button(g, bx - 2, y + 4, Component.translatable("screen.bsp_teleport.band.locked").getString(), DIM, MUTED, null);
             } else if (h.nearRaid()) {
@@ -198,7 +234,9 @@ public class BandScreen extends Screen {
             }
             String sub = where(w.server(), w.world(), w.x(), w.y(), w.z());
             if (w.cost() > 0) {
-                sub += "  " + Component.translatable("screen.bsp_teleport.band.coins", w.cost()).getString();
+                // D163: the cost names its currency, bank pieces or coins carried.
+                sub += "  " + (w.pieces() ? Component.translatable("screen.bsp_teleport.band.pieces", String.format(java.util.Locale.ROOT, "%,d", w.cost()))
+                        : Component.translatable("screen.bsp_teleport.band.coins", w.cost())).getString();
             }
             String wkey = Component.translatable(w.nearRaid() ? "screen.bsp_teleport.band.near_raid" : "screen.bsp_teleport.band.go").getString();
             // D150: a warp with open hours carries a chip before its key: OPEN, or OPENS 03:00 on a red-edged row.
@@ -215,7 +253,7 @@ public class BandScreen extends Screen {
             if (w.nearRaid()) {
                 button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.near_raid").getString(), BAD, BAD, null);
             } else {
-                boolean afford = w.cost() <= data.coins();
+                boolean afford = w.afford();
                 // A closed warp's key stays pressable but dim: admins pass the hours, and everyone else is told when it opens.
                 // B23: the same for a warp the player cannot pay for: the server says what it costs, where a dead key said nothing.
                 int keyX = button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.go").getString(), closed ? DIM : w.cost() > 0 ? GOLD : TQ,
@@ -238,7 +276,10 @@ public class BandScreen extends Screen {
             int ax = button(g, bx - 2, y + 4, Component.translatable("screen.bsp_teleport.band.accept").getString(), OK, OK, () -> go(BandAction.ACCEPT, ""));
             // Audit: the request line is small and cut before the keys.
             small(g, clip(head, ax - (left + 14) - 4), left + 14, y + 3, VIO);
-            small(g, clip(Component.translatable("screen.bsp_teleport.band.request_left", r.server(), r.secondsLeft()).getString(), ax - (left + 14) - 4), left + 14, y + 12, MUTED);
+            // B27: the server comes only for a teammate (or to an admin).
+            Component timeLeft = r.server().isEmpty() ? Component.translatable("screen.bsp_teleport.band.request_time_left", r.secondsLeft())
+                    : Component.translatable("screen.bsp_teleport.band.request_left", r.server(), r.secondsLeft());
+            small(g, clip(timeLeft.getString(), ax - (left + 14) - 4), left + 14, y + 12, MUTED);
             y += ROW_H + 4;
         }
         if (data.players().isEmpty()) {
@@ -252,7 +293,7 @@ public class BandScreen extends Screen {
             if (y + ROW_H > bottom) {
                 break;
             }
-            row(g, y, p.name(), p.server(), TEXT, p.server().equals(data.server()) ? MUTED : VIO);
+            row(g, y, p.name(), p.server(), TEXT, p.server().isEmpty() || p.server().equals(data.server()) ? MUTED : VIO);
             int bx = button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.here").getString(), DIM, MUTED, () -> send(BandAction.TPA_HERE, p.name()));
             button(g, bx - 2, y + 4, Component.translatable("screen.bsp_teleport.band.tpa").getString(), TQ, TQ, () -> send(BandAction.TPA, p.name()));
             y += ROW_H + 2;
@@ -497,6 +538,9 @@ public class BandScreen extends Screen {
                 }
             }
         }
+        if (confirm != null) {
+            return true; // a click beside the box does nothing, so the list under it cannot be used by mistake
+        }
         return super.mouseClicked(mx, my, button);
     }
 
@@ -517,6 +561,9 @@ public class BandScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mx, double my, double delta) {
+        if (confirm != null) {
+            return true;
+        }
         int count = switch (tab) {
             case HOMES -> data.homes().size();
             case WARPS -> data.warps().size();
@@ -540,6 +587,15 @@ public class BandScreen extends Screen {
 
     @Override
     public boolean keyPressed(int key, int scan, int mods) {
+        if (confirm != null) {
+            if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
+                confirm = null; // Esc answers No and leaves the band open
+                return true;
+            }
+            if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER || key == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_ENTER) {
+                return true; // never a Yes by keyboard
+            }
+        }
         if (nameBox.isFocused() && key == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER) {
             send(BandAction.SET_HOME, nameBox.getValue().trim());
             nameBox.setValue("");

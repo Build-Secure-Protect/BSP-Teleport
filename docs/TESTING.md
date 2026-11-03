@@ -273,3 +273,106 @@ Set `portals.timeZone` (for example `Europe/London`) and pick hours a few minute
 - [ ] As a player without `bsp_teleport.warp.<name>`: `/warp ` and Tab lists the warps the band lists, and no restricted warp or portal warp.
 - [ ] Give the player's group the node in LuckPerms: the restricted warp is offered at once (no relog).
 - [ ] As an admin: restricted warps are offered; portal warps are not. `/delwarp ` still offers every warp, portal warps included.
+
+## Bounced players leave the restricted server (B26, 2026-11-02)
+
+- [ ] `access.enabled = true` everywhere, `lobbyServer = ""`, no global spawn warp. Start a backend: its log warns that `access.lobbyServer` is empty.
+- [ ] A player with no access to Frostwarf uses the proxy's `/server BSP-Frostwarf` (or logs in with Frostwarf as their last server): chat says they no longer have access, the access popup shows, and they are moved to their main server if it is up, else the first open server that is up. Before, they stayed on Frostwarf at its spawn.
+- [ ] The same with `lobbyServer = "BSP-Spawn"`: they go to Spawn.
+- [ ] Rent for Frostwarf runs out while the player is there: they go to their main server first, then the lobby, then any open server.
+- [ ] Every other server down: the player is disconnected with "You have no access to BSP-Frostwarf, and no other server is up to send you to."
+
+## Players' servers on the band (B27, 2026-11-02)
+
+- [ ] As a player in no team: the PLAYERS tab lists names only, sorted A to Z, with no server under any of them. TPA and HERE still work.
+- [ ] A teammate's row shows their server; other rows do not.
+- [ ] A teleport request from a non-teammate reads "N s left" with no server; from a teammate, "from BSP-Frostwarf, N s left".
+- [ ] As an admin: every row and every request shows the server.
+
+## The shared restricted list switches access on everywhere (D162, 2026-11-02)
+
+- [ ] `access.enabled = true` on Frostwarf only, `false` on Spawn; Frostwarf restricted on the NETWORK tab. On Spawn a player without access uses random teleport (band or `/rtp BSP-Frostwarf`), a warp or a portal to Frostwarf: refused with the access popup, and they stay on Spawn. Before, Spawn let them go.
+- [ ] On Spawn the HUD and the band's ACCESS list show, although Spawn's own switch is off.
+- [ ] Un-restrict every server on the NETWORK tab: on Spawn the HUD goes and nothing is checked; on Frostwarf (switch on) the system stays on.
+- [ ] A server with no database (`storage` off): only its own switch counts, as before.
+
+## Bring across servers (B28, 2026-11-02)
+
+- [ ] Admin on Spawn, a player on Frostwarf: the panel's bring (or `/bsptp bring <player>`) moves the player to Spawn, beside the admin. Before, they were put at the admin's coordinates on Frostwarf, in the air.
+- [ ] Bring all from one other server, and from every server: everyone arrives on the admin's server beside the admin.
+- [ ] Bring a player on the admin's own server: as before, a local move.
+
+## Warps are free for admins and operators (B29, 2026-11-02)
+
+- [ ] As an admin, or an operator (level 2) who is not on BSP-Core's admin list, with no coins: a warp with a cost shows no price and a turquoise GO on the band; GO, `/warp` and the warm-up work, nothing is taken, no "paid" line. `/warps` lists it without a price.
+- [ ] As a player: the cost shows, is checked and is taken as before.
+
+## Config edits after /bsptp reload (B30, 2026-11-02)
+
+- [ ] On a running backend, run `/bsptp reload`. Then set `suppressJoinLeaveMessages = true` in `<world>/serverconfig/bsp_teleport-server.toml` and save. Without another reload, switch a player away and back: no "left the game" or "joined the game" from this backend (Forge reloads the file by itself).
+- [ ] Change any setting on the panel's SETTINGS tab, then open the file: `suppressJoinLeaveMessages` is still `true`. Before, the panel wrote the old value back.
+- [ ] `/bsptp reload` after an edit still applies it at once.
+
+## Back after dying (B31, 2026-11-02)
+
+- [ ] With no bed, die away from spawn (note the spot). Respawn: you are moved to the server's spawn point as before. Press Back on the band: you go to the death spot, not to a spot in the air above the world spawn.
+- [ ] Press Back again: you go to where you stood when you pressed it the first time.
+- [ ] First join on a server (placed at its spawn) and an access bounce: Back still goes to the last spot you teleported from.
+- [ ] Teleport across servers, then press Back on the band: you return to the spot on the first server.
+
+## Logging in inside a portal (B32, 2026-11-02)
+
+- [ ] Walk into a portal to another server and quit the game (or kill the client) during the one-second hold, before the switch. Log in again: within about a second you are moved to the spot in front of the portal, facing away from it, and the portal does not fire. The server log says "logged in inside portal <name>; moved in front of it".
+- [ ] The same with a block (or your totem) on the spot in front: you are put behind the portal instead ("moved behind it").
+- [ ] Both sides blocked: two or three blocks out on either side; with every spot blocked, the server's spawn (a warning in the log).
+- [ ] A cross-server portal whose destination server is down at the moment of the switch: when the proxy puts you back, you land in front of the portal, not in it, and nothing loops.
+- [ ] A player who arrives at a portal's own arrival spot (a link) is not moved.
+
+## Warp and portal costs in pieces (D163, 2026-11-02)
+
+- [ ] WARPS tab: press a warp's cost key. The strip shows COST OF <NAME>, the amount, and PIECES and COINS (a free warp starts on PIECES, a warp set before keeps COINS lit). Type 5000, keep PIECES, Save: the key reads `5,000P`. Pick COINS, type 25, Save: it reads `25C`.
+- [ ] As a player with 10,000 pieces in the bank and no coins: the band shows "5,000 pieces" on the warp with a gold GO. GO: after the warm-up you arrive, the chat says "Paid 5,000 pieces from your bank.", and the bank's log names BSP Teleport.
+- [ ] With 1,000 pieces: GO is grey; pressing it (or `/warp`) says "This warp costs 5,000 pieces and your bank holds 1,000 pieces." Nothing is taken.
+- [ ] A warp still on coins: as before, coins come out of the inventory.
+- [ ] Core screen, ACCESS tab: add a PIECES rule of 2000. Walk through with enough pieces: 2000 are taken and you go. Without enough: "This costs 2,000 pieces from your bank." and you stay. With a warm-up, the pieces are taken only at its end.
+- [ ] A warp with a Pieces rule and a coins cost: both are checked first, and either both are paid or neither.
+- [ ] On the network (bank in MySQL): the move happens a moment after the warm-up ends, once the bank answers; walking through a priced portal twice quickly charges once.
+- [ ] As an admin: nothing is taken in either currency.
+- [ ] Existing warps after updating: their cost key still reads `...c` and they still charge coins.
+
+## No charge for a move that does not happen (B34, 2026-11-03)
+
+- [ ] A priced warp whose world is gone (or rename the world in its saved position): GO. "You did not move, so what you paid has been given back." The coins or pieces are back and there is no cooldown.
+- [ ] A priced warp or portal on another server that is stopped (but still listed): pay and go. After 45 seconds you get the same line and everything back (pieces in the bank log as "sold to BSP Teleport", coins in the inventory, used-up items in the inventory or at your feet). The server log says "paid move to '<server>' did not happen".
+- [ ] The same to a server that is up: you arrive, nothing comes back, and the origin server's log has no refund line.
+- [ ] Pay for a portal to another server and quit during the one-second hold: on your next login the pieces, and the coins as pieces, are in your bank ("left before their paid move ... started" in the log). An item rule's items come back at your next login on that server.
+- [ ] `/tpnow` (with `skipCooldownCoins` set): the warm-up starts and nothing is taken yet. Walk to cancel: nothing is taken and the cooldown is still there. Try again and stay still: the price is taken at the end with the move ("Paid N coins to skip the cooldown.").
+- [ ] Not covered: another server that takes you in and then sends you back counts as a move made.
+
+
+## /spawn goes to the network spawn (B35, 2026-11-03)
+
+Setup: the network spawn set with `/bsptp setnetworkspawn` on BSP-Spawn; `spawn.globalWarp` left empty (as on every live server); each other server keeps its own `/setspawn` point.
+
+1. On another server (for example Moongrove), run `/spawn`. After the warm-up you are moved to BSP-Spawn and land at the network spawn, not that server's world spawn.
+2. Open the band, press Spawn. Same result.
+3. On BSP-Spawn itself, run `/spawn`. You move to the network spawn there, with no server switch.
+4. Die on Moongrove with no bed. You still respawn at Moongrove's own spot (respawns and first visits keep the server's own point, D142, D143).
+5. Optional: delete the `spawn` warp, then run `/spawn` on Moongrove. You go to Moongrove's own `/setspawn` point. With neither set, the message is "No network spawn is set (the warp spawn). Ask an admin to set it."
+
+## Asking before a home is deleted (B36, 2026-11-03)
+
+1. Open the band, HOMES tab, press DEL on a home. The band dims and a gold box asks "Delete the home <name>?" with YES and NO. The home is still listed.
+2. Press NO. The box closes and the home is still there. Press DEL again, then Esc: same, and the band stays open.
+3. With the box up, click the list, a tab, or the name box beside it, scroll, and press Enter. Nothing happens.
+4. Press DEL, then YES. The home is deleted and the list updates.
+5. `/delhome <name>` still deletes without asking (on purpose). The panel's warp Del still asks as before.
+
+## /tpnow after a refused /rtp (B37, 2026-11-03)
+
+Setup: `teleport.skipCooldownCoins` above 0 (for example 5), a cooldown of a minute or more, and coins in your inventory.
+
+1. Run `/rtp`, then `/rtp` again while the cooldown runs. You are told to wait or pay with `/tpnow`.
+2. Run `/tpnow`. A random spot is searched for, the warm-up starts, and at its end you land somewhere new and the price is taken. Before, `/tpnow` took the price and left you where you stood.
+3. Repeat with `/rtp <another server>`: `/tpnow` asks that server for a spot ("asking ..."), then the warm-up and the move to it, the price taken with the move.
+4. Run `/tpnow` after a refused `/rtp` in a world where /rtp is off, or with no safe spot found: nothing is taken, and the next teleport still has its cooldown.

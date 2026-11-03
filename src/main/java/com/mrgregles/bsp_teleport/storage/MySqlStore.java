@@ -132,6 +132,8 @@ final class MySqlStore implements AutoCloseable {
                     + "cost INT NOT NULL DEFAULT 0, restricted BOOLEAN NOT NULL DEFAULT FALSE, icon VARCHAR(96) NOT NULL DEFAULT '', portal BOOLEAN NOT NULL DEFAULT FALSE, rules VARCHAR(1024) NOT NULL DEFAULT '')");
             addColumn(st, "warps", "portal", "BOOLEAN NOT NULL DEFAULT FALSE");
             addColumn(st, "warps", "rules", "VARCHAR(1024) NOT NULL DEFAULT ''");
+            // D163: warps from before pay in coins, as they always did.
+            addColumn(st, "warps", "cost_pieces", "BOOLEAN NOT NULL DEFAULT FALSE");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("portals") + " (id VARCHAR(190) NOT NULL PRIMARY KEY, server VARCHAR(64) NOT NULL, world VARCHAR(128) NOT NULL, "
                     + "x INT NOT NULL, y INT NOT NULL, z INT NOT NULL, name VARCHAR(32) NOT NULL DEFAULT '', destination VARCHAR(512) NOT NULL DEFAULT '', "
                     + "arrive_only BOOLEAN NOT NULL DEFAULT FALSE, exit_to VARCHAR(512) NOT NULL DEFAULT '', frame_ok BOOLEAN NOT NULL DEFAULT FALSE, "
@@ -312,17 +314,18 @@ final class MySqlStore implements AutoCloseable {
 
     List<Warp> loadWarps() throws SQLException {
         List<Warp> warps = new ArrayList<>();
-        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT name, position, cost, restricted, icon, portal, rules FROM " + t("warps") + " ORDER BY name")) {
+        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT name, position, cost, restricted, icon, portal, rules, cost_pieces FROM " + t("warps") + " ORDER BY name")) {
             while (rs.next()) {
-                warps.add(new Warp(rs.getString(1), Position.parse(rs.getString(2)), rs.getInt(3), rs.getBoolean(4), rs.getString(5), rs.getBoolean(6), rs.getString(7)));
+                warps.add(new Warp(rs.getString(1), Position.parse(rs.getString(2)), rs.getInt(3), rs.getBoolean(4), rs.getString(5), rs.getBoolean(6), rs.getString(7), rs.getBoolean(8)));
             }
         }
         return warps;
     }
 
     void saveWarp(Warp warp) throws SQLException {
-        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("warps") + " (name, position, cost, restricted, icon, portal, rules) VALUES (?, ?, ?, ?, ?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE position = VALUES(position), cost = VALUES(cost), restricted = VALUES(restricted), icon = VALUES(icon), portal = VALUES(portal), rules = VALUES(rules)")) {
+        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("warps") + " (name, position, cost, restricted, icon, portal, rules, cost_pieces) VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE position = VALUES(position), cost = VALUES(cost), restricted = VALUES(restricted), icon = VALUES(icon), portal = VALUES(portal), rules = VALUES(rules), "
+                + "cost_pieces = VALUES(cost_pieces)")) {
             ps.setString(1, warp.name());
             ps.setString(2, warp.position().serialize());
             ps.setInt(3, warp.cost());
@@ -330,6 +333,7 @@ final class MySqlStore implements AutoCloseable {
             ps.setString(5, warp.icon());
             ps.setBoolean(6, warp.portal());
             ps.setString(7, warp.rules());
+            ps.setBoolean(8, warp.pieces());
             ps.executeUpdate();
         }
     }
