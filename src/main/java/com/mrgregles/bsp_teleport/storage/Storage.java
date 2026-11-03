@@ -252,6 +252,24 @@ public final class Storage {
 
     // Access (D87): grants per player on login and on notice; tokens and restricted servers for everyone.
 
+    /**
+     * B39: the player's grants read on the storage worker, for a check that waits on it off the server thread (the
+     * login check); null without the database or once it is shutting down.
+     */
+    @Nullable
+    public static java.util.concurrent.Future<List<AccessGrant>> loadAccessNow(UUID uuid) {
+        MySqlStore s = store;
+        ExecutorService w = worker;
+        if (s == null || w == null) {
+            return null;
+        }
+        try {
+            return w.submit(() -> s.loadAccess(uuid));
+        } catch (java.util.concurrent.RejectedExecutionException e) {
+            return null;
+        }
+    }
+
     public static void loadAccess(UUID uuid, Consumer<List<AccessGrant>> then) {
         MySqlStore s = store;
         if (s == null) {

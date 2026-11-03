@@ -55,6 +55,23 @@ public final class LuckPerms {
         }
     }
 
+    /**
+     * B39: LuckPerms' answer for a player who is still logging in, read by UUID (LuckPerms loads them during the same
+     * login, so this may load them itself); empty when LuckPerms is absent or the answer took longer than
+     * {@code waitMs}. Blocks: never call it on the server thread.
+     */
+    public static Optional<Boolean> checkLoggingIn(java.util.UUID player, String node, long waitMs) {
+        if (!isPresent()) {
+            return Optional.empty();
+        }
+        try {
+            return Impl.checkLoggingIn(player, node, waitMs);
+        } catch (RuntimeException | LinkageError e) {
+            BSPTeleport.LOGGER.warn("LuckPerms permission check for {} at login failed: {}", node, e.toString());
+            return Optional.empty();
+        }
+    }
+
     /** Forgets the cached answer, for tests. */
     public static void reset() {
         present = null;
@@ -81,6 +98,22 @@ public final class LuckPerms {
                 return Optional.of(user.getInheritedGroups(user.getQueryOptions()).stream().anyMatch(g -> g.getName().equalsIgnoreCase(group)));
             }
             return Optional.of(answer.asBoolean());
+        }
+
+        static Optional<Boolean> checkLoggingIn(java.util.UUID player, String node, long waitMs) {
+            net.luckperms.api.model.user.UserManager users = net.luckperms.api.LuckPermsProvider.get().getUserManager();
+            net.luckperms.api.model.user.User user = users.getUser(player);
+            if (user == null) {
+                try {
+                    user = users.loadUser(player).get(waitMs, java.util.concurrent.TimeUnit.MILLISECONDS);
+                } catch (java.util.concurrent.TimeoutException | java.util.concurrent.ExecutionException e) {
+                    return Optional.empty();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return Optional.empty();
+                }
+            }
+            return user == null ? Optional.empty() : Optional.of(user.getCachedData().getPermissionData().checkPermission(node).asBoolean());
         }
     }
 }

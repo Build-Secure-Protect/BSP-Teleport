@@ -83,6 +83,9 @@ public class BSPTeleport {
         MinecraftForge.EVENT_BUS.addListener(com.mrgregles.bsp_teleport.teleport.PaidTrips::onLoggedIn);
         MinecraftForge.EVENT_BUS.addListener(com.mrgregles.bsp_teleport.teleport.PaidTrips::onServerTick);
         MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.server.ServerStoppedEvent e) -> com.mrgregles.bsp_teleport.teleport.PaidTrips.clear());
+        // B39: a player without access is refused during the login, so the proxy sends them on with no switch.
+        MinecraftForge.EVENT_BUS.addListener(com.mrgregles.bsp_teleport.access.LoginCheck::onNegotiation);
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.server.ServerStoppedEvent e) -> com.mrgregles.bsp_teleport.access.LoginCheck.reset());
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, TeleportService::onPlayerLoggedIn);
         MinecraftForge.EVENT_BUS.addListener(TeleportService::onPlayerLoggedOut);
         MinecraftForge.EVENT_BUS.addListener(TeleportService::onServerTick);

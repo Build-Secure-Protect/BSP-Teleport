@@ -135,6 +135,24 @@ public final class BspCore {
         return BspPlayers.isAdmin(player);
     }
 
+    /**
+     * B39: BSP-Core's admin rule for a player who is still logging in and has no player object yet: the names in
+     * {@code admins}, or every operator (level 2) when that list is empty. Mirrors {@code Admins.isAdmin(Player)}, which
+     * needs the player; BSP-Core has no profile form yet (asked in Teleport - Requests for BSP-Core).
+     */
+    public static boolean isAdminProfile(net.minecraft.server.MinecraftServer server, com.mojang.authlib.GameProfile profile) {
+        java.util.List<? extends String> admins = BSPConfig.getOr(BSPConfig.ADMINS, java.util.List.<String>of());
+        if (admins.isEmpty()) {
+            return server.getProfilePermissions(profile) >= 2;
+        }
+        for (String name : admins) {
+            if (name.equalsIgnoreCase(profile.getName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean isModerator(Player player) {
         return BspPlayers.isModerator(player);
     }

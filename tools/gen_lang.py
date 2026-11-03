@@ -202,6 +202,7 @@ MESSAGES = {
     "access.ran_out": "Your access to %s ran out.",
     "access.ends_in": "Your access to %s ends in %s.",
     "access.bounced": "You no longer have access to %s.",
+    "access.refused_login": "You have no access to %s.",
     "access.nowhere": "You have no access to %s, and no other server is up to send you to. Try again soon.",
     "access.server_on": "%s now needs access.",
     "access.server_off": "%s no longer needs access.",

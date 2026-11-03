@@ -527,6 +527,7 @@
   "message.bsp_teleport.access.ran_out": "Your access to %s ran out.",
   "message.bsp_teleport.access.ends_in": "Your access to %s ends in %s.",
   "message.bsp_teleport.access.bounced": "You no longer have access to %s.",
+  "message.bsp_teleport.access.refused_login": "You have no access to %s.",
   "message.bsp_teleport.access.nowhere": "You have no access to %s, and no other server is up to send you to. Try again soon.",
   "message.bsp_teleport.access.server_on": "%s now needs access.",
   "message.bsp_teleport.access.server_off": "%s no longer needs access.",

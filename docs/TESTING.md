@@ -379,7 +379,7 @@ Setup: `teleport.skipCooldownCoins` above 0 (for example 5), a cooldown of a min
 
 ## A player without access is moved off only once their client is in (B38, 2026-11-03)
 
-Setup: server access on, a player whose main server is not Moongrove and who has no token for it, and Velocity Additions remembering Moongrove as their last server (they were last there).
+Setup: server access on, a player whose main server is not Moongrove and who has no token for it, and Velocity Additions remembering Moongrove as their last server (they were last there). Set `access.refuseAtLogin = false` on Moongrove for this section; with it on (the default), B39 below refuses them before they get in.
 
 1. The player logs in. They land on Moongrove, see "You have no access to BSP-Moongrove" and, once the world has loaded, "Leaving for BSP-Spawn in 10 s" above the hotbar.
 2. About 10 seconds after the world shows, the one-second hold, then the switch to BSP-Spawn. No "Can't serialize unregistered packet" kick.
@@ -388,3 +388,14 @@ Setup: server access on, a player whose main server is not Moongrove and who has
 5. If it still kicks: send the client's `logs/latest.log` lines starting "BSP-Teleport diagnostic", which name the packet and the mod that sent it.
 
 `network.placeGapSeconds` (10) is new in `bsp_teleport-server.toml`; Forge adds it at the next start.
+
+## A player without access is refused while still logging in (B39, 2026-11-03)
+
+Setup: as for B38, with `access.refuseAtLogin = true` (the default) on Moongrove, and LuckPerms' Forge edition on the servers.
+
+1. The player logs in. They never see Moongrove: the proxy sends them straight to BSP-Spawn, and the chat says they were kicked from BSP-Moongrove: "You have no access to BSP-Moongrove." No "Can't serialize unregistered packet".
+2. Moongrove's log: "<name> has no access to BSP-Moongrove: refused at login, so the proxy sends them on". The proxy's log: "<name> could not join BSP-Moongrove; sending them to BSP-Spawn".
+3. They log out and in again: they go to BSP-Spawn directly (it is now their last server).
+4. An admin (operator, a name in BSP-Core's `admins`, or `bsp_teleport.admin` in LuckPerms) logs in to Moongrove without a grant: let in as before.
+5. A player who rents Moongrove, or has it as their main server, logs in there: let in.
+6. While on BSP-Spawn, `/server BSP-Moongrove` (the proxy's own command) without access: the proxy says they could not join and they stay on Spawn, or, if Ambassador cannot put the client back, they are asked to reconnect and land on Spawn. Tell me which.
