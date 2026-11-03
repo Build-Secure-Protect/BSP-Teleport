@@ -54,6 +54,12 @@ public final class TeleportService implements BspTeleportApi {
     private static final Map<UUID, Long> LOGIN_AT = new HashMap<>();
     /** Players whose departure is already waiting for the gap to pass. */
     private static final Set<UUID> WAITING = new HashSet<>();
+    /** B38: when each player's client was first seen in the world after their login (its first movement packet). */
+    private static final Map<UUID, Long> READY_AT = new HashMap<>();
+    /** B38: a client that shows no sign of being in the world this long after its login is moved anyway. */
+    static final long READY_TIMEOUT_MS = 60_000;
+    /** B38: how often a departure waiting for the client looks again. */
+    static final long READY_POLL_MS = 500;
 
     public static void onPlayerLoggedIn(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
         LOGIN_AT.put(event.getEntity().getUUID(), System.currentTimeMillis());
@@ -72,6 +78,7 @@ public final class TeleportService implements BspTeleportApi {
 
     public static void onPlayerLoggedOut(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
         LOGIN_AT.remove(event.getEntity().getUUID());
+        READY_AT.remove(event.getEntity().getUUID());
         DEPARTING.remove(event.getEntity().getUUID());
         WAITING.remove(event.getEntity().getUUID());
     }
@@ -79,23 +86,32 @@ public final class TeleportService implements BspTeleportApi {
     /**
      * B5: a backend switch that starts within {@code network.switchGapSeconds} of the player's login is held until the
      * gap has passed, because the client is still settling from the proxy's Forge reset and a second reset on top of
-     * it kicks it ("Can't serialize unregistered packet"). Returns true when the departure was deferred (it runs by
-     * itself later). Never defers while the server is stopping.
+     * it kicks it ("Can't serialize unregistered packet"). B38: the gap counts from when the client is in the world,
+     * not from the login, which a heavy pack's client can be many seconds behind; and a move the server makes on its
+     * own ({@code placing}: the access bounce, which comes at every login of a player without access, and the new
+     * player's first placement) waits {@code network.placeGapSeconds}. Before, a player sent back to a server they had
+     * no access to was switched about 4 s after the login, while still loading, kicked, and sent back again by the
+     * proxy, every time. Returns true when the departure was deferred (it runs by itself later, and checks again).
+     * Never defers while the server is stopping.
      */
-    private static boolean deferWhileFresh(ServerPlayer player, String server, Runnable departure) {
+    private static boolean deferWhileFresh(ServerPlayer player, String server, boolean placing, Runnable departure) {
         int gap = TeleportConfig.getOr(TeleportConfig.SWITCH_GAP_SECONDS, 3);
+        if (placing) {
+            gap = Math.max(gap, TeleportConfig.getOr(TeleportConfig.PLACE_GAP_SECONDS, 10));
+        }
         Long at = LOGIN_AT.get(player.getUUID());
         if (gap <= 0 || at == null || !player.server.isRunning()) {
             return false;
         }
-        long wait = at + gap * 1000L - System.currentTimeMillis();
+        long wait = switchWait(System.currentTimeMillis(), at, readyAt(player), gap);
         if (wait <= 0) {
             return false;
         }
         if (!WAITING.add(player.getUUID())) {
             return true;
         }
-        player.displayClientMessage(Component.translatable("message.bsp_teleport.leaving_in", server, (wait + 999) / 1000), true);
+        long shown = READY_AT.containsKey(player.getUUID()) ? wait : gap * 1000L;
+        player.displayClientMessage(Component.translatable("message.bsp_teleport.leaving_in", server, (shown + 999) / 1000), true);
         Scheduler.later((int) (wait / 50) + 1, () -> {
             WAITING.remove(player.getUUID());
             if (!player.hasDisconnected() && !player.isRemoved()) {
@@ -103,6 +119,47 @@ public final class TeleportService implements BspTeleportApi {
             }
         });
         return true;
+    }
+
+    /**
+     * B38: milliseconds a switch must still wait, 0 to go now. Until the client is in the world ({@code readyAt} null)
+     * it waits in short steps, at most {@link #READY_TIMEOUT_MS} after the login; then {@code gapSeconds} from the
+     * moment it was first seen there (from the login when it never was).
+     */
+    static long switchWait(long now, long loginAt, @javax.annotation.Nullable Long readyAt, int gapSeconds) {
+        if (readyAt == null && now - loginAt < READY_TIMEOUT_MS) {
+            return READY_POLL_MS;
+        }
+        long from = readyAt != null ? readyAt : loginAt;
+        return Math.max(0, from + gapSeconds * 1000L - now);
+    }
+
+    /** When the player's client was first seen in the world since their login, or null while it has not been. */
+    @javax.annotation.Nullable
+    private static Long readyAt(ServerPlayer player) {
+        return READY_AT.get(player.getUUID());
+    }
+
+    /** B38: records the first movement packet of each fresh login, checked every tick while any is outstanding. */
+    private static void watchReady() {
+        if (LOGIN_AT.size() == READY_AT.size()) {
+            return;
+        }
+        net.minecraft.server.MinecraftServer mc = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (mc == null) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        for (UUID id : LOGIN_AT.keySet()) {
+            if (READY_AT.containsKey(id)) {
+                continue;
+            }
+            ServerPlayer p = mc.getPlayerList().getPlayer(id);
+            if (p != null && p.connection instanceof com.mrgregles.bsp_teleport.mixin.ServerGamePacketListenerAccessor c
+                    && c.bsp_teleport$receivedMovePacketCount() > 0) {
+                READY_AT.put(id, now);
+            }
+        }
     }
 
     /** Players being moved by {@link #place}: their move leaves /back as it is. */
@@ -150,7 +207,7 @@ public final class TeleportService implements BspTeleportApi {
         if (player.connection == null) {
             return false;
         }
-        if (deferWhileFresh(player, destination.server(), () -> {
+        if (deferWhileFresh(player, destination.server(), placing, () -> {
             if (placing) {
                 place(player, destination);
             } else {
@@ -180,7 +237,7 @@ public final class TeleportService implements BspTeleportApi {
         if (!placing) {
             Teleports.recordBack(player);
         }
-        if (deferWhileFresh(player, server, () -> {
+        if (deferWhileFresh(player, server, placing, () -> {
             if (placing) {
                 placeOnServer(player, server);
             } else {
@@ -267,7 +324,11 @@ public final class TeleportService implements BspTeleportApi {
 
     /** B21: every tick, keep each departing player in place and send them off once their hold is over. */
     public static void onServerTick(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
-        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END || DEPARTING.isEmpty()) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) {
+            return;
+        }
+        watchReady();
+        if (DEPARTING.isEmpty()) {
             return;
         }
         for (Map.Entry<UUID, Departure> e : DEPARTING.entrySet()) {

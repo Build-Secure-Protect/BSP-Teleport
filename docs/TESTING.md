@@ -376,3 +376,15 @@ Setup: `teleport.skipCooldownCoins` above 0 (for example 5), a cooldown of a min
 2. Run `/tpnow`. A random spot is searched for, the warm-up starts, and at its end you land somewhere new and the price is taken. Before, `/tpnow` took the price and left you where you stood.
 3. Repeat with `/rtp <another server>`: `/tpnow` asks that server for a spot ("asking ..."), then the warm-up and the move to it, the price taken with the move.
 4. Run `/tpnow` after a refused `/rtp` in a world where /rtp is off, or with no safe spot found: nothing is taken, and the next teleport still has its cooldown.
+
+## A player without access is moved off only once their client is in (B38, 2026-11-03)
+
+Setup: server access on, a player whose main server is not Moongrove and who has no token for it, and Velocity Additions remembering Moongrove as their last server (they were last there).
+
+1. The player logs in. They land on Moongrove, see "You have no access to BSP-Moongrove" and, once the world has loaded, "Leaving for BSP-Spawn in 10 s" above the hotbar.
+2. About 10 seconds after the world shows, the one-second hold, then the switch to BSP-Spawn. No "Can't serialize unregistered packet" kick.
+3. Log out and back in: Velocity Additions now sends them to BSP-Spawn directly.
+4. A player with access who warps to another server straight after logging in waits only `switchGapSeconds` (3) from the moment their world showed.
+5. If it still kicks: send the client's `logs/latest.log` lines starting "BSP-Teleport diagnostic", which name the packet and the mod that sent it.
+
+`network.placeGapSeconds` (10) is new in `bsp_teleport-server.toml`; Forge adds it at the next start.

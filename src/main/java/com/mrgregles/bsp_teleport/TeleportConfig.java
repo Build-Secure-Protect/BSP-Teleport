@@ -9,7 +9,7 @@ public final class TeleportConfig {
     public static final ForgeConfigSpec SPEC;
 
     public static final ForgeConfigSpec.ConfigValue<String> SERVER_NAME;
-    public static final ForgeConfigSpec.IntValue LANDING_SECONDS, SWITCH_GAP_SECONDS, DEPARTURE_HOLD_TICKS;
+    public static final ForgeConfigSpec.IntValue LANDING_SECONDS, SWITCH_GAP_SECONDS, PLACE_GAP_SECONDS, DEPARTURE_HOLD_TICKS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SERVER_ALIASES;
     public static final ForgeConfigSpec.BooleanValue SUPPRESS_JOIN_LEAVE;
 
@@ -56,8 +56,12 @@ public final class TeleportConfig {
                 .define("serverName", "server-1");
         LANDING_SECONDS = b.comment("How long a cross-server landing waits for its player to arrive before it is forgotten.")
                 .defineInRange("landingSeconds", 120, 10, 3600);
-        SWITCH_GAP_SECONDS = b.comment("Seconds after a player's login before they may be moved to another server again (B5: a second proxy switch on top of a fresh one kicks the client). 0 turns the wait off.")
+        SWITCH_GAP_SECONDS = b.comment("Seconds after a player has logged in and their client is in the world before they may be moved to another server",
+                        "(B5, B38: a proxy switch while the client is still loading kicks it, \"Can't serialize unregistered packet\"). 0 turns the wait off.")
                 .defineInRange("switchGapSeconds", 3, 0, 60);
+        PLACE_GAP_SECONDS = b.comment("B38: the same wait for a move the server makes on its own right after a login (a player without access sent to the lobby,",
+                        "a new player sent to the network spawn), which comes at every such login. The longer of this and switchGapSeconds applies.")
+                .defineInRange("placeGapSeconds", 10, 0, 60);
         DEPARTURE_HOLD_TICKS = b.comment("B21: ticks a player is held still, with their movement keys off, before every move to another server. A client",
                         "still walking when the proxy switch starts can be kicked (\"Can't serialize unregistered packet\"). 20 ticks = 1 s; 0 turns it off.")
                 .defineInRange("departureHoldTicks", 20, 0, 100);
