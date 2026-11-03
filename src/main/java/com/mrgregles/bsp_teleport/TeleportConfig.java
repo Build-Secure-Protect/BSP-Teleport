@@ -171,8 +171,10 @@ public final class TeleportConfig {
         ACCESS_ENABLED = b.comment("The server access system (main server, rented and full access through Access Tokens). Off: no checks, no HUD, no board. On a network sharing the database, any restricted server turns it on here too; to turn it off for the network, un-restrict every server on the panel's NETWORK tab.").define("enabled", false);
         ACCESS_REFUSE_AT_LOGIN = b.comment("B39: a player without access to this server is refused while still logging in, so the proxy sends them on with no",
                         "server switch (BSP-Velocity Additions sends a refused first join to spawn). Needs LuckPerms' Forge edition to tell admins apart",
-                        "before the login; without it, or when a check cannot finish in time, the player is let in and sent off after the login as before.")
-                .define("refuseAtLogin", true);
+                        "before the login; without it, or when a check cannot finish in time, the player is let in and sent off after the login as before.",
+                        "Off by default: behind Ambassador the refusal arrives after the Forge handshake has started, so the proxy drops the player",
+                        "(\"Connection reset\") instead of sending them on. Off, they are let in and moved off once their world has loaded (B38).")
+                .define("refuseAtLogin", false);
         ACCESS_LOBBY = b.comment("The network's main spawn server, where a player without access is sent. Empty: the server of the global spawn warp, else the server they came from.").define("lobbyServer", "");
         ACCESS_RENT_HOURS = b.comment("Rent length in hours a token grants when its assignment gives none.").defineInRange("rentHours", 168, 1, 8760);
         b.pop();

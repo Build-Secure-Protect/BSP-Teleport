@@ -48,7 +48,7 @@ public final class LoginCheck {
     public static void onNegotiation(PlayerNegotiationEvent event) {
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         GameProfile profile = event.getProfile();
-        if (server == null || profile == null || profile.getId() == null || !TeleportConfig.getOr(TeleportConfig.ACCESS_REFUSE_AT_LOGIN, true)) {
+        if (server == null || profile == null || profile.getId() == null || !TeleportConfig.getOr(TeleportConfig.ACCESS_REFUSE_AT_LOGIN, false)) {
             return;
         }
         String here = TeleportConfig.serverName();

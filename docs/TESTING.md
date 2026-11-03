@@ -379,7 +379,7 @@ Setup: `teleport.skipCooldownCoins` above 0 (for example 5), a cooldown of a min
 
 ## A player without access is moved off only once their client is in (B38, 2026-11-03)
 
-Setup: server access on, a player whose main server is not Moongrove and who has no token for it, and Velocity Additions remembering Moongrove as their last server (they were last there). Set `access.refuseAtLogin = false` on Moongrove for this section; with it on (the default), B39 below refuses them before they get in.
+Setup: server access on, a player whose main server is not Moongrove and who has no token for it, and Velocity Additions remembering Moongrove as their last server (they were last there). Keep `access.refuseAtLogin = false` (the default) on Moongrove; with it on, B39 below refuses them before they get in.
 
 1. The player logs in. They land on Moongrove, see "You have no access to BSP-Moongrove" and, once the world has loaded, "Leaving for BSP-Spawn in 10 s" above the hotbar.
 2. About 10 seconds after the world shows, the one-second hold, then the switch to BSP-Spawn. No "Can't serialize unregistered packet" kick.
@@ -391,7 +391,9 @@ Setup: server access on, a player whose main server is not Moongrove and who has
 
 ## A player without access is refused while still logging in (B39, 2026-11-03)
 
-Setup: as for B38, with `access.refuseAtLogin = true` (the default) on Moongrove, and LuckPerms' Forge edition on the servers.
+Off by default and not for the live network: behind Ambassador the refusal comes after the Forge handshake has started and the proxy drops the player with "Connection reset" (seen live on Stormfall, 2026-11-03). Only for a proxy without Ambassador.
+
+Setup: as for B38, with `access.refuseAtLogin = true` on Moongrove, and LuckPerms' Forge edition on the servers.
 
 1. The player logs in. They never see Moongrove: the proxy sends them straight to BSP-Spawn, and the chat says they were kicked from BSP-Moongrove: "You have no access to BSP-Moongrove." No "Can't serialize unregistered packet".
 2. Moongrove's log: "<name> has no access to BSP-Moongrove: refused at login, so the proxy sends them on". The proxy's log: "<name> could not join BSP-Moongrove; sending them to BSP-Spawn".
