@@ -1,3 +1,11 @@
+# BSP-Teleport 3.5.5
+
+Minecraft 1.20.1, Forge 47.4, Java 17. Requires BSP-Core 1.10.1 or newer, on every server of the network. The network protocol is the same as 3.5.0, so 3.5.x clients and servers work together.
+
+## Fixed
+
+**Extra Homes and Swift Travel were lost on the spawn hub.** On a server without your totem (the spawn hub, say), your totem's Extra Homes and Swift Travel levels counted as zero: the band showed "Homes 4 of 3" with homes locked, and the cooldown was the full one. With BSP-Core 1.10.1 on every server, the levels of your totems on the network's other servers count everywhere, and drop within seconds when such a totem is broken or stolen.
+
 # BSP-Teleport 3.5.4
 
 Minecraft 1.20.1, Forge 47.4, Java 17. Requires BSP-Core 1.10.0 or newer. The network protocol is the same as 3.5.0, so 3.5.0 and 3.5.4 clients and servers work together; update the client for single player.

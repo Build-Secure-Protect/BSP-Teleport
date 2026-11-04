@@ -5,7 +5,7 @@
 **Homes, warps, portals, team and ally teleports and server access across the Build Secure Protect network.** Every player gets a Teleport Band on their hotbar that takes them home, to a warp, to a friend, to a teammate, to an ally or to a random spot on any server in the network. Admins build walk-through portals with hangar doors, and sell access to servers, regions, portals and warps with Access Tokens from an Access Shop. Built around [BSP-Core](https://www.curseforge.com/minecraft/mc-mods/bsp-core)'s Shatter Totem: your totem travels with you, and nothing here can take you into a raid for free.
 
 - Minecraft 1.20.1, Forge 47 or newer, Java 17. Needed on the client and the server, and both must run the same version.
-- Requires BSP-Core 1.10.0 or newer. BSP-Region Guard, BSP-RankUp, BSP-InventorySync and LuckPerms are optional and switch more on. Made to sit behind BSP-Velocity Additions on the proxy.
+- Requires BSP-Core 1.10.1 or newer. BSP-Region Guard, BSP-RankUp, BSP-InventorySync and LuckPerms are optional and switch more on. Made to sit behind BSP-Velocity Additions on the proxy.
 - Made for a Velocity network of Mohist backends with Proxy Compatible Forge, one MySQL database and one Redis. Plain Forge backends work too, using the MySQL driver in BSP-Core's full jar. Runs on a single server with no database too, and in a single-player or LAN world the network features switch off by themselves, whatever the config says.
 - MIT licence, source on [GitHub](https://github.com/Build-Secure-Protect/BSP-Teleport).
 
@@ -13,7 +13,7 @@
 
 ## 1. Setting it up (admins first)
 
-1. Put the jar in `mods/` on every backend and on every client, next to BSP-Core 1.10.0 or newer.
+1. Put the jar in `mods/` on every backend and on every client, next to BSP-Core 1.10.1 or newer.
 2. Start each server once. The config appears at `<world>/serverconfig/bsp_teleport-server.toml`, and the database and Redis connection at `config/bsp_teleport-network.toml`. That second file holds the passwords and is never sent to players (Forge sends the server config to everyone who joins); keep it out of any client pack.
 3. On a network: `storage.mode = "mysql"` and `redis.enabled = true` in the server config, your database (BSP-Core's can be shared, the tables are prefixed) and Redis in `bsp_teleport-network.toml`, and `network.serverName` set to this server's Velocity name on every backend. Without a database the mod keeps everything in the world save and works on one server.
 4. Behind BSP-Velocity Additions, set `network.suppressJoinLeaveMessages = true` on every backend so the proxy's one join line is the only one (more below).

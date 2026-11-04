@@ -476,3 +476,14 @@ On a client with this jar and BSP-Core (no server):
 1. Create a single-player world and join it: no crash. Walk around for a minute, open the band, `/sethome a`, `/home a`.
 2. Open the world to LAN and have a second client join it: no crash for either.
 3. On a dedicated server nothing changes: joining still works, and with `network.suppressJoinLeaveMessages = true` the join and leave lines stay hidden.
+
+## Totem upgrades on the spawn hub (B43, 2026-11-04)
+
+Every server needs BSP-Core 1.10.1 or newer: the home servers write their totems' levels to the shared `totems` table, and the hub reads them. A home server still on 1.10.0 writes nothing, so its totems do not count on the hub.
+
+Setup: the network on MySQL; a player whose totem, placed on their home server, has Extra Homes and Swift Travel levels; the spawn hub (BSP-Spawn) holds no totem of theirs.
+
+1. On the home server, open the band's HOMES tab and note the count (for example "Homes 4 of 5") and the cooldown after a `/home`.
+2. Go to the spawn hub. The HOMES tab shows the same count (not "Homes 4 of 3"), no home is locked, and `/home` there uses the same shorter cooldown.
+3. Back on the home server, break the totem (or let it be stolen). Return to the hub: within a few seconds the count and cooldown drop to the base values, and homes above the base slots show as locked.
+4. A stolen totem counts for its new owner only: the thief sees the levels on the hub, the old owner does not.
