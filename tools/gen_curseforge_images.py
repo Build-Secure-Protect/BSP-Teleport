@@ -842,8 +842,255 @@ def join_leave():
     s.save("join-leave")
 
 
+def text_lines(s, x, y, text, width, gap=18, size=14, fill=MUTED):
+    """Wrapped help text in the right column; returns the y after it."""
+    for k, line in enumerate(wrap(text, width)):
+        s.text(x, y + k * gap, line, size, fill)
+    return y + len(wrap(text, width)) * gap
+
+
+def band_sethome():
+    s = Svg(1200, 470)
+    x, y, w, h = 40, 40, 700, 390
+    s.hud(x, y, w, h, "Teleport Band", ACCENT, "Pick a home. Stand still while it counts down.", ("Homes", "Warps", "Players", "Team", "More", "Admin"), 0)
+    ry = y + 66
+    for name, where, tok in (("base", "BSP-Moongrove  120 64 -40", 5), ("farm", "BSP-Moongrove  -310 70 88", 6), ("mine", "BSP-Frostwarf  44 -12 905", 13)):
+        s.rect(x + 16, ry, w - 32, 44, INSET, LINE, r=0)
+        s.text(x + 26, ry + 19, name, 15, TEXT, "bold")
+        s.text(x + 26, ry + 36, where, 12, MUTED, family=MONO)
+        bx = s.button(x + w - 26, ry + 11, "del", LINE, True) - 6
+        s.button(bx, ry + 11, "go", ACCENT)
+        ry += 50
+    qy = ry + 14
+    s.line(x + 16, qy, x + w - 16, qy, GOLD, 2)
+    s.text(x + 16, qy + 26, "All 3 homes used. Replace one with tower:", 14, TEXT)
+    kx = x + 16
+    for label, color, dim in (("base", GOLD, False), ("farm", GOLD, False), ("mine", GOLD, False), ("keep", LINE, True)):
+        kw = len(label) * 7.6 + 18
+        s.button(kx + kw, qy + 40, label, color, dim)
+        kx += kw + 8
+    s.footer(x, y + h - 40, w, "Homes 3/3      Cooldown ready", "", OK)
+    rx = 780
+    s.text(rx, 70, "Set home asks first", 22, TEXT, "bold")
+    ny = text_lines(s, rx, 100, "Set home with a name you already use (an empty name box means \"home\") no longer moves that home without a word. The strip under the list asks \"Move base here?\" with MOVE and KEEP.", 44)
+    ny = text_lines(s, rx, ny + 20, "With every slot used, a new name lets you pick the home it replaces. The new home takes that one's place in the list; locked homes are never offered.", 44)
+    ny = text_lines(s, rx, ny + 20, "In chat, /sethome asks the same with keys to click: /sethome base confirm, or /sethome tower replace farm.", 44)
+    s.save("band-sethome")
+
+
+def band_allies():
+    s = Svg(1200, 660)
+    x, y, w, h = 40, 40, 700, 500
+    s.hud(x, y, w, h, "Teleport Band", ACCENT, "Pick an ally. They are asked first and have 30 s.", ("Homes", "Warps", "Players", "Team", "More", "Admin"), 3)
+    sy = y + 64
+    half = (w - 32 - 6) / 2
+    for i, label in enumerate(("my team", "allies: iron pact")):
+        sx = x + 16 + i * (half + 6)
+        on = i == 1
+        s.rect(sx, sy, half, 26, INSET, ACCENT if on else LINE, r=0)
+        s.text(sx + half / 2, sy + 17, label.upper(), 12, ACCENT if on else MUTED, "bold", "middle", spacing=1)
+    ry = sy + 38
+    allies = (("Wren", "Blue Herons", "#4FA3FF", "here   overworld   402 71 -118", OK, "ask", GOLD, False),
+              ("Moss", "Blue Herons", "#4FA3FF", "on BSP-Moongrove   overworld   1180 64 -2210   a steal within 150", BAD, "raid", BAD, True),
+              ("Kestrel", "Gold Crows", "#E8B931", "on BSP-Frostwarf   the end", VIOLET, "ask", GOLD, False),
+              ("Sable", "Gold Crows", "#E8B931", "offline, seen 1 d ago", MUTED, "", None, False))
+    for name, team, tcol, state, color, key, kc, dim in allies:
+        s.rect(x + 16, ry, w - 32, 44, INSET, LINE, r=0)
+        s.text(x + 26, ry + 19, name, 15, TEXT if key else MUTED, "bold")
+        s.text(x + 26 + len(name) * 9 + 8, ry + 19, team, 12, tcol, "bold")
+        s.text(x + 26, ry + 36, state, 12, color)
+        if key:
+            s.button(x + w - 26, ry + 11, key, kc, dim)
+        ry += 50
+    s.footer(x, y + h - 44, w, "Ready.      refreshes every 5 s while open", "", OK)
+    cy = y + h + 24
+    s.rect(x, cy, w, 52, "rgba(0,0,0,0.6)", r=0)
+    s.text(x + 12, cy + 20, "Ally Alex (Night Owls) wants to teleport to you.", 15, "#ffffff", family=MONO)
+    s.text(x + 12, cy + 42, "[Accept] [Deny] 30 s", 15, "#ffaa00", family=MONO)
+    rx = 780
+    s.text(rx, 70, "Allies on the TEAM tab", 22, TEXT, "bold")
+    ny = text_lines(s, rx, 100, "When your BSP-Core team is in an alliance, the TEAM tab gets a switch: MY TEAM is your roster as before, ALLIES lists every player of the allied teams with their team's name in its colour.", 44)
+    ny = text_lines(s, rx, ny + 20, "Where they are: here, or on another server, with the dimension. Coordinates only when their team shares them.", 44)
+    ny = text_lines(s, rx, ny + 20, "Allies trust each other less than teammates, so ASK asks first: the ally has 30 seconds to accept, in chat or on their band. After that it is a team teleport, with no price, and nothing lands near a running steal.", 44)
+    ny = text_lines(s, rx, ny + 20, "Nobody who is stealing a totem can ask or be visited, and an alliance that ends cancels a waiting ask or warm-up. The same ask sits on the ALLIES page of BSP-Core's Team screen.", 44)
+    s.save("band-allies")
+
+
+def shop_block(s, x, y, k):
+    """The Access Shop's front, k px per model pixel: the desk, the neck and the monitor with its screen."""
+    steel, steel2, hull, amber = "#4A5060", "#2B313D", "#1E222B", "#F2B544"
+    X = lambda m: x + m * k
+    Y = lambda m: y + (32 - m) * k
+    s.rect(X(0), Y(2), 32 * k, 2 * k, steel2, r=0)
+    for i in range(8):
+        s.rect(X(i * 4 + 0.5), Y(1.65), 2 * k, 1.3 * k, amber, r=0)
+    s.rect(X(1), Y(10), 30 * k, 8 * k, steel, r=0)
+    s.rect(X(3), Y(9), 26 * k, 6 * k, steel2, r=0)
+    for i in range(3):
+        s.rect(X(5), Y(4.4 + i * 1.6), 22 * k, 0.4 * k, "#565C6B", r=0)
+    s.rect(X(0), Y(11), 32 * k, 1 * k, steel2, r=0)
+    s.rect(X(13), Y(11.5), 6 * k, 0.5 * k, amber, r=0)
+    s.rect(X(12), Y(15), 8 * k, 4 * k, steel2, r=0)
+    s.rect(X(2), Y(31), 28 * k, 16 * k, steel, r=0)
+    s.rect(X(4), Y(29), 24 * k, 12 * k, "#061008", r=0)
+    s.rect(X(1.6), Y(31.6), 28.8 * k, 1 * k, steel2, r=0)
+    s.rect(X(4), Y(30.6), 24 * k, 0.4 * k, ACCENT, r=0)
+    return X, Y
+
+
+def access_shop():
+    s = Svg(1200, 640)
+    s.text(40, 48, "The Access Shop", 28, TEXT, "bold")
+    s.text(40, 78, "An admin block that sells access tokens: two wide and two tall, in the steel of BSP-Core's Trade Post.", 16, MUTED)
+    k = 11
+    X, Y = shop_block(s, 40, 120, k)
+    s.text(X(16), Y(26), "SPAWN SHOP", 15, ACCENT, "bold", "middle", family=MONO)
+    s.text(X(16), Y(24), "Rent or buy your way in.", 11, TEXT, anchor="middle", family=MONO)
+    for i, tok in enumerate((1, 8, 11)):
+        s.pixels(KEYCARD, token_pal(tok), X(16) - 54 + i * 40, Y(22.4), 1.6)
+    s.caption(40, 520, "The screen shows the admin's message and")
+    s.caption(40, 540, "the first tokens the shop sells.")
+    x, y, w, h = 440, 110, 720, 500
+    s.hud(x, y, w, h, "Spawn shop", ACCENT, "", ("Settings",), 0)
+    s.text(x + w - 130, y + 29, "61,200 pieces   83 coins", 13, GOLD, anchor="end")
+    ty = y + 56
+    for i, t in enumerate(("servers", "portals", "warps")):
+        tx = x + 16 + i * 112
+        s.rect(tx, ty, 104, 24, INSET, ACCENT if i == 0 else LINE, r=0)
+        s.text(tx + 52, ty + 16, t.upper(), 12, ACCENT if i == 0 else MUTED, "bold", "middle", spacing=1)
+    cards = (("BSP-Frostwarf", 1, "rent", "25,000p   72 h", GOLD, "", True),
+             ("BSP-Moongrove", 4, None, "", OK, "YOUR MAIN SERVER", False),
+             ("BSP-Stormfall", 6, "full", "200,000p", GOLD, "Rented: 2d 4h left", True),
+             ("BSP-Isles", 11, "rent", "90,000p   24 h", BAD, "", False))
+    cw, ch = (w - 32 - 2 * 12) / 3, 150
+    for n, (name, tok, tier, price, pcol, note, buy) in enumerate(cards):
+        cx, cy = x + 16 + (n % 3) * (cw + 12), ty + 40 + (n // 3) * (ch + 12)
+        s.rect(cx, cy, cw, ch, INSET, LINE, r=0)
+        s.pixels(KEYCARD, token_pal(tok), cx + 10, cy + 10, 2)
+        s.text(cx + 52, cy + 26, name, 15, TEXT, "bold")
+        s.text(cx + 52, cy + 44, "Token " + ("I II III IV V VI VII VIII IX X XI XII".split()[tok]) + "  server", 11, MUTED)
+        if tier is None:
+            s.text(cx + 12, cy + 80, note, 13, OK, "bold", spacing=1)
+            continue
+        if note:
+            s.text(cx + 12, cy + 64, note, 12, GOLD)
+        half = (cw - 30) / 2
+        for i, label in enumerate(("rent", "full")):
+            on = label == tier
+            s.rect(cx + 12 + i * (half + 6), cy + 74, half, 22, INSET, ACCENT if on else LINE, r=0)
+            s.text(cx + 12 + i * (half + 6) + half / 2, cy + 89, label.upper(), 11, ACCENT if on else MUTED, "bold", "middle", spacing=1)
+        s.text(cx + 12, cy + 116, price, 14, pcol, family=MONO)
+        s.button(cx + cw - 10, cy + ch - 30, "buy", GOLD if buy else LINE, not buy)
+    s.footer(x, y + h - 40, w, "Full access and your main server show as owned. Rent can be bought again for more time.", "", OK)
+    s.save("access-shop")
+
+
+def access_shop_buy():
+    s = Svg(1200, 500)
+    s.text(40, 48, "Buying, and the first visit", 28, TEXT, "bold")
+    s.text(40, 78, "Nothing is taken until you answer. A player with no main server gets the free pick first, then the shop.", 16, MUTED)
+    x, y, w, h = 40, 110, 540, 340
+    s.rect(x - 2, y - 2, w + 4, h + 4, GOLD, r=0)
+    s.rect(x, y, w, h, PANEL, r=0)
+    s.text(x + 16, y + 30, "CHOOSE YOUR MAIN SERVER", 18, GOLD, "bold", spacing=2)
+    s.text(x + 16, y + 50, "One choice, free, for ever. The shop opens after.", 13, MUTED)
+    ry = y + 68
+    for name, tok, counts in (("BSP-Moongrove", 4, "41 call this home"), ("BSP-Frostwarf", 1, "27 call this home"), ("BSP-Stormfall", 6, "12 call this home")):
+        s.rect(x + 16, ry, w - 32, 40, INSET, LINE, r=0)
+        s.pixels(KEYCARD, token_pal(tok), x + 24, ry + 8, 1.5)
+        s.text(x + 60, ry + 25, name, 14, TEXT, "bold")
+        s.text(x + 210, ry + 25, counts, 12, GOLD)
+        s.button(x + w - 26, ry + 9, "choose", GOLD)
+        ry += 48
+    s.caption(x + 16, y + h - 30, "Clicking the shop with no main server opens this pick.")
+    x2, w2 = 620, 540
+    s.rect(x2 - 2, y - 2, w2 + 4, h + 4, ACCENT, r=0)
+    s.rect(x2, y, w2, h, PANEL, r=0)
+    s.rect(x2, y, w2, h, "#000000", r=0, opacity=0.55)
+    bx, by, bw, bh = x2 + 40, y + 80, w2 - 80, 170
+    s.rect(bx - 2, by - 2, bw + 4, bh + 4, GOLD, r=0)
+    s.rect(bx, by, bw, bh, PANEL, r=0)
+    s.text(bx + 16, by + 32, "Rent 72 hours of access to BSP-Frostwarf", 15, TEXT, "bold")
+    s.text(bx + 16, by + 54, "for 25,000 pieces?", 15, TEXT, "bold")
+    s.text(bx + 16, by + 86, "Use now starts the access at once.", 13, MUTED)
+    s.text(bx + 16, by + 104, "Take token puts the token in your inventory.", 13, MUTED)
+    kx = s.button(bx + bw - 16, by + bh - 38, "cancel", LINE, True) - 8
+    kx = s.button(kx, by + bh - 38, "take token", GOLD) - 8
+    s.button(kx, by + bh - 38, "use now", OK)
+    s.caption(x2 + 16, y + h - 30, "BUY on a card asks this. Esc cancels.")
+    s.save("access-shop-buy")
+
+
+def access_shop_settings():
+    s = Svg(1200, 560)
+    x, y, w, h = 40, 40, 720, 480
+    s.rect(x - 2, y - 2, w + 4, h + 4, VIOLET, r=0)
+    s.rect(x, y, w, h, PANEL, r=0)
+    s.text(x + 16, y + 30, "SHOP SETTINGS", 20, VIOLET, "bold", spacing=2)
+    kx = s.button(x + w - 16, y + 12, "save", OK) - 8
+    s.button(kx, y + 12, "back", LINE, True)
+    fy = y + 54
+    s.text(x + 16, fy + 17, "NAME", 11, MUTED, "bold", spacing=1)
+    s.rect(x + 64, fy, 180, 26, INSET, LINE, r=0)
+    s.text(x + 74, fy + 18, "Spawn shop", 13, TEXT, family=MONO)
+    s.text(x + 262, fy + 17, "MESSAGE", 11, MUTED, "bold", spacing=1)
+    s.rect(x + 336, fy, w - 352, 26, INSET, LINE, r=0)
+    s.text(x + 346, fy + 18, "Rent or buy your way in.", 13, TEXT, family=MONO)
+    cy = fy + 40
+    s.text(x + 16, cy + 16, "COPY FROM", 11, MUTED, "bold", spacing=1)
+    s.button(x + 132, cy, "<", LINE, True)
+    s.text(x + 142, cy + 16, "Arena desk (220 64 18)", 13, TEXT)
+    kx = s.button(x + w - 16, cy, "copy", VIOLET) - 8
+    s.button(kx, cy, ">", LINE, True)
+    ty = cy + 38
+    for i, t in enumerate(("servers", "portals", "warps")):
+        tx = x + 16 + i * 112
+        s.rect(tx, ty, 104, 24, INSET, ACCENT if i == 0 else LINE, r=0)
+        s.text(tx + 52, ty + 16, t.upper(), 12, ACCENT if i == 0 else MUTED, "bold", "middle", spacing=1)
+    gy = ty + 36
+    sw = (w - 32 - 3 * 10) / 4
+    slots = (("BSP-Frostwarf", 1, "25,000p/72h 200,000p", True), ("BSP-Stormfall", 6, "40,000p/24h", False), ("BSP-Isles", 11, "90,000p/24h", False), None)
+    for n, slot in enumerate(slots):
+        sx = x + 16 + n * (sw + 10)
+        if slot is None:
+            s.rect(sx, gy, sw, 52, INSET, LINE, r=0)
+            s.text(sx + sw / 2, gy + 31, "+ ADD", 13, ACCENT, "bold", "middle")
+            continue
+        name, tok, summary, sel = slot
+        s.rect(sx, gy, sw, 52, INSET, ACCENT if sel else LINE, r=0)
+        s.pixels(KEYCARD, token_pal(tok), sx + 8, gy + 12, 1.6)
+        s.text(sx + 42, gy + 22, name, 12, TEXT, "bold")
+        s.text(sx + 42, gy + 40, summary, 10, MUTED)
+    ey = gy + 76
+    s.line(x + 16, ey - 12, x + w - 16, ey - 12, LINE, 1)
+    s.button(x + 40, ey, "<", LINE, True)
+    s.text(x + 52, ey + 16, "II   BSP-Frostwarf", 14, TEXT, "bold")
+    s.button(x + 236, ey, ">", LINE, True)
+    kx = s.button(x + w - 16, ey, "remove", BAD) - 8
+    kx = s.button(kx, ey, ">>", LINE, True) - 6
+    s.button(kx, ey, "<<", LINE, True)
+    for row, (label, on, hours, price, cur) in enumerate((("rent on", True, "72", "25000", "pieces"), ("full on", True, None, "200000", "pieces"))):
+        ly = ey + 44 + row * 44
+        s.button(x + 16 + len(label) * 7.6 + 18, ly, label, ACCENT)
+        if hours:
+            s.text(x + 130, ly + 16, "HOURS", 11, MUTED, "bold", spacing=1)
+            s.rect(x + 184, ly, 60, 24, INSET, LINE, r=0)
+            s.text(x + 194, ly + 17, hours, 13, TEXT, family=MONO)
+        s.text(x + 270, ly + 16, "PRICE", 11, MUTED, "bold", spacing=1)
+        s.rect(x + 322, ly, 120, 24, INSET, LINE, r=0)
+        s.text(x + 332, ly + 17, price, 13, TEXT, family=MONO)
+        s.button(x + w - 16, ly, cur, GOLD)
+    s.footer(x, y + h - 40, w, "Save sends the shop's new list; the screen on the block changes at once.", "", OK)
+    rx = 800
+    s.text(rx, 70, "Laying out a shop", 22, TEXT, "bold")
+    ny = text_lines(s, rx, 100, "Admins see a SETTINGS key on the shop. Give the shop a name and the message its screen shows.", 40)
+    ny = text_lines(s, rx, ny + 20, "Each tab is a grid of slots. + ADD puts a token in; the picked slot sets its token (only tokens assigned to that tab's kind), its place, rent on or off with its hours and price, and full access on or off with its price, each in pieces or coins.", 40)
+    ny = text_lines(s, rx, ny + 20, "Every shop block has its own list. COPY FROM takes another shop's list and message on the same server, so a second shop starts from the first.", 40)
+    s.save("access-shop-settings")
+
+
 def main():
-    for fn in (banner, band_slot, band_screen, band_team, band_more, admin_network, admin_portals, blocks_and_items, portal_views, core_screen, portal_chooser, core_doors, access_hud, access_popups, access_board_img, score_board, admin_tokens, join_leave, compat):
+    for fn in (banner, band_slot, band_screen, band_team, band_more, admin_network, admin_portals, blocks_and_items, portal_views, core_screen, portal_chooser, core_doors, access_hud, access_popups, access_board_img, score_board, admin_tokens, join_leave, compat, band_sethome, band_allies, access_shop, access_shop_buy, access_shop_settings):
         fn()
 
 

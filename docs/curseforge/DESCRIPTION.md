@@ -2,7 +2,7 @@
 
 # BSP-Teleport
 
-**Homes, warps, portals, team teleports and server access across the Build Secure Protect network.** Every player gets a Teleport Band on their hotbar that takes them home, to a warp, to a friend, to a teammate or to a random spot on any server in the network. Admins build walk-through portals with hangar doors, and sell access to servers, regions, portals and warps with Access Tokens. Built around [BSP-Core](https://www.curseforge.com/minecraft/mc-mods/bsp-core)'s Shatter Totem: your totem travels with you, and nothing here can take you into a raid for free.
+**Homes, warps, portals, team and ally teleports and server access across the Build Secure Protect network.** Every player gets a Teleport Band on their hotbar that takes them home, to a warp, to a friend, to a teammate, to an ally or to a random spot on any server in the network. Admins build walk-through portals with hangar doors, and sell access to servers, regions, portals and warps with Access Tokens from an Access Shop. Built around [BSP-Core](https://www.curseforge.com/minecraft/mc-mods/bsp-core)'s Shatter Totem: your totem travels with you, and nothing here can take you into a raid for free.
 
 - Minecraft 1.20.1, Forge 47 or newer, Java 17. Needed on the client and the server, and both must run the same version.
 - Requires BSP-Core 1.10.0 or newer. BSP-Region Guard, BSP-RankUp, BSP-InventorySync and LuckPerms are optional and switch more on. Made to sit behind BSP-Velocity Additions on the proxy.
@@ -13,7 +13,7 @@
 
 ## 1. Setting it up (admins first)
 
-1. Put the jar in `mods/` on every backend and on every client, next to BSP-Core (1.4.5 recommended).
+1. Put the jar in `mods/` on every backend and on every client, next to BSP-Core 1.10.0 or newer.
 2. Start each server once. The config appears at `<world>/serverconfig/bsp_teleport-server.toml`, and the database and Redis connection at `config/bsp_teleport-network.toml`. That second file holds the passwords and is never sent to players (Forge sends the server config to everyone who joins); keep it out of any client pack.
 3. On a network: `storage.mode = "mysql"` and `redis.enabled = true` in the server config, your database (BSP-Core's can be shared, the tables are prefixed) and Redis in `bsp_teleport-network.toml`, and `network.serverName` set to this server's Velocity name on every backend. Without a database the mod keeps everything in the world save and works on one server.
 4. Behind BSP-Velocity Additions, set `network.suppressJoinLeaveMessages = true` on every backend so the proxy's one join line is the only one (more below).
@@ -34,11 +34,19 @@ The first thing you see: a tenth hotbar slot after the nine, drawn for every pla
 
 **Homes.** Set one where you stand, on any server, and go there from anywhere on the network. You start with three slots; the Extra Homes power on your Shatter Totem adds more. Lose the totem and the extra homes are not deleted, only locked until you earn the slots back. Homes can be public (`/phome <player>`), carry a description and show an icon you pick by clicking with an item in hand.
 
+![Set home asks first](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/band-sethome.png)
+
+Setting a home never moves or replaces one without asking. A name you already use (an empty name box means "home") asks "Move base here?"; with every slot used, a new name lets you pick the home it replaces, in that home's place in the list. `/sethome` asks the same in chat with keys to click.
+
 **Warps.** Admin-set places with a coin cost and, if the admin says so, a permission node or a list of rules. A warp with open hours shows OPEN, or OPENS and the time, on its row. **Players.** Everyone online across the network: ask to teleport to them, ask them to come to you, answer requests.
 
 ![The TEAM tab](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/band-team.png)
 
 **Team.** Your BSP-Core team as a roster: who is here, who is on another server, who is offline and when they were last seen. GO takes you to a teammate on any server, no request to answer, no cost; the teammate is told you are coming. The same key sits on BSP-Core's Team screen as TELEPORT. One extra rule for team teleports: nothing lands within 150 blocks of any running steal on the network, whoever owns the totem, so a team cannot pour in behind a friend who started a raid.
+
+![Allies on the TEAM tab](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/band-allies.png)
+
+**Allies.** When your team is in a BSP-Core alliance (up to three teams), the TEAM tab gets a MY TEAM / ALLIES switch. ALLIES lists every player of the allied teams with their team's name in its colour and where they are; coordinates only when their team shares them. ASK asks the ally first: they have 30 seconds to accept, in chat or on their band, and a player who ignores requests is not asked. After that it is a team teleport with the same rules and no price. Nobody stealing a totem can ask or be visited, and an alliance that ends cancels a waiting ask or warm-up. The same ask sits on the ALLIES page of BSP-Core's Team screen.
 
 ![The MORE tab](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/band-more.png)
 
@@ -118,7 +126,7 @@ Off by default (`access.enabled` in the config), because it is made for the BSP 
 
 What you may enter sits above your hotbar: a gold frame for your main server, turquoise for full access, violet with a countdown for rented. Three layouts, Row, Strip or Column, picked on the band's MORE tab. Rent warns you an hour, ten minutes and a minute before it runs out; at the end you are moved to your main server.
 
-**Access Tokens.** Twenty items, Access Token I to XX, one colour each. An admin makes a token stand for a server; a shop sells it as a rent stack (so many hours) or a full stack. Buy one, keep it until you want it, give it to a team mate, right-click it to use it. Rent adds up; full access replaces rent. They sell in BSP-Core's shops like any other item.
+**Access Tokens.** Twenty items, Access Token I to XX, one colour each. An admin makes a token stand for a server; the Access Shop (below) sells it for rent (so many hours) or full access. Use it at once, or keep the token until you want it, give it to a team mate, and right-click it to use it. Rent adds up; full access replaces rent. Token stacks also sell in BSP-Core's shops like any other item.
 
 ![Access needed and choose](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/access-popups.png)
 
@@ -127,6 +135,20 @@ A refused teleport, portal or warp tells you what you need: the server, the toke
 ![Assigning tokens](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/admin-tokens.png)
 
 **Setting it up.** On the panel's NETWORK tab switch "needs access" on for each server that needs it. On the TOKENS tab pick a token and click the server it stands for, set the rent length and a shop hint, and press Rent or Full to get the stack for your shop. The same tab puts tokens on admin regions, portals and warps, so a token can sell access to a single arena, a single portal or a single warp. Everything is shared through the database, so every server agrees.
+
+### The Access Shop
+
+![The Access Shop](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/access-shop.png)
+
+An admin block, two wide and two tall in the steel of BSP-Core's Trade Post, whose screen shows the admin's message and the first tokens it sells. Right-click it: tabs for Servers, Portals and Warps, and a card per token with a Rent / Full switch and that tier's price, in pieces from the bank or Shatter Coins. Full access and your main server show as owned; rent you hold shows the time left and can be bought again for more. Only admins place it; players cannot break it.
+
+![Buying, and the first visit](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/access-shop-buy.png)
+
+A player with no main server who clicks the shop gets the free main-server pick first, then the shop. BUY asks before anything is taken: **Use now** starts the access at once, **Take token** puts the token in your inventory to use, trade or gift later.
+
+![Laying out a shop](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/access-shop-settings.png)
+
+Admins get a SETTINGS key: the shop's name and screen message, and a grid of slots per tab. Each slot holds a token with a rent price and hours and a full price, each in pieces or coins, and can be moved or removed. Every shop block has its own list, so two shops on a server can sell different things; **Copy from** takes another shop's list and message to start from.
 
 ### Rules on portals and warps
 
@@ -158,7 +180,7 @@ Behind a proxy, every server switch looks to a backend like a leave and a join, 
 
 ![Compatibility](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/compat.png)
 
-**BSP-Core** (required). Totems travel with you on every cross-server move. When your totem is being stolen on another server, BSP-Core's Recall offer brings you back through this mod and lands you beside it. The raid distances, the thief's block and the Anti Totem zones' teleport rules come from BSP-Core's events and API. Extra Homes and Swift Travel on the totem tree give more home slots and shorter cooldowns. Team teleports run on BSP-Core's teams, from the band and from the Team screen. The Home Servers board shows on BSP-Core's Score Screens. Warps and rules charge Shatter Coins; Access Tokens sell in BSP-Core's shops; a full season reset wipes homes.
+**BSP-Core** (required). Totems travel with you on every cross-server move. When your totem is being stolen on another server, BSP-Core's Recall offer brings you back through this mod and lands you beside it. The raid distances, the thief's block and the Anti Totem zones' teleport rules come from BSP-Core's events and API. Extra Homes and Swift Travel on the totem tree give more home slots and shorter cooldowns. Team teleports run on BSP-Core's teams, and ally teleports on its alliances, from the band and from the Team screen. The Access Shop is built in BSP-Core's steel. The Home Servers board shows on BSP-Core's Score Screens. Warps and rules charge Shatter Coins; Access Tokens sell in BSP-Core's shops; a full season reset wipes homes.
 
 **BSP-Region Guard** (optional). Regions forbid teleporting in or out and setting homes with their flags. Region triggers (enter, exit, timer, shutdown) and world-edge links that lead to another server are carried out by this mod, with the landing exactly where the trigger says. Random teleport stays inside the world border. Set a region's `entry` flag to deny and assign a token to it: players who bought access walk in, everyone else is kept out. Shutdown triggers evacuate everyone to a holding server; `/back` brings them home.
 
@@ -174,7 +196,7 @@ Behind a proxy, every server switch looks to a backend like a leave and a join, 
 
 | For players | What |
 |---|---|
-| `/home [name]`, `/sethome [name]`, `/delhome <name>`, `/homes`, `/edithome <name> rename\|relocate\|description\|public\|icon`, `/phome <player> [home]` | homes |
+| `/home [name]`, `/sethome [name] [confirm \| replace <old>]`, `/delhome <name>`, `/homes`, `/edithome <name> rename\|relocate\|description\|public\|icon`, `/phome <player> [home]` | homes |
 | `/warp <name>`, `/warps`, `/spawn`, `/back`, `/rtp [server]`, `/tpcancel`, `/tpnow` | moving |
 | `/tpa`, `/tpahere`, `/tpaall`, `/tpaccept`, `/tpdeny`, `/tpignore` | requests |
 | `/mainserver <server>` | the one free main-server choice |
