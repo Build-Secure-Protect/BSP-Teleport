@@ -73,7 +73,7 @@ The whole pack is built on one promise: nobody can make a Shatter Totem impossib
 
 `/bsptp admin`, or the ADMIN tab on the band. Moderators see everything and can press nothing. NETWORK draws the servers as a map with their players: bring everyone here before a restart, send everyone to another server, go there, bring one player or go to them, and switch "needs access" on for a server (section 6). SETTINGS edits the config values you change often and saves them to the file at once. WARPS sets a warp where you stand, moves it, prices it, restricts it, gives it an icon, turns it into a portal warp, or opens its rules. PORTALS and TOKENS are below.
 
-Admin commands cover the same ground: `/tpall`, `/tpall all` and `/tpall from <server>` for restart evacuations; `/tphere`, `/tpto`, `/tppos`, `/tpoffline`; `/setwarp`, `/delwarp`, `/setspawn`, `/bsptp setnetworkspawn` (where new players start); `/bsptp status|players|send|reload`.
+Admin commands cover the same ground: `/tpall`, `/tpall all` and `/tpall from <server>` bring players to you for restart evacuations; `/tpall to <server>` sends everyone on the network to another server's spawn, and `/tpall to <server> <x y z> [world]` to a spot on it; `/tphere`, `/tpto`, `/tppos`, `/tpoffline`; `/setwarp`, `/delwarp`, `/setspawn`, `/bsptp setnetworkspawn` (where new players start); `/bsptp status|players|send|reload`.
 
 ---
 
@@ -206,7 +206,7 @@ Behind a proxy, every server switch looks to a backend like a leave and a join, 
 | `/bsptp admin`, `/bsptp status`, `/bsptp players`, `/bsptp reload`, `/bsptp send <player> <server>` | the panel and the network |
 | `/setwarp <name> [cost] [restricted]`, `/delwarp`, `/setspawn` | warps and spawn |
 | `/bsptp setnetworkspawn` | the network spawn: where new players start, and where first visits and respawns without a bed go on that server |
-| `/tpall [all\|from <server>]`, `/tphere`, `/tpto`, `/tppos`, `/tpoffline` | forced moves and evacuation |
+| `/tpall [all\|from <server>\|to <server> [<x y z> [world]]]`, `/tphere`, `/tpto`, `/tppos`, `/tpoffline` | forced moves and evacuation |
 | `/bsptp portal ...`, `/bsptp portal <name> ...`, `/bsptp portalwarp set\|del\|list` | portals |
 | `/bsptp access servers\|server\|list\|grant\|revoke\|main\|token\|tokens\|stack` | access |
 

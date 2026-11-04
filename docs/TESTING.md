@@ -445,3 +445,15 @@ Setup: access on, two restricted servers with tokens assigned (for example II fo
 8. FULL with USE NOW: the card then says OWNED and has no BUY.
 9. With too few pieces or coins the price shows red and BUY is grey.
 10. Breaking any part as an admin removes the whole shop; the other shop's COPY FROM no longer lists it.
+
+## /tpall to <server> (2026-11-04)
+
+Setup: three servers on Redis (A, B, C), players on each, an admin on A. B has a `/setspawn` point.
+
+1. On A: `/tpall to B`. Everyone on A and C goes to B's `/setspawn` point, each told who moved them; the players already on B stay where they are; the admin stays on A. Chat: "Sending everyone on the network to B (n from this server)."
+2. Without a `/setspawn` on B (or without the database): the same, landing wherever B puts arriving players.
+3. On A: `/tpall to B 100 70 -200`. Everyone, those on B too, lands at 100 70 -200 in B's overworld, keeping their own facing.
+4. `/tpall to B 0 80 0 nether` (or `end`, or a full id in quotes such as `"bsp_core:mining"`): the same in that world.
+5. `/tpall to A 10 64 10`: everyone on B and C comes across to that spot on A; players on A are moved there too.
+6. A server that is down: "B is not online." and nothing moves. Without Redis: "Redis messaging is off, so other servers cannot be reached." and nothing moves.
+7. Everyone moved can `/back` to where they were.

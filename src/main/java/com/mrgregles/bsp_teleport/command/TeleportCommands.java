@@ -150,7 +150,14 @@ public final class TeleportCommands {
         d.register(admin("tpall").executes(ctx -> tpAll(ctx, "here"))
                 .then(Commands.literal("all").executes(ctx -> tpAll(ctx, "all")))
                 .then(Commands.literal("from").then(Commands.argument("server", StringArgumentType.word()).suggests(SERVERS)
-                        .executes(ctx -> tpAll(ctx, StringArgumentType.getString(ctx, "server"))))));
+                        .executes(ctx -> tpAll(ctx, StringArgumentType.getString(ctx, "server")))))
+                // Everyone on every server to another server's spawn, or to a spot on it.
+                .then(Commands.literal("to").then(Commands.argument("server", StringArgumentType.word()).suggests(SERVERS)
+                        .executes(ctx -> tpAllTo(ctx, false, null))
+                        .then(Commands.argument("pos", Vec3Argument.vec3())
+                                .executes(ctx -> tpAllTo(ctx, true, null))
+                                .then(Commands.argument("world", StringArgumentType.string())
+                                        .executes(ctx -> tpAllTo(ctx, true, StringArgumentType.getString(ctx, "world"))))))));
         d.register(admin("tphere").then(Commands.argument("player", StringArgumentType.word()).suggests(PLAYERS)
                 .executes(TeleportCommands::tpHere)));
         d.register(admin("tpto").then(Commands.argument("player", StringArgumentType.word()).suggests(PLAYERS)
@@ -293,6 +300,15 @@ public final class TeleportCommands {
 
     private static int tpAll(CommandContext<CommandSourceStack> ctx, String scope) throws CommandSyntaxException {
         return AdminActions.bringAll(ctx.getSource().getPlayerOrException(), scope) ? 1 : 0;
+    }
+
+    private static int tpAllTo(CommandContext<CommandSourceStack> ctx, boolean spot, String world) throws CommandSyntaxException {
+        AdminActions.Vec at = null;
+        if (spot) {
+            Vec3 pos = Vec3Argument.getVec3(ctx, "pos");
+            at = new AdminActions.Vec(AdminActions.worldId(world), pos.x, pos.y, pos.z);
+        }
+        return AdminActions.sendEveryone(ctx.getSource().getPlayerOrException(), StringArgumentType.getString(ctx, "server"), at) ? 1 : 0;
     }
 
     private static int tpHere(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {

@@ -513,6 +513,8 @@
   "message.bsp_teleport.admin.asking": "Asking where %s is...",
   "message.bsp_teleport.admin.no_offline": "No last position is known for %s.",
   "message.bsp_teleport.admin.sent_all": "Sent %s players to %s.",
+  "message.bsp_teleport.admin.sent_everyone": "Sending everyone on the network to %s (%s from this server).",
+  "message.bsp_teleport.admin.sent_everyone_spot": "Sending everyone on the network to %3$s on %1$s (%2$s from this server).",
   "message.bsp_teleport.admin.reloaded": "Config file re-read.",
   "message.bsp_teleport.admin.sent_all_remote": "Told %s to send its players to %s.",
   "message.bsp_teleport.portal.admin_only": "Only admins can place or remove portal blocks.",

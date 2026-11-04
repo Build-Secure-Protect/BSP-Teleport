@@ -131,6 +131,8 @@ MESSAGES = {
     "admin.asking": "Asking where %s is...",
     "admin.no_offline": "No last position is known for %s.",
     "admin.sent_all": "Sent %s players to %s.",
+    "admin.sent_everyone": "Sending everyone on the network to %s (%s from this server).",
+    "admin.sent_everyone_spot": "Sending everyone on the network to %3$s on %1$s (%2$s from this server).",
     "admin.reloaded": "Config file re-read.",
     "admin.sent_all_remote": "Told %s to send its players to %s.",
     # Portals (T53)

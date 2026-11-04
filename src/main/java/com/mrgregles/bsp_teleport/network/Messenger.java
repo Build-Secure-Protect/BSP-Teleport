@@ -244,6 +244,9 @@ public final class Messenger {
                 player.displayClientMessage(Component.translatable("message.bsp_teleport." + (m.get("reason").isEmpty() ? "admin.moved" : m.get("reason")), m.get("by")), false);
             }
             case TP_ALL -> {
+                if (m.get("skip").equals(TeleportConfig.serverName())) {
+                    return; // /tpall to <server>: the players already there stay put
+                }
                 Destination d = Destination.parse(m.get("destination"));
                 String exclude = m.get("exclude");
                 for (ServerPlayer p : new ArrayList<>(server.getPlayerList().getPlayers())) {
@@ -254,6 +257,9 @@ public final class Messenger {
                 }
             }
             case SEND_ALL -> {
+                if (m.get("to").equals(TeleportConfig.serverName())) {
+                    return; // already on the server they are sent to
+                }
                 for (ServerPlayer p : new ArrayList<>(server.getPlayerList().getPlayers())) {
                     if (TeleportService.INSTANCE.sendToServer(p, m.get("to"))) {
                         p.displayClientMessage(Component.translatable("message.bsp_teleport.admin.moved", m.get("by")), false);
@@ -362,8 +368,18 @@ public final class Messenger {
 
     /** Moves everyone on {@code server} (or every server when null), except {@code exclude}, to a destination. */
     public static boolean moveAll(@Nullable String server, Destination destination, String byName, String exclude) {
+        return moveAll(server, destination, byName, exclude, "");
+    }
+
+    /** As above; the players on {@code skipServer} (when not empty) stay where they are. */
+    public static boolean moveAll(@Nullable String server, Destination destination, String byName, String exclude, String skipServer) {
         Message m = server == null ? new Message(Message.Type.TP_ALL, Message.To.ALL, Message.ALL) : new Message(Message.Type.TP_ALL, Message.To.SERVER, server);
-        return send(m.put("destination", destination.serialize()).put("by", byName).put("exclude", exclude));
+        return send(m.put("destination", destination.serialize()).put("by", byName).put("exclude", exclude).put("skip", skipServer));
+    }
+
+    /** Everyone on every other server goes to {@code to}; the players already on it stay. */
+    public static boolean sendAllEverywhere(String to, String byName) {
+        return send(new Message(Message.Type.SEND_ALL, Message.To.ALL, Message.ALL).put("to", to).put("by", byName));
     }
 
     /** Everyone on {@code from} goes to {@code to}. */
