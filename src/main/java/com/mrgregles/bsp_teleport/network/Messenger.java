@@ -128,7 +128,13 @@ public final class Messenger {
                 names.add(p.getGameProfile().getName());
             }
         }
-        send(new Message(Message.Type.PLAYER_LIST, Message.To.ALL, Message.ALL).put("names", String.join(",", names)));
+        boolean rtp = RandomTeleport.enabled() && RandomTeleport.arrivalWorld(server) != null; // B41
+        send(new Message(Message.Type.PLAYER_LIST, Message.To.ALL, Message.ALL).put("names", String.join(",", names)).put("rtp", String.valueOf(rtp)));
+    }
+
+    /** B41: tells the other servers at once that this one's settings changed (a /rtp switch), instead of at the next heartbeat. */
+    public static void announce(MinecraftServer server) {
+        publishPlayerList(server, null);
     }
 
     public static void homesChanged(UUID owner) {
@@ -214,7 +220,7 @@ public final class Messenger {
                     PlayerDirectory.markDown(m.source);
                 } else {
                     String names = m.get("names");
-                    PlayerDirectory.update(m.source, names.isEmpty() ? List.of() : List.of(names.split(",")));
+                    PlayerDirectory.update(m.source, names.isEmpty() ? List.of() : List.of(names.split(",")), !"false".equals(m.get("rtp")));
                 }
             }
             case PLAYER_LIST_REQUEST -> publishPlayerList(server, null);

@@ -20,14 +20,15 @@ public final class PlayerDirectory {
     static final long STALE_MS = 90_000L;
     private static final Map<String, Entry> SERVERS = new ConcurrentHashMap<>();
 
-    private record Entry(Set<String> names, long lastSeen) {
+    /** @param rtp B41: whether /rtp works there (its heartbeat says so; a server too old to say counts as yes) */
+    private record Entry(Set<String> names, long lastSeen, boolean rtp) {
     }
 
     private PlayerDirectory() {
     }
 
-    public static void update(String server, List<String> names) {
-        SERVERS.put(server, new Entry(new TreeSet<>(names), System.currentTimeMillis()));
+    public static void update(String server, List<String> names, boolean rtp) {
+        SERVERS.put(server, new Entry(new TreeSet<>(names), System.currentTimeMillis(), rtp));
     }
 
     public static void markDown(String server) {
@@ -86,6 +87,22 @@ public final class PlayerDirectory {
         }
         servers.sort(String.CASE_INSENSITIVE_ORDER);
         return servers;
+    }
+
+    /** B41: the other servers that are up and have /rtp turned on, sorted; empty in single player. */
+    public static List<String> rtpServers() {
+        if (TeleportConfig.singlePlayer()) {
+            return new ArrayList<>();
+        }
+        prune();
+        List<String> out = new ArrayList<>();
+        SERVERS.forEach((server, e) -> {
+            if (e.rtp() && !server.equals(TeleportConfig.serverName())) {
+                out.add(server);
+            }
+        });
+        out.sort(String.CASE_INSENSITIVE_ORDER);
+        return out;
     }
 
     /** Every reported server with its names (this server not included). */

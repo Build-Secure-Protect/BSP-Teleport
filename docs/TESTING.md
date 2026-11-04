@@ -458,3 +458,13 @@ Setup: three servers on Redis (A, B, C), players on each, an admin on A. B has a
 6. A server that is down: "B is not online." and nothing moves. Without Redis: "Redis messaging is off, so other servers cannot be reached." and nothing moves.
 7. Everyone moved can `/back` to where they were.
 8. From the server console: `tpall to B 100 70 -200`. Everyone on the network, nobody left out, lands on the spot; players see "moved by Server"; the console prints "Sending everyone on the network to 100 70 -200 on B (n from this server)." in English. `tpall to B` from the console sends everyone to B's spawn the same way. Give plain numbers: `~` counts from the world spawn.
+
+## The band offers random teleport only where it is on (B41, 2026-11-04)
+
+Setup: two servers on Redis (A, B), both with `randomTeleport.enabled = true`, and a player on A.
+
+1. Open the band's MORE tab: "Random on this server" and "Random on B" both show.
+2. Set `enabled = false` in A's `[randomTeleport]` (file, or the admin panel's `rtpEnabled`). Reopen the band on A: "Random on this server" is gone; "Random on B" stays.
+3. Set it back on A, then turn it off on B. Reopen the band on A: through the admin panel "Random on B" is gone at once; through the file, within 30 seconds (the next heartbeat).
+4. On A, go to a world that is not in A's `worlds` list (the Nether, by default): "Random on this server" is gone, the other servers' rows stay. Back in the overworld it is there again.
+5. `/rtp` typed in chat still answers as before where it is off ("Random teleport is off on this server.").

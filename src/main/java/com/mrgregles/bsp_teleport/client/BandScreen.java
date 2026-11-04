@@ -598,11 +598,17 @@ public class BandScreen extends Screen {
         int x = left + 10;
         y = wide(g, x, y, Component.translatable("screen.bsp_teleport.band.spawn").getString(), data.hasSpawn() ? TQ : DIM, data.hasSpawn() ? () -> go(BandAction.SPAWN, "") : null);
         y = wide(g, x, y, Component.translatable("screen.bsp_teleport.band.back").getString(), data.hasBack() ? TQ : DIM, data.hasBack() ? () -> go(BandAction.BACK, "") : null);
-        y = wide(g, x, y, Component.translatable("screen.bsp_teleport.band.rtp_here").getString(), TQ, () -> go(BandAction.RTP, ""));
+        // B41: the server sends only where /rtp works; its own name in the list stands for "random here".
+        if (data.rtpServers().contains(data.server())) {
+            y = wide(g, x, y, Component.translatable("screen.bsp_teleport.band.rtp_here").getString(), TQ, () -> go(BandAction.RTP, ""));
+        }
         // Audit: room is kept for the ignore and pay-to-skip rows, so a long server list never pushes them past the footer.
         boolean skip = data.skipCoins() > 0 && data.cooldownLeft() > 0;
         int reserve = 4 + 16 + (skip ? 16 : 0);
         for (String server : data.rtpServers()) {
+            if (server.equals(data.server())) {
+                continue;
+            }
             if (y + 16 > bottom - reserve) {
                 break;
             }

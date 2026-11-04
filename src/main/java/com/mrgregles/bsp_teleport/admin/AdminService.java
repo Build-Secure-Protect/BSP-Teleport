@@ -290,6 +290,9 @@ public final class AdminService {
                 }
                 TeleportConfig.SPEC.save();
                 BSPTeleport.LOGGER.info("{} set {} to {}", player.getGameProfile().getName(), id, value.trim());
+                if (id.equals("rtpEnabled")) {
+                    com.mrgregles.bsp_teleport.network.Messenger.announce(player.server); // B41: the bands elsewhere hear at once
+                }
             } catch (RuntimeException ex) {
                 player.displayClientMessage(Component.literal("Could not set " + id + ": " + ex.getMessage()), false);
             }

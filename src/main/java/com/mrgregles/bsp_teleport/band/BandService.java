@@ -163,8 +163,13 @@ public final class BandService {
             }
         }
         players.sort(java.util.Comparator.comparing(BandData.PlayerEntry::name, String.CASE_INSENSITIVE_ORDER));
-        List<String> rtpServers = new ArrayList<>(PlayerDirectory.servers());
-        rtpServers.remove(TeleportConfig.serverName());
+        // B41: only servers where /rtp works. This server's own name, first, means "random here" works (here it is on, and
+        // the player stands in one of its /rtp worlds); kept in the list so the packet's layout does not change.
+        List<String> rtpServers = new ArrayList<>();
+        if (com.mrgregles.bsp_teleport.teleport.RandomTeleport.enabled() && com.mrgregles.bsp_teleport.teleport.RandomTeleport.allowedIn(player.serverLevel())) {
+            rtpServers.add(TeleportConfig.serverName());
+        }
+        rtpServers.addAll(PlayerDirectory.rtpServers());
 
         BandData.RequestEntry request = TeleportRequests.peek(player).map(r ->
                 new BandData.RequestEntry(r.fromName(), seesServer.test(r.fromName()) ? r.fromServer() : "", r.here(), r.secondsLeft())).orElse(null);
