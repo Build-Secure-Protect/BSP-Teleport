@@ -457,3 +457,4 @@ Setup: three servers on Redis (A, B, C), players on each, an admin on A. B has a
 5. `/tpall to A 10 64 10`: everyone on B and C comes across to that spot on A; players on A are moved there too.
 6. A server that is down: "B is not online." and nothing moves. Without Redis: "Redis messaging is off, so other servers cannot be reached." and nothing moves.
 7. Everyone moved can `/back` to where they were.
+8. From the server console: `tpall to B 100 70 -200`. Everyone on the network, nobody left out, lands on the spot; players see "moved by Server"; the console prints "Sending everyone on the network to 100 70 -200 on B (n from this server)." in English. `tpall to B` from the console sends everyone to B's spawn the same way. Give plain numbers: `~` counts from the world spawn.

@@ -8,7 +8,10 @@ import com.mrgregles.bsp_teleport.data.TeleportData;
 import com.mrgregles.bsp_teleport.network.Messenger;
 import com.mrgregles.bsp_teleport.network.PlayerDirectory;
 import com.mrgregles.bsp_teleport.storage.Storage;
+import com.mrgregles.bsp_teleport.util.ServerText;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 import javax.annotation.Nullable;
@@ -66,46 +69,51 @@ public final class AdminActions {
     }
 
     /**
-     * {@code /tpall to <server> [x y z [world]]}: everyone on every server of the network goes to {@code to}; the admin
-     * stays. With a {@code spot}, everyone lands on it, those already on {@code to} too. Without one they go to that
-     * server's own spawn (its /setspawn point, from the shared database) and players already there stay put; with no
-     * spawn known they land wherever that server puts them.
+     * {@code /tpall to <server> [x y z [world]]}: everyone on every server of the network goes to {@code to}. With a
+     * {@code spot}, everyone lands on it, those already on {@code to} too. Without one they go to that server's own spawn
+     * (its /setspawn point, from the shared database) and players already there stay put; with no spawn known they land
+     * wherever that server puts them. Run by an admin, the admin stays; run from the console, nobody is left out, the
+     * players are told "Server" moved them and the answer goes to the console.
      */
-    public static boolean sendEveryone(ServerPlayer admin, String to, @Nullable Vec spot) {
+    public static boolean sendEveryone(CommandSourceStack src, String to, @Nullable Vec spot) {
+        MinecraftServer mc = src.getServer();
+        ServerPlayer admin = src.getEntity() instanceof ServerPlayer p ? p : null;
+        String by = admin != null ? admin.getGameProfile().getName() : "Server";
         if (TeleportConfig.singlePlayer()) {
-            return fail(admin, "single_player");
+            return refuse(src, "single_player");
         }
         if (!Messenger.enabled()) {
-            return fail(admin, "admin.no_network");
+            return refuse(src, "admin.no_network");
         }
         String server = properServer(to);
         if (!PlayerDirectory.isOnline(server)) {
-            return fail(admin, "admin.server_offline", server);
+            return refuse(src, "admin.server_offline", server);
         }
         if (spot != null) {
             // Audit: a world this server does not have would move nobody without a word; other servers' worlds are not known here.
-            if (server.equals(TeleportConfig.serverName()) && TeleportService.levelOf(admin.server, spot.world()) == null) {
-                return fail(admin, "no_world");
+            if (server.equals(TeleportConfig.serverName()) && TeleportService.levelOf(mc, spot.world()) == null) {
+                return refuse(src, "no_world");
             }
-            moveEveryone(admin, new Position(server, spot.world(), spot.x(), spot.y(), spot.z(), 0f, 0f), null, true);
+            moveEveryone(src, admin, by, new Position(server, spot.world(), spot.x(), spot.y(), spot.z(), 0f, 0f), null, true);
             return true;
         }
         Storage.spawnOf(server, spawn -> {
             if (spawn != null) {
-                moveEveryone(admin, new Position(server, spawn.world(), spawn.x(), spawn.y(), spawn.z(), spawn.yaw(), spawn.pitch()), server, false);
+                moveEveryone(src, admin, by, new Position(server, spawn.world(), spawn.x(), spawn.y(), spawn.z(), spawn.yaw(), spawn.pitch()), server, false);
                 return;
             }
             int sent = 0;
             if (!server.equals(TeleportConfig.serverName())) {
-                for (ServerPlayer p : new ArrayList<>(admin.server.getPlayerList().getPlayers())) {
+                for (ServerPlayer p : new ArrayList<>(mc.getPlayerList().getPlayers())) {
                     if (p != admin && BspTeleportApi.get().sendToServer(p, server)) {
-                        p.displayClientMessage(Component.translatable("message.bsp_teleport.admin.moved", admin.getGameProfile().getName()), false);
+                        p.displayClientMessage(Component.translatable("message.bsp_teleport.admin.moved", by), false);
                         sent++;
                     }
                 }
             }
-            Messenger.sendAllEverywhere(server, admin.getGameProfile().getName());
-            tell(admin, "admin.sent_everyone", server, sent);
+            Messenger.sendAllEverywhere(server, by);
+            int count = sent;
+            src.sendSuccess(() -> ServerText.msg("admin.sent_everyone", server, count), true);
         });
         return true;
     }
@@ -115,17 +123,16 @@ public final class AdminActions {
     }
 
     /**
-     * Moves everyone on the network to {@code where}, except the admin and, when {@code skip} is set, the players on
-     * that server. A {@code typed} spot has no facing of its own, so each player keeps theirs.
+     * Moves everyone on the network to {@code where}, except {@code admin} (null from the console) and, when {@code skip}
+     * is set, the players on that server. A {@code typed} spot has no facing of its own, so each player keeps theirs.
      */
-    private static void moveEveryone(ServerPlayer admin, Position where, @Nullable String skip, boolean typed) {
-        String by = admin.getGameProfile().getName();
+    private static void moveEveryone(CommandSourceStack src, @Nullable ServerPlayer admin, String by, Position where, @Nullable String skip, boolean typed) {
         boolean local = where.server().equals(TeleportConfig.serverName());
         Destination here = new Destination(local ? "" : where.server(), where.world(), where.x(), where.y(), where.z(),
                 typed ? Float.NaN : where.yaw(), typed ? Float.NaN : where.pitch(), "");
         int moved = 0;
         if (skip == null || !local) {
-            for (ServerPlayer p : new ArrayList<>(admin.server.getPlayerList().getPlayers())) {
+            for (ServerPlayer p : new ArrayList<>(src.getServer().getPlayerList().getPlayers())) {
                 if (p != admin && BspTeleportApi.get().teleport(p, here)) {
                     p.displayClientMessage(Component.translatable("message.bsp_teleport.admin.moved", by), false);
                     moved++;
@@ -134,9 +141,15 @@ public final class AdminActions {
         }
         // Other servers get the spot with its server named, so they move their players across to it.
         Destination there = new Destination(where.server(), here.world(), here.x(), here.y(), here.z(), here.yaw(), here.pitch(), "");
-        Messenger.moveAll(null, there, by, by, skip == null ? "" : skip);
-        tell(admin, typed ? "admin.sent_everyone_spot" : "admin.sent_everyone", where.server(), moved,
-                (int) Math.floor(where.x()) + " " + (int) Math.floor(where.y()) + " " + (int) Math.floor(where.z()));
+        Messenger.moveAll(null, there, by, admin != null ? by : "", skip == null ? "" : skip);
+        int count = moved;
+        String at = (int) Math.floor(where.x()) + " " + (int) Math.floor(where.y()) + " " + (int) Math.floor(where.z());
+        src.sendSuccess(() -> ServerText.msg(typed ? "admin.sent_everyone_spot" : "admin.sent_everyone", where.server(), count, at), true);
+    }
+
+    private static boolean refuse(CommandSourceStack src, String key, Object... args) {
+        src.sendFailure(ServerText.msg(key, args));
+        return false;
     }
 
     /** The server's name as the network spells it, matched without case (this one too); as typed when unknown. */

@@ -308,7 +308,8 @@ public final class TeleportCommands {
             Vec3 pos = Vec3Argument.getVec3(ctx, "pos");
             at = new AdminActions.Vec(AdminActions.worldId(world), pos.x, pos.y, pos.z);
         }
-        return AdminActions.sendEveryone(ctx.getSource().getPlayerOrException(), StringArgumentType.getString(ctx, "server"), at) ? 1 : 0;
+        // Console too: nobody is left out and the answer goes to the console.
+        return AdminActions.sendEveryone(ctx.getSource(), StringArgumentType.getString(ctx, "server"), at) ? 1 : 0;
     }
 
     private static int tpHere(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
