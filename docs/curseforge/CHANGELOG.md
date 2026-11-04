@@ -1,3 +1,13 @@
+# BSP-Teleport 3.5.4
+
+Minecraft 1.20.1, Forge 47.4, Java 17. Requires BSP-Core 1.10.0 or newer. The network protocol is the same as 3.5.0, so 3.5.0 and 3.5.4 clients and servers work together; update the client for single player.
+
+## Fixed
+
+**Single-player and LAN worlds crashed.** Joining a single-player or LAN world with 3.5.0 crashed the game on the first tick ("Illegal classload request for ...ServerGamePacketListenerAccessor"). Dedicated servers were not affected.
+
+**Random teleport showed where it was off.** The band's MORE tab offered a random teleport on servers where `randomTeleport.enabled` is false. It now lists only the servers where it is on, and "Random on this server" only when it is on here and you are in one of its random-teleport worlds.
+
 # BSP-Teleport 3.5.0
 
 Minecraft 1.20.1, Forge 47.4, Java 17. Needed on the client and the server, and both must run this version (the network protocol changed). Requires BSP-Core 1.10.0 or newer (alliances). BSP-Region Guard (0.1.0 or newer, built against 0.5.0), BSP-RankUp, BSP-InventorySync and LuckPerms are optional.

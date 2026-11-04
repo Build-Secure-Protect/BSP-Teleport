@@ -4,14 +4,15 @@
   "package": "com.mrgregles.bsp_teleport.mixin",
   "compatibilityLevel": "JAVA_17",
   "refmap": "bsp_teleport.refmap.json",
-  "mixins": [],
+  "mixins": [
+    "PlayerListAccessor",
+    "ServerGamePacketListenerAccessor"
+  ],
   "client": [
     "GuiHotbarMixin",
     "ConnectionDiagnosticMixin"
   ],
   "server": [
-    "PlayerListAccessor",
-    "ServerGamePacketListenerAccessor",
     "PlayerListMixin",
     "ServerGamePacketListenerMixin"
   ],

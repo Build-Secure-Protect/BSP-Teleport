@@ -468,3 +468,11 @@ Setup: two servers on Redis (A, B), both with `randomTeleport.enabled = true`, a
 3. Set it back on A, then turn it off on B. Reopen the band on A: through the admin panel "Random on B" is gone at once; through the file, within 30 seconds (the next heartbeat).
 4. On A, go to a world that is not in A's `worlds` list (the Nether, by default): "Random on this server" is gone, the other servers' rows stay. Back in the overworld it is there again.
 5. `/rtp` typed in chat still answers as before where it is off ("Random teleport is off on this server.").
+
+## Single-player and LAN worlds open (B42, 2026-11-04)
+
+On a client with this jar and BSP-Core (no server):
+
+1. Create a single-player world and join it: no crash. Walk around for a minute, open the band, `/sethome a`, `/home a`.
+2. Open the world to LAN and have a second client join it: no crash for either.
+3. On a dedicated server nothing changes: joining still works, and with `network.suppressJoinLeaveMessages = true` the join and leave lines stay hidden.

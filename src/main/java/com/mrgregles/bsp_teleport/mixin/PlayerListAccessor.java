@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 import java.util.List;
 
 /**
- * Server only. Reaches the writable player list ({@code getPlayers()} returns an unmodifiable view on Forge), so the
+ * Common (applied in single player too, B42). Reaches the writable player list ({@code getPlayers()} returns an unmodifiable view on Forge), so the
  * GameTests can seat a mock player where system broadcasts reach it. No production code uses this.
  */
 @Mixin(PlayerList.class)
