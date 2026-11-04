@@ -414,3 +414,34 @@ Setup: a player with three home slots and homes `base`, `farm`, `mine`, standing
 6. Chat: `/sethome base` says "You already have a home base. [Move it here]"; clicking runs `/sethome base confirm`. `/sethome tower` with every slot used lists `[base] [farm] [mine]`; clicking one runs `/sethome tower replace <home>`.
 7. On a second server: the band and `/homes` there show the replaced home (the change reaches other servers).
 8. Where homes may not be set (Region Guard, a raid zone), the band still asks first, then MOVE or a replace key says "You cannot set a home here." and nothing changes.
+
+## Ally teleports (BSP-Core A-1 to A-3, 2026-11-03)
+
+Setup: BSP-Core 1.10.0 on every server, and this jar on the servers and in the client pack (band protocol 7). Team Red with player A; team Blue with player B and C; Red and Blue in one alliance. Blue shares its coordinates, Red does not.
+
+1. A opens the band, TEAM tab: a MY TEAM / ALLIES switch sits at the top. MY TEAM is the old team list. ALLIES lists B and C with "Blue" after their names in Blue's colour, "here" or "on <server>", the dimension, and their coordinates.
+2. B's band, ALLIES: A is listed without coordinates (Red does not share them).
+3. A presses ASK on B (same server). A: "Asked B. They have 30 s to accept." B: "Ally A (Red) wants to teleport to you. [Accept] [Deny] 30 s", and the band's request line. B clicks Accept: A gets the warm-up, then lands on B. No coins taken.
+4. Again, B clicks Deny: A is told B denied. Again, B waits 30 s: the request is gone ("You have no teleport request" on /tpaccept).
+5. B turns on /tpignore: A's ASK says "B is not taking teleport requests."
+6. Cross-server: B on another server. A's ASK reaches B there; on Accept A gets the warm-up and the switch, landing where B stood.
+7. BSP-Core's Team screen, ALLIES page: TELEPORT on B does the same as ASK.
+8. While A's ask waits, Blue leaves the alliance on A's or B's server: the waiting ask is dropped and both are told. During A's warm-up: the warm-up is cancelled ("Your alliance ended"). If the alliance ends on a third server, the accept or the end of the warm-up refuses instead ("You and B are no longer allies").
+9. A starts a steal: ASK says they cannot while stealing. B starts a steal: A is told B is stealing; an Accept while one of them steals refuses too.
+10. A steal runs within 150 blocks of B: B's row shows RAID and no ASK; an accepted move there is refused.
+11. A team in no alliance: no switch on TEAM, the tab is as before.
+
+## The Access Shop (D174 to D180, 2026-11-04)
+
+Setup: access on, two restricted servers with tokens assigned (for example II for BSP-Frostwarf, IX for a portal, XII for a warp), this jar on the server and in the client pack (band protocol 8). BSP-Core must be on the client (the shop's steel comes from its textures).
+
+1. As an admin, take the Access Shop from the creative tab and place it: it stands two wide and two tall, facing you, in the Trade Post's steel, with "ACCESS TOKENS. Right-click to buy." on its screen. A non-admin cannot place it, and cannot break it in survival.
+2. Click it as the admin: the shop opens with SETTINGS. In SETTINGS set a name and a message, then on SERVERS press + ADD: token II appears. Set RENT on, 72 hours, price 25000, PIECES; FULL on, 200000. On PORTALS add IX with rent only, price 40, COINS. SAVE: the screen on the block shows the new message and the coins of the first tokens.
+3. Place a second shop. In its SETTINGS, COPY FROM lists the first shop by name and position; COPY gives it the same list and message, and it keeps its own name. Change its prices and SAVE: the first shop is unchanged.
+4. A player with no main server clicks the shop: the free main-server pick opens. After choosing, the shop opens.
+5. That player, on SERVERS: the main server's card says YOUR MAIN SERVER. On II, RENT shows 25,000p and 72 h; FULL shows 200,000p. BUY: the box asks "Rent 72 hours of access to BSP-Frostwarf for 25,000 pieces?" with USE NOW, TAKE TOKEN and CANCEL. CANCEL and Esc take nothing.
+6. USE NOW: the pieces are taken, chat says "Access to BSP-Frostwarf for 3d 0h", the card shows "Rented: ... left". Buying rent again adds time.
+7. TAKE TOKEN: the pieces are taken and Access Token II (rent, 72 h) goes into the inventory; right-clicking it grants the access.
+8. FULL with USE NOW: the card then says OWNED and has no BUY.
+9. With too few pieces or coins the price shows red and BUY is grey.
+10. Breaking any part as an admin removes the whole shop; the other shop's COPY FROM no longer lists it.

@@ -127,8 +127,8 @@ public final class Teleports {
             }
         }
         // D91: a team teleport also stays clear of every running steal, whoever owns the totem, so a team cannot
-        // pour in behind a friend who started one.
-        if (kind == TeleportKind.TEAM) {
+        // pour in behind a friend who started one. An ally teleport gets the same rule (A-1).
+        if (kind == TeleportKind.TEAM || kind == TeleportKind.ALLY) {
             int distance = TeleportConfig.getOr(TeleportConfig.RAID_HOME_DISTANCE, 150);
             if (BspCore.nearAnySteal(player.server, destination.server(), destination.world(), destination.x(), destination.z(), distance)) {
                 tell(player, "blocked_raid_team", label, distance);
@@ -274,6 +274,13 @@ public final class Teleports {
 
     public static boolean isWaiting(ServerPlayer player) {
         return PENDING.containsKey(player.getUUID());
+    }
+
+    /** The kind of the move the player is in the warm-up of, or null. */
+    @Nullable
+    public static TeleportKind waitingKind(ServerPlayer player) {
+        Pending p = PENDING.get(player.getUUID());
+        return p == null ? null : p.kind();
     }
 
     /** Takes back a cooldown written for a move that did not happen. */

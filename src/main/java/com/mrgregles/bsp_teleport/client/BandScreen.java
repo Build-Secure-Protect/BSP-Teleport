@@ -55,6 +55,8 @@ public class BandScreen extends Screen {
     /** Where the replace keys start in the unlocked homes, when they need more than {@link #ASK_ROWS} rows (MORE pages on). */
     private int askFrom;
     private Tab tab = Tab.HOMES;
+    /** D167: the TEAM tab shows the alliance's other teams instead of the player's own. */
+    private boolean allySide;
     private int scroll;
     private int left, top;
     /** Everything is drawn this many times bigger than vanilla's GUI scale; mouse positions are divided by it. */
@@ -135,7 +137,7 @@ public class BandScreen extends Screen {
         if (left + 10 + font.width(heading) <= firstTab - 4) {
             g.drawString(font, heading, left + 10, top + 8, TQ, false);
         }
-        small(g, clip(Component.translatable(tab == Tab.TEAM ? "screen.bsp_teleport.band.team_help" : "screen.bsp_teleport.band.help").getString(), W - 20), left + 10, top + 19, MUTED);
+        small(g, clip(Component.translatable(tab == Tab.TEAM ? allySide ? "screen.bsp_teleport.band.ally_help" : "screen.bsp_teleport.band.team_help" : "screen.bsp_teleport.band.help").getString(), W - 20), left + 10, top + 19, MUTED);
 
         for (int i = 0; i < tabs.length; i++) {
             int tx = left + W - 10 - (tabs.length - i) * (tabW + 2);
@@ -456,6 +458,15 @@ public class BandScreen extends Screen {
             small(g, Component.translatable("screen.bsp_teleport.band.no_team_hint").getString(), left + 10, y + 12, MUTED);
             return;
         }
+        if (team.alliance().isEmpty()) {
+            allySide = false;
+        } else {
+            y = drawTeamSwitch(g, y, team.alliance());
+        }
+        if (allySide) {
+            drawAllies(g, y, bottom, team.allies());
+            return;
+        }
         int colour = 0xFF000000 | team.colour();
         long online = team.mates().stream().filter(m -> !"off".equals(m.state())).count() + 1;
         g.fill(left + 10, y, left + W - 10, y + ROW_H, colour);
@@ -500,6 +511,87 @@ public class BandScreen extends Screen {
             }
             y += ROW_H + 2;
         }
+    }
+
+    /** D167: MY TEAM and ALLIES side by side across the list, only when the team is in an alliance. */
+    private int drawTeamSwitch(GuiGraphics g, int y, String alliance) {
+        int w = (W - 22) / 2;
+        String[] labels = {Component.translatable("screen.bsp_teleport.band.my_team").getString(),
+                Component.translatable("screen.bsp_teleport.band.allies", alliance).getString()};
+        for (int i = 0; i < 2; i++) {
+            int x = left + 10 + i * (w + 2);
+            boolean on = (i == 1) == allySide;
+            g.fill(x, y, x + w, y + 13, on ? TQ : DIM);
+            g.fill(x + 1, y + 1, x + w - 1, y + 12, SLOT);
+            String label = clip(labels[i].toUpperCase(), w - 8);
+            small(g, label, x + (w - (int) (font.width(label) * 0.75f)) / 2, y + 4, on ? TQ : MUTED);
+            boolean side = i == 1;
+            hits.add(new Hit(x, y, w, 13, () -> {
+                if (allySide != side) {
+                    allySide = side;
+                    scroll = 0;
+                }
+            }));
+        }
+        return y + 17;
+    }
+
+    /** D167: one row per ally, their team's name in its colour after the player's, ASK (or FAR, RAID) for online ones. */
+    private void drawAllies(GuiGraphics g, int y, int bottom, List<BandData.AllyEntry> allies) {
+        if (allies.isEmpty()) {
+            small(g, Component.translatable("screen.bsp_teleport.band.no_allies").getString(), left + 10, y + 2, MUTED);
+            return;
+        }
+        int i = 0;
+        for (BandData.AllyEntry a : allies) {
+            if (i++ < scroll) {
+                continue;
+            }
+            if (y + ROW_H > bottom) {
+                break;
+            }
+            boolean off = "off".equals(a.state());
+            String where = switch (a.state()) {
+                case "here" -> Component.translatable("screen.bsp_teleport.band.mate_here").getString();
+                case "far" -> Component.translatable("screen.bsp_teleport.band.mate_on", a.server()).getString();
+                default -> a.seen().isEmpty() ? Component.translatable("screen.bsp_teleport.band.mate_offline").getString()
+                        : Component.translatable("screen.bsp_teleport.band.mate_seen", a.seen()).getString();
+            };
+            if (!off && !a.dimension().isEmpty()) {
+                where += "  " + dimensionName(a.dimension());
+            }
+            if (!off && !a.coords().isEmpty()) {
+                where += "  " + a.coords();
+            }
+            if (a.nearRaid()) {
+                where += "  " + Component.translatable("screen.bsp_teleport.band.steal_near", data.raidDistance()).getString();
+            }
+            String key = off ? null : Component.translatable(a.nearRaid() ? "screen.bsp_teleport.band.raid_key"
+                    : !a.reachable() ? "screen.bsp_teleport.band.far" : "screen.bsp_teleport.band.ask").getString();
+            int textRight = (key == null ? left + W - 10 : left + W - 10 - keyW(key)) - 4;
+            int subColour = "far".equals(a.state()) ? VIO : "here".equals(a.state()) ? OK : MUTED;
+            row(g, y, a.name(), where, off ? MUTED : a.nearRaid() ? BAD : TEXT, a.nearRaid() ? BAD : subColour, textRight);
+            int tagX = left + 14 + Math.min(font.width(a.name()), textRight - left - 14) + 4;
+            if (textRight - tagX > 16) {
+                small(g, clip(a.teamName(), textRight - tagX), tagX, y + 4, 0xFF000000 | a.colour());
+            }
+            if (key != null) {
+                if (a.nearRaid()) {
+                    button(g, left + W - 10, y + 4, key, BAD, BAD, null);
+                } else if (!a.reachable()) {
+                    button(g, left + W - 10, y + 4, key, DIM, MUTED, null);
+                } else {
+                    button(g, left + W - 10, y + 4, key, GOLD, GOLD, () -> go(BandAction.ALLY_ASK, a.uuid()));
+                }
+            }
+            y += ROW_H + 2;
+        }
+    }
+
+    /** "minecraft:the_nether" as "the nether"; other mods' worlds keep their path. */
+    private static String dimensionName(String id) {
+        int colon = id.indexOf(':');
+        return (colon >= 0 ? id.substring(colon + 1) : id).replace('_', ' ');
     }
 
     private void drawMore(GuiGraphics g, int y, int bottom) {
@@ -716,7 +808,7 @@ public class BandScreen extends Screen {
             case HOMES -> data.homes().size();
             case WARPS -> data.warps().size();
             case PLAYERS -> data.players().size();
-            case TEAM -> data.team() == null ? 0 : data.team().mates().size();
+            case TEAM -> data.team() == null ? 0 : allySide ? data.team().allies().size() : data.team().mates().size();
             case MORE, ADMIN -> 0;
         };
         scroll = Math.max(0, Math.min(Math.max(0, count - 1), scroll - (int) Math.signum(delta)));

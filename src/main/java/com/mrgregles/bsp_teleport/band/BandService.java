@@ -94,6 +94,13 @@ public final class BandService {
                 }
                 TeamTeleports.go(player, target);
             }
+            case ALLY_ASK -> {
+                try {
+                    com.mrgregles.bsp_teleport.team.AllyTeleports.ask(player, UUID.fromString(arg));
+                } catch (IllegalArgumentException ignored) {
+                    // not a uuid; drop
+                }
+            }
             case TEAM_REFRESH -> {
                 // T80: the TEAM tab polls every 5 s; a client asking faster than every 3 s gets nothing new.
                 long now = System.currentTimeMillis();
@@ -209,7 +216,31 @@ public final class BandService {
             mates.add(new BandData.MateEntry(m.uuid().toString(), m.name(), m.leader(), state, m.server(),
                     "off".equals(state) ? TeamTeleports.ago(m.seenMs(), now) : "", reachable, nearRaid));
         }
-        return new BandData.TeamEntry(team.name(), team.colour(), leaderName, mates);
+        return new BandData.TeamEntry(team.name(), team.colour(), leaderName, mates,
+                BspCore.allianceName(player.server, player.getUUID()), allies(player, raidDistance, now));
+    }
+
+    /** The ALLIES side of the TEAM tab (D167): every player of the other teams in the alliance, as BSP-Core shares them. */
+    private static List<BandData.AllyEntry> allies(ServerPlayer player, int raidDistance, long now) {
+        List<BandData.AllyEntry> out = new ArrayList<>();
+        for (com.mrgregles.bsp_teleport.team.AllyTeleports.Ally a : BspCore.allies(player.server, player.getUUID())) {
+            String state = a.onlineHere() ? "here" : a.online() ? "far" : "off";
+            String dimension = a.dimension();
+            boolean nearRaid = false;
+            ServerPlayer there = a.onlineHere() ? player.server.getPlayerList().getPlayer(a.uuid()) : null;
+            if (there != null) {
+                dimension = there.serverLevel().dimension().location().toString();
+                nearRaid = BspCore.nearAnySteal(player.server, "", dimension, there.getX(), there.getZ(), raidDistance);
+            } else if (a.online() && a.pos() != null && !dimension.isEmpty()) {
+                nearRaid = BspCore.nearAnySteal(player.server, a.server(), dimension, a.pos().getX() + 0.5, a.pos().getZ() + 0.5, raidDistance);
+            }
+            // Coordinates only when their team shares them, even for an ally on this server.
+            String coords = a.pos() == null ? "" : a.pos().getX() + " " + a.pos().getY() + " " + a.pos().getZ();
+            boolean reachable = a.onlineHere() || (a.online() && com.mrgregles.bsp_teleport.network.Messenger.enabled());
+            out.add(new BandData.AllyEntry(a.uuid().toString(), a.name(), a.teamName(), a.colour(), state, a.server(),
+                    "off".equals(state) ? "" : dimension, coords, "off".equals(state) ? TeamTeleports.ago(a.seenMs(), now) : "", reachable, nearRaid));
+        }
+        return out;
     }
 
     private static boolean nearRaid(ServerPlayer player, Position p, int distance) {

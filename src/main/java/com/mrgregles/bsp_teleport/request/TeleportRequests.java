@@ -6,6 +6,7 @@ import com.mrgregles.bsp_teleport.data.TeleportData;
 import com.mrgregles.bsp_teleport.network.Message;
 import com.mrgregles.bsp_teleport.network.Messenger;
 import com.mrgregles.bsp_teleport.network.PlayerDirectory;
+import com.mrgregles.bsp_teleport.team.AllyTeleports;
 import com.mrgregles.bsp_teleport.teleport.TeleportKind;
 import com.mrgregles.bsp_teleport.teleport.Teleports;
 import net.minecraft.network.chat.Component;
@@ -16,6 +17,7 @@ import net.minecraftforge.event.TickEvent;
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Player-to-player requests: {@code /tpa} (I come to you) and {@code /tpahere} (you come to me), on this server or
@@ -29,9 +31,21 @@ public final class TeleportRequests {
     /** Keyed by the target's name, lower case. */
     private static final Map<String, Request> OPEN = new HashMap<>();
 
-    private record Request(String fromName, String fromServer, Position fromPosition, boolean here, long expiresAt) {
+    /**
+     * @param allyTeam A-1: the asker's team when this is an ally asking to come (D168), else ""
+     * @param fromId   the asker's uuid as text for an ally ask (the alliance is checked again on accept), else ""
+     */
+    private record Request(String fromName, String fromServer, Position fromPosition, boolean here, long expiresAt, String allyTeam, String fromId) {
+        Request(String fromName, String fromServer, Position fromPosition, boolean here, long expiresAt) {
+            this(fromName, fromServer, fromPosition, here, expiresAt, "", "");
+        }
+
         boolean local() {
             return fromServer.equals(TeleportConfig.serverName());
+        }
+
+        boolean ally() {
+            return !allyTeam.isEmpty();
         }
     }
 
@@ -68,9 +82,44 @@ public final class TeleportRequests {
         tell(from, "request.sent", Component.literal(targetName));
     }
 
+    /**
+     * A-1: an ally asks to come to {@code targetName}, on this server or another; the request waits
+     * {@link AllyTeleports#ASK_SECONDS}. A player who ignores requests is not asked.
+     */
+    public static boolean sendAlly(ServerPlayer from, String targetName, String team) {
+        long expiry = System.currentTimeMillis() + AllyTeleports.ASK_SECONDS * 1000L;
+        Request request = new Request(from.getGameProfile().getName(), TeleportConfig.serverName(), Position.of(from), false, expiry,
+                team.isEmpty() ? "?" : team, from.getUUID().toString());
+        ServerPlayer target = Messenger.find(from.server, targetName);
+        if (target != null) {
+            if (TeleportData.get(from.server).isIgnoring(target.getUUID())) {
+                tell(from, "ally.not_taking", target.getDisplayName());
+                return false;
+            }
+            receive(target, request);
+            tell(from, "ally.asked", target.getDisplayName(), AllyTeleports.ASK_SECONDS);
+            return true;
+        }
+        if (PlayerDirectory.serverOf(targetName) == null) {
+            tell(from, "team.offline", targetName);
+            return false;
+        }
+        boolean sent = Messenger.send(new Message(Message.Type.TP_REQUEST, Message.To.PLAYER, targetName)
+                .put("fromName", request.fromName()).put("fromPosition", request.fromPosition().serialize())
+                .put("here", "false").put("expiresAt", Long.toString(expiry))
+                .put("allyTeam", request.allyTeam()).put("fromId", request.fromId()));
+        if (!sent) {
+            tell(from, "team.unreachable", targetName, PlayerDirectory.serverOf(targetName));
+            return false;
+        }
+        tell(from, "ally.asked", Component.literal(targetName), AllyTeleports.ASK_SECONDS);
+        return true;
+    }
+
     public static void onRemoteRequest(ServerPlayer target, Message m) {
         try {
-            receive(target, new Request(m.get("fromName"), m.source, Position.parse(m.get("fromPosition")), m.flag("here"), Long.parseLong(m.get("expiresAt"))));
+            receive(target, new Request(m.get("fromName"), m.source, Position.parse(m.get("fromPosition")), m.flag("here"), Long.parseLong(m.get("expiresAt")),
+                    m.get("allyTeam"), m.get("fromId")));
         } catch (RuntimeException ignored) {
             // malformed; drop
         }
@@ -108,7 +157,14 @@ public final class TeleportRequests {
             return;
         }
         OPEN.put(key(target), request);
-        tell(target, request.here() ? "request.received_here" : "request.received", Component.literal(request.fromName()));
+        if (request.ally()) {
+            target.displayClientMessage(Component.translatable("message.bsp_teleport.ally.received", request.fromName(), request.allyTeam(),
+                    com.mrgregles.bsp_teleport.teleport.TeleportActions.chatKey("message.bsp_teleport.ally.accept_key", "/tpaccept"),
+                    com.mrgregles.bsp_teleport.teleport.TeleportActions.chatKey("message.bsp_teleport.ally.deny_key", "/tpdeny"),
+                    AllyTeleports.ASK_SECONDS), false);
+        } else {
+            tell(target, request.here() ? "request.received_here" : "request.received", Component.literal(request.fromName()));
+        }
         com.mrgregles.bsp_teleport.util.Sounds.request(target);
     }
 
@@ -117,6 +173,10 @@ public final class TeleportRequests {
     public static void accept(ServerPlayer target) {
         Request request = take(target);
         if (request == null) {
+            return;
+        }
+        if (request.ally()) {
+            acceptAlly(target, request);
             return;
         }
         if (request.local()) {
@@ -154,6 +214,7 @@ public final class TeleportRequests {
         if (request.local()) {
             ServerPlayer from = Messenger.find(target.server, request.fromName());
             if (from != null) {
+                AllyTeleports.answered(from.getUUID());
                 tell(from, "request.denied", target.getDisplayName());
             }
         } else {
@@ -162,13 +223,99 @@ public final class TeleportRequests {
         }
     }
 
+    /**
+     * A-1: the ally accepted. The alliance and the steal rule are checked again on this side first; the asker's server
+     * checks them once more before the warm-up and again when it ends ({@link AllyTeleports#start}).
+     */
+    private static void acceptAlly(ServerPlayer target, Request request) {
+        UUID from;
+        try {
+            from = UUID.fromString(request.fromId());
+        } catch (IllegalArgumentException e) {
+            return;
+        }
+        String refusal = AllyTeleports.refusal(target.server, from, target.getUUID());
+        if (refusal != null) {
+            tell(target, "ally.not_now", request.fromName());
+            refuseAsker(target, request, refusal);
+            return;
+        }
+        if (request.local()) {
+            ServerPlayer asker = Messenger.find(target.server, request.fromName());
+            if (asker == null) {
+                tell(target, "request.offline", request.fromName());
+                return;
+            }
+            tell(asker, "request.accepted", target.getDisplayName());
+            if (AllyTeleports.start(asker, target.getUUID(), target.getGameProfile().getName(), Position.of(target).toDestination(""))) {
+                tell(target, "team.incoming", asker.getDisplayName());
+            }
+            return;
+        }
+        boolean sent = Messenger.send(new Message(Message.Type.TP_RESPONSE, Message.To.PLAYER, request.fromName())
+                .put("accepted", "true").put("here", "false").put("ally", "true").put("recipientId", target.getUUID().toString())
+                .put("recipientName", target.getGameProfile().getName()).put("recipientPosition", Position.of(target).serialize()));
+        tell(target, sent ? "ally.accepted_you" : "request.offline", request.fromName());
+    }
+
+    /** Tells an ally's asker their ask cannot go ahead ({@code reason} is an {@code ally.*} key taking the ally's name). */
+    private static void refuseAsker(ServerPlayer target, Request request, String reason) {
+        if (request.local()) {
+            ServerPlayer asker = Messenger.find(target.server, request.fromName());
+            if (asker != null) {
+                AllyTeleports.answered(asker.getUUID());
+                tell(asker, reason, target.getDisplayName());
+            }
+            return;
+        }
+        Messenger.send(new Message(Message.Type.TP_RESPONSE, Message.To.PLAYER, request.fromName())
+                .put("accepted", "false").put("reason", reason).put("recipientName", target.getGameProfile().getName()));
+    }
+
+    /**
+     * An alliance changed on this server: open ally asks between players no longer allied are dropped, and both are
+     * told (the asker through their server when it is another).
+     */
+    public static void dropAllyRequests(MinecraftServer server) {
+        java.util.Iterator<Map.Entry<String, Request>> it = OPEN.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, Request> e = it.next();
+            Request r = e.getValue();
+            ServerPlayer target = Messenger.find(server, e.getKey());
+            if (!r.ally() || target == null) {
+                continue;
+            }
+            UUID from;
+            try {
+                from = UUID.fromString(r.fromId());
+            } catch (IllegalArgumentException ex) {
+                continue;
+            }
+            if (!com.mrgregles.bsp_teleport.compat.BspCore.allied(server, from, target.getUUID())) {
+                it.remove();
+                tell(target, "ally.ask_dropped", r.fromName());
+                refuseAsker(target, r, "ally.ended");
+            }
+        }
+    }
+
     public static void onRemoteResponse(ServerPlayer from, Message m) {
         String recipient = m.get("recipientName");
         if (!m.flag("accepted")) {
-            tell(from, "request.denied", Component.literal(recipient));
+            AllyTeleports.answered(from.getUUID());
+            String reason = m.get("reason");
+            tell(from, reason.startsWith("ally.") ? reason : "request.denied", Component.literal(recipient));
             return;
         }
         tell(from, "request.accepted", Component.literal(recipient));
+        if (m.flag("ally")) {
+            try {
+                AllyTeleports.start(from, UUID.fromString(m.get("recipientId")), recipient, Position.parse(m.get("recipientPosition")).toDestination(""));
+            } catch (IllegalArgumentException ignored) {
+                // malformed; drop
+            }
+            return;
+        }
         if (!m.flag("here")) {
             Position position = Position.parse(m.get("recipientPosition"));
             Teleports.start(from, position.toDestination(""), Component.literal(recipient), TeleportKind.REQUEST, null);

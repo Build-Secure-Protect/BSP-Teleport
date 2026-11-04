@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 /** The mod's own channel: the band screen's data down, its actions up. */
 public final class BandPackets {
     /** "2" since T69 and T73 changed packets 2, 11 and added 13; "3" added 14 (B21); "4" since T82 changed the band and core screen data. An older client is told to update instead of misreading them. */
-    private static final String PROTOCOL = "6"; // 6: B40 added the MOVE_HOME and REPLACE_HOME band actions
+    private static final String PROTOCOL = "8"; // 8: D174 added the Access Shop packets (15 to 17)
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(new ResourceLocation(BSPTeleport.MODID, "main"), () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
 
     private BandPackets() {
@@ -62,6 +62,30 @@ public final class BandPackets {
         CHANNEL.registerMessage(13, Warmup.class, (m, buf) -> buf.writeUtf(m.portal()).writeVarInt(m.totalTicks()).writeVarInt(m.ticksLeft()).writeBoolean(m.held()),
                 buf -> new Warmup(buf.readUtf(), buf.readVarInt(), buf.readVarInt(), buf.readBoolean()), Warmup::handle);
         CHANNEL.registerMessage(14, Departing.class, (m, buf) -> buf.writeVarInt(m.ticks()), buf -> new Departing(buf.readVarInt()), Departing::handle);
+        CHANNEL.registerMessage(15, Shop.class, (m, buf) -> m.view().encode(buf), buf -> new Shop(com.mrgregles.bsp_teleport.shop.ShopView.decode(buf)), Shop::handle);
+        CHANNEL.registerMessage(16, ShopBuy.class, (m, buf) -> {
+            buf.writeBlockPos(m.pos());
+            buf.writeVarInt(m.index());
+            buf.writeVarInt(m.token());
+            buf.writeVarInt(m.price());
+            buf.writeBoolean(m.full());
+            buf.writeBoolean(m.take());
+        }, buf -> new ShopBuy(buf.readBlockPos(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readBoolean(), buf.readBoolean()), ShopBuy::handle);
+        CHANNEL.registerMessage(17, ShopSave.class, (m, buf) -> {
+            buf.writeBlockPos(m.pos());
+            buf.writeUtf(m.name(), 64).writeUtf(m.message(), 256).writeUtf(m.copyFrom(), 512);
+            buf.writeVarInt(m.entries().size());
+            m.entries().forEach(e -> e.write(buf));
+        }, buf -> {
+            BlockPos pos = buf.readBlockPos();
+            String name = buf.readUtf(64), message = buf.readUtf(256), copyFrom = buf.readUtf(512);
+            int n = Math.min(buf.readVarInt(), com.mrgregles.bsp_teleport.block.AccessShopBlockEntity.ENTRIES_MAX);
+            java.util.List<com.mrgregles.bsp_teleport.shop.ShopEntry> entries = new java.util.ArrayList<>(n);
+            for (int i = 0; i < n; i++) {
+                entries.add(com.mrgregles.bsp_teleport.shop.ShopEntry.read(buf));
+            }
+            return new ShopSave(pos, name, message, copyFrom, entries);
+        }, ShopSave::handle);
         CHANNEL.registerMessage(3, AdminDo.class, (m, buf) -> buf.writeEnum(m.action()).writeUtf(m.arg()), buf -> new AdminDo(buf.readEnum(AdminAction.class), buf.readUtf()), AdminDo::handle);
     }
 
@@ -123,6 +147,60 @@ public final class BandPackets {
                 if (player != null && com.mrgregles.bsp_teleport.perm.Permissions.isAdmin(player) && player.serverLevel().isLoaded(pos)
                         && player.serverLevel().getBlockEntity(pos) instanceof com.mrgregles.bsp_teleport.block.AccessBoardBlockEntity board) {
                     board.configure(style, size, title);
+                }
+            });
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    // The Access Shop (D174 to D180)
+
+    public static void sendShop(ServerPlayer player, com.mrgregles.bsp_teleport.shop.ShopView view) {
+        if (canReceive(player)) {
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new Shop(view));
+        }
+    }
+
+    /** {@code token} and {@code price} are what the screen showed, so a shop changed meanwhile refuses the purchase. */
+    public static void sendShopBuy(BlockPos pos, int index, int token, int price, boolean full, boolean take) {
+        CHANNEL.sendToServer(new ShopBuy(pos, index, token, price, full, take));
+    }
+
+    /** An admin's settings, or with {@code copyFrom} set a Copy from that other shop instead. */
+    public static void sendShopSave(BlockPos pos, String name, String message, String copyFrom, java.util.List<com.mrgregles.bsp_teleport.shop.ShopEntry> entries) {
+        CHANNEL.sendToServer(new ShopSave(pos, name, message, copyFrom, entries));
+    }
+
+    public record Shop(com.mrgregles.bsp_teleport.shop.ShopView view) {
+        void handle(Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> com.mrgregles.bsp_teleport.client.AccessShopScreen.show(view)));
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    public record ShopBuy(BlockPos pos, int index, int token, int price, boolean full, boolean take) {
+        void handle(Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> {
+                ServerPlayer player = ctx.get().getSender();
+                if (player != null) {
+                    com.mrgregles.bsp_teleport.shop.AccessShops.buy(player, pos, index, token, price, full, take);
+                }
+            });
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    public record ShopSave(BlockPos pos, String name, String message, String copyFrom, java.util.List<com.mrgregles.bsp_teleport.shop.ShopEntry> entries) {
+        void handle(Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> {
+                ServerPlayer player = ctx.get().getSender();
+                if (player == null) {
+                    return;
+                }
+                if (copyFrom.isEmpty()) {
+                    com.mrgregles.bsp_teleport.shop.AccessShops.save(player, pos, name, message, entries);
+                } else {
+                    com.mrgregles.bsp_teleport.shop.AccessShops.copy(player, pos, copyFrom);
                 }
             });
             ctx.get().setPacketHandled(true);

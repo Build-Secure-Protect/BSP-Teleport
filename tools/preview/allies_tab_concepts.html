@@ -1,0 +1,187 @@
+<title>Ally Teleport Options</title>
+<style>
+/* Layout: one short intro, then three concept panels (A, B, C), each a working copy of the Teleport Band at its real proportions (248 x 196, shown 1.5x). Single dark look on purpose: it copies the game screen. */
+:root {
+  --bg: #0B0F14; --panel: #10151C; --inset: #0C0E12; --line: #2A2F3A;
+  --accent: #19D3B0; --violet: #B58CFF; --gold: #FFD23A; --bad: #FF6B5C; --ok: #8FE04A;
+  --text: #E6EAF2; --muted: #9AA3B5; --dim: #5A6272;
+  --wolves: #E0533D; --herons: #4FA3FF; --crows: #E8B931;
+  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif; --mono: Menlo, Monaco, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--sans); margin: 0; padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 28px; margin: 0 0 6px; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; }
+p, li { color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 72ch; }
+code { font-family: var(--mono); color: var(--text); font-size: 13px; }
+.sheets { display: flex; flex-wrap: wrap; gap: 28px 20px; align-items: flex-start; margin-top: 20px; }
+.sheet { flex: 1 1 372px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.sheet p { margin: 0; }
+.band { position: relative; width: 100%; max-width: 372px; aspect-ratio: 248 / 196; background: var(--panel); border: 2px solid var(--accent);
+  font-size: 12px; display: flex; flex-direction: column; overflow: hidden; }
+.top { display: flex; align-items: center; gap: 3px; padding: 7px 10px 0; }
+.brand { color: var(--accent); font-weight: bold; font-size: 12px; letter-spacing: 1px; margin-right: auto; white-space: nowrap; }
+.tab { font: inherit; font-size: 9px; font-weight: bold; letter-spacing: 0.5px; background: var(--inset); color: var(--muted);
+  border: 1px solid var(--dim); padding: 3px 0; width: 52px; text-align: center; text-transform: uppercase; cursor: pointer; }
+.tab.on { border-color: var(--accent); color: var(--accent); }
+.tab.adm { border-color: var(--violet); color: var(--violet); }
+.tab.n7 { width: 45px; }
+.help { color: var(--muted); font-size: 10px; padding: 4px 10px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list { flex: 1; min-height: 0; padding: 5px 10px 0; display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
+.row { border: 1px solid var(--line); background: var(--inset); padding: 3px 6px; display: flex; align-items: center; gap: 6px; min-height: 27px; }
+.row.head { border-width: 1px 1px 1px 3px; min-height: 22px; }
+.grow { flex: 1 1 0; min-width: 0; }
+.name { font-weight: bold; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tag { font-size: 9px; font-weight: bold; margin-left: 4px; }
+.sub { font-size: 9px; font-family: var(--mono); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.here { color: var(--ok); } .far { color: var(--violet); } .off { color: var(--muted); }
+.key { font: inherit; font-size: 9px; font-weight: bold; letter-spacing: 1px; background: var(--inset); padding: 2px 5px; border: 1px solid var(--line); color: var(--muted); text-transform: uppercase; white-space: nowrap; }
+button.key { cursor: pointer; }
+button.key:focus-visible, .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.key.tq { border-color: var(--accent); color: var(--accent); }
+.key.vio { border-color: var(--violet); color: var(--violet); }
+.key.bad { border-color: var(--bad); color: var(--bad); }
+.key.gold { border-color: var(--gold); color: var(--gold); }
+.switch { display: flex; gap: 3px; }
+.switch .key { flex: 1; text-align: center; padding: 3px 0; }
+.switch .key.on { border-color: var(--accent); color: var(--accent); background: rgba(25, 211, 176, 0.08); }
+.foot { border-top: 1px solid var(--line); margin: 4px 10px 0; padding: 4px 0 6px; font-size: 10px; color: var(--muted); display: flex; gap: 8px; align-items: center; min-height: 14px; }
+.foot .note { color: var(--gold); }
+.gear { font: inherit; font-size: 9px; font-weight: bold; background: var(--inset); color: var(--violet); border: 1px solid var(--violet); padding: 3px 5px; cursor: pointer; }
+.facts { margin: 0; padding-left: 18px; }
+.facts li { font-size: 13px; }
+.target { border: 1px solid var(--line); background: var(--inset); padding: 10px 12px; font-family: var(--mono); font-size: 12px; display: flex; flex-direction: column; gap: 4px; overflow-x: auto; }
+.target .y { color: var(--herons); } .target .c { color: var(--accent); } .target .r { color: var(--bad); }
+</style>
+
+<h1>Teleporting to allies</h1>
+<p>BSP-Core is adding alliances of up to three teams. Allies get the same teleports as teammates, except the ally is asked first and has 30 seconds to accept. The band's tab row is already full: with the ADMIN tab, six tabs take its whole width, so a seventh tab cannot simply be added. Each option solves that differently. Press ASK to see what the asker gets.</p>
+
+<div class="sheets">
+  <section class="sheet">
+    <h2>A: A switch inside TEAM</h2>
+    <div class="band" id="a"></div>
+    <ul class="facts">
+      <li>The tab row stays as it is. The TEAM tab gets a two-way switch at the top: MY TEAM and ALLIES.</li>
+      <li>The ALLIES side lists each ally with their team's name in its colour beside the player.</li>
+      <li>The switch only shows when the team is in an alliance.</li>
+    </ul>
+  </section>
+
+  <section class="sheet">
+    <h2>B: Its own ALLIES tab</h2>
+    <div class="band" id="b"></div>
+    <ul class="facts">
+      <li>ALLIES sits beside TEAM, as the request asks. To make room, ADMIN leaves the tab row and becomes a violet "Admin panel" row on the MORE tab (admins only). Every player gets six narrower tabs and no title, as admins have today.</li>
+      <li>Each allied team is a header row in its colour, with its players under it.</li>
+      <li>The tab shows for everyone, and says "Your team is in no alliance" when there is none.</li>
+    </ul>
+  </section>
+
+  <section class="sheet">
+    <h2>C: One list on TEAM</h2>
+    <div class="band" id="c"></div>
+    <ul class="facts">
+      <li>No new tab or switch. The TEAM tab lists your team first, then each allied team under a header in its colour.</li>
+      <li>Teammates have GO (no question); allies have ASK. Scroll for more.</li>
+      <li>Simplest, but a full alliance of three teams makes a long list.</li>
+    </ul>
+  </section>
+</div>
+
+<h2 style="margin-top:28px">What the ally sees (every option)</h2>
+<div class="target">
+  <span>Ally <span class="y">Wren</span> (Blue Herons) wants to come to you. <span class="c">[Accept]</span> <span class="r">[Deny]</span> 30 s</span>
+</div>
+<p>The ask uses the same request as <code>/tpa</code>: the band's request line shows it too, <code>/tpaccept</code> and <code>/tpdeny</code> answer it, and a player who ignores requests is not asked. After an accept it is a normal team teleport: cooldown, warm-up, access, zones, steals.</p>
+
+<script>
+(function () {
+  var TEAM = { name: "Red Wolves", colour: "var(--wolves)", mates: [
+    { name: "Ash", state: "here", where: "here  overworld  120 64 -40" },
+    { name: "Juniper", state: "far", where: "on BSP-Frostwarf  nether  -88 70 12" },
+    { name: "Pike", state: "off", where: "offline, seen 2 h ago" }
+  ] };
+  var ALLIES = [
+    { team: "Blue Herons", colour: "var(--herons)", players: [
+      { name: "Wren", state: "here", where: "here  overworld  402 71 -118" },
+      { name: "Moss", state: "far", where: "on BSP-Moongrove  overworld  1180 64 -2210", raid: true }
+    ] },
+    { team: "Gold Crows", colour: "var(--crows)", players: [
+      { name: "Kestrel", state: "far", where: "on BSP-Frostwarf  the end" },
+      { name: "Sable", state: "off", where: "offline, seen 1 d ago" }
+    ] }
+  ];
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) { e.className = cls; } if (text) { e.textContent = text; } return e; }
+  function key(text, cls, fn) { var b = el("button", "key " + (cls || ""), text); b.type = "button"; if (fn) { b.addEventListener("click", fn); } return b; }
+
+  function makeBand(id, style) {
+    var band = document.getElementById(id), side = "allies", tab = style === "c" ? "team" : "allies", note = "";
+    function personRow(p, ally, teamName, colour) {
+      var row = el("div", "row");
+      var g = el("div", "grow"), n = el("span", "name", p.name);
+      if (ally && style === "a") { var t = el("span", "tag", teamName); t.style.color = colour; n.appendChild(t); }
+      g.appendChild(n);
+      g.appendChild(el("span", "sub " + (p.raid ? "" : p.state), p.where + (p.raid ? "  steal within 150" : "")));
+      if (p.raid) { g.lastChild.style.color = "var(--bad)"; }
+      row.appendChild(g);
+      if (p.state === "off") { return row; }
+      if (p.raid) { row.appendChild(key("Raid", "bad")); return row; }
+      if (!ally) { row.appendChild(key("Go", p.state === "far" ? "vio" : "tq", function () { note = "Going to " + p.name + "."; draw(); })); return row; }
+      row.appendChild(key("Ask", "gold", function () { note = "Asked " + p.name + ". Waiting for an answer, 30 s."; draw(); }));
+      return row;
+    }
+    function header(name, colour, line) {
+      var h = el("div", "row head"); h.style.borderColor = colour;
+      var g = el("div", "grow"), n = el("span", "name", name); n.style.color = colour; g.appendChild(n);
+      g.appendChild(el("span", "sub off", line)); h.appendChild(g); return h;
+    }
+    function draw() {
+      band.innerHTML = "";
+      var top = el("div", "top");
+      top.appendChild(el("span", "brand", ""));
+      var tabs = style === "b" ? ["homes", "warps", "players", "team", "allies", "more"] : ["homes", "warps", "players", "team", "more", "admin"];
+      tabs.forEach(function (t) {
+        var b = el("button", "tab" + (t === tab ? " on" : "") + (t === "admin" ? " adm" : "") + " n" + tabs.length, t);
+        b.type = "button";
+        b.addEventListener("click", function () { if (t === "team" || t === "allies") { tab = t; note = ""; draw(); } });
+        top.appendChild(b);
+      });
+      band.appendChild(top);
+      var help = tab === "allies" || (style === "a" && tab === "team" && side === "allies") ? "Pick an ally. They are asked first and have 30 s." : "Pick a teammate. Stand still while it counts down.";
+      band.appendChild(el("div", "help", help));
+      var list = el("div", "list");
+      if (style === "a" && tab === "team") {
+        var sw = el("div", "switch");
+        sw.appendChild(key("My team", side === "team" ? "on" : "", function () { side = "team"; note = ""; draw(); }));
+        sw.appendChild(key("Allies  2 teams", side === "allies" ? "on" : "", function () { side = "allies"; note = ""; draw(); }));
+        list.appendChild(sw);
+        if (side === "team") { TEAM.mates.forEach(function (m) { list.appendChild(personRow(m, false)); }); }
+        else { ALLIES.forEach(function (t) { t.players.forEach(function (p) { list.appendChild(personRow(p, true, t.team, t.colour)); }); }); }
+      } else if (style === "b" && tab === "allies") {
+        ALLIES.forEach(function (t) {
+          list.appendChild(header(t.team, t.colour, t.players.length + " members  " + (t.team === "Gold Crows" ? "coordinates hidden" : "shares coordinates")));
+          t.players.forEach(function (p) { list.appendChild(personRow(p, true)); });
+        });
+      } else {
+        list.appendChild(header(TEAM.name, TEAM.colour, "your team  4 members  3 online"));
+        TEAM.mates.forEach(function (m) { list.appendChild(personRow(m, false)); });
+        if (style === "c") {
+          ALLIES.forEach(function (t) {
+            list.appendChild(header(t.team, t.colour, "ally  " + t.players.length + " members"));
+            t.players.forEach(function (p) { list.appendChild(personRow(p, true)); });
+          });
+        }
+      }
+      band.appendChild(list);
+      var foot = el("div", "foot");
+      if (note) { foot.appendChild(el("span", "note", note)); } else { foot.appendChild(el("span", "", "Homes 3/3   Cooldown ready")); }
+      band.appendChild(foot);
+    }
+    if (style === "a") { tab = "team"; }
+    draw();
+  }
+  makeBand("a", "a"); makeBand("b", "b"); makeBand("c", "c");
+})();
+</script>

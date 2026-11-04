@@ -142,7 +142,7 @@ public final class TeleportActions {
     }
 
     /** A gold chat key that runs {@code command} when clicked; the label is a lang key or a plain name. */
-    static Component chatKey(String label, String command) {
+    public static Component chatKey(String label, String command) {
         Component text = label.startsWith("message.") ? Component.translatable(label) : Component.literal(label);
         return Component.literal("[").append(text).append("]").withStyle(style -> style
                 .withColor(net.minecraft.ChatFormatting.GOLD)

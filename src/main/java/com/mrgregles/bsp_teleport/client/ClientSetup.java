@@ -41,6 +41,7 @@ public final class ClientSetup {
     public static void onRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(ModBlocks.PORTAL_CORE_ENTITY.get(), PortalCoreRenderer::new);
         event.registerBlockEntityRenderer(ModBlocks.ACCESS_BOARD_ENTITY.get(), AccessBoardRenderer::new);
+        event.registerBlockEntityRenderer(ModBlocks.ACCESS_SHOP_ENTITY.get(), AccessShopRenderer::new);
     }
 
     /** The portal field's grey texture takes its colour from the block state (D58). */

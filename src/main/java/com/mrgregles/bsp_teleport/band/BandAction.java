@@ -14,5 +14,7 @@ public enum BandAction {
     /** name: move that home here, after the band asked (B40) */
     MOVE_HOME,
     /** "old new": a new home here takes the old one's place, after the band asked (B40) */
-    REPLACE_HOME
+    REPLACE_HOME,
+    /** uuid: ask that ally to let the player come (A-1, D168) */
+    ALLY_ASK
 }

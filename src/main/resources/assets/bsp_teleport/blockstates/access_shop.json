@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=north,half=lower,wing=false": {
+      "model": "bsp_teleport:block/access_shop"
+    },
+    "facing=east,half=lower,wing=false": {
+      "model": "bsp_teleport:block/access_shop",
+      "y": 90
+    },
+    "facing=south,half=lower,wing=false": {
+      "model": "bsp_teleport:block/access_shop",
+      "y": 180
+    },
+    "facing=west,half=lower,wing=false": {
+      "model": "bsp_teleport:block/access_shop",
+      "y": 270
+    },
+    "facing=north,half=lower,wing=true": {
+      "model": "bsp_teleport:block/access_shop_part"
+    },
+    "facing=east,half=lower,wing=true": {
+      "model": "bsp_teleport:block/access_shop_part",
+      "y": 90
+    },
+    "facing=south,half=lower,wing=true": {
+      "model": "bsp_teleport:block/access_shop_part",
+      "y": 180
+    },
+    "facing=west,half=lower,wing=true": {
+      "model": "bsp_teleport:block/access_shop_part",
+      "y": 270
+    },
+    "facing=north,half=upper,wing=false": {
+      "model": "bsp_teleport:block/access_shop_part"
+    },
+    "facing=east,half=upper,wing=false": {
+      "model": "bsp_teleport:block/access_shop_part",
+      "y": 90
+    },
+    "facing=south,half=upper,wing=false": {
+      "model": "bsp_teleport:block/access_shop_part",
+      "y": 180
+    },
+    "facing=west,half=upper,wing=false": {
+      "model": "bsp_teleport:block/access_shop_part",
+      "y": 270
+    },
+    "facing=north,half=upper,wing=true": {
+      "model": "bsp_teleport:block/access_shop_part"
+    },
+    "facing=east,half=upper,wing=true": {
+      "model": "bsp_teleport:block/access_shop_part",
+      "y": 90
+    },
+    "facing=south,half=upper,wing=true": {
+      "model": "bsp_teleport:block/access_shop_part",
+      "y": 180
+    },
+    "facing=west,half=upper,wing=true": {
+      "model": "bsp_teleport:block/access_shop_part",
+      "y": 270
+    }
+  }
+}

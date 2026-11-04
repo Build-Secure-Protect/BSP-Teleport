@@ -5,7 +5,7 @@
 **Homes, warps, portals, team teleports and server access across the Build Secure Protect network.** Every player gets a Teleport Band on their hotbar that takes them home, to a warp, to a friend, to a teammate or to a random spot on any server in the network. Admins build walk-through portals with hangar doors, and sell access to servers, regions, portals and warps with Access Tokens. Built around [BSP-Core](https://www.curseforge.com/minecraft/mc-mods/bsp-core)'s Shatter Totem: your totem travels with you, and nothing here can take you into a raid for free.
 
 - Minecraft 1.20.1, Forge 47 or newer, Java 17. Needed on the client and the server, and both must run the same version.
-- Requires BSP-Core 1.3.0 or newer; 1.4.5 is recommended (its steal checks no longer load chunks, and it hands this mod its MySQL driver). The Home Servers board needs 1.4.0. BSP-Region Guard, BSP-RankUp, BSP-InventorySync and LuckPerms are optional and switch more on. Made to sit behind BSP-Velocity Additions on the proxy.
+- Requires BSP-Core 1.10.0 or newer. BSP-Region Guard, BSP-RankUp, BSP-InventorySync and LuckPerms are optional and switch more on. Made to sit behind BSP-Velocity Additions on the proxy.
 - Made for a Velocity network of Mohist backends with Proxy Compatible Forge, one MySQL database and one Redis. Plain Forge backends work too, using the MySQL driver in BSP-Core's full jar. Runs on a single server with no database too, and in a single-player or LAN world the network features switch off by themselves, whatever the config says.
 - MIT licence, source on [GitHub](https://github.com/Build-Secure-Protect/BSP-Teleport).
 

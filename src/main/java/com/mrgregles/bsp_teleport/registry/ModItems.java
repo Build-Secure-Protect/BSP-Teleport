@@ -23,6 +23,8 @@ public final class ModItems {
     public static final RegistryObject<Item> PORTAL_CORE = ITEMS.register("portal_core", () -> new PortalBlockItem(ModBlocks.PORTAL_CORE.get()));
     public static final RegistryObject<Item> PORTAL_FRAME = ITEMS.register("portal_frame", () -> new PortalBlockItem(ModBlocks.PORTAL_FRAME.get()));
     public static final RegistryObject<Item> ACCESS_BOARD = ITEMS.register("access_board", () -> new PortalBlockItem(ModBlocks.ACCESS_BOARD.get()));
+    /** The Access Shop (D178): only admins place it. */
+    public static final RegistryObject<Item> ACCESS_SHOP = ITEMS.register("access_shop", () -> new PortalBlockItem(ModBlocks.ACCESS_SHOP.get()));
 
     /** Access Token I to XX (D73): index 0 is token 1. */
     @SuppressWarnings("unchecked")
@@ -43,6 +45,7 @@ public final class ModItems {
                 out.accept(PORTAL_CORE.get());
                 out.accept(PORTAL_FRAME.get());
                 out.accept(ACCESS_BOARD.get());
+                out.accept(ACCESS_SHOP.get());
                 for (RegistryObject<Item> token : ACCESS_TOKENS) {
                     out.accept(token.get());
                 }

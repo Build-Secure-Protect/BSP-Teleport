@@ -36,8 +36,19 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
     public record RequestEntry(String from, String server, boolean here, int secondsLeft) {
     }
 
-    /** The player's team for the TEAM tab (D92): colour is the team's chat colour as RGB; mates in joining order. */
-    public record TeamEntry(String name, int colour, String leader, List<MateEntry> mates) {
+    /**
+     * The player's team for the TEAM tab (D92): colour is the team's chat colour as RGB; mates in joining order.
+     * {@code alliance} is the alliance's name, "" when the team is in none (D167), and {@code allies} its other teams' players.
+     */
+    public record TeamEntry(String name, int colour, String leader, List<MateEntry> mates, String alliance, List<AllyEntry> allies) {
+    }
+
+    /**
+     * One ally (D167): their team's name and colour (RGB), state here / far / off as for a mate, {@code dimension} ""
+     * until known, {@code coords} "x y z" only when their team shares them, else "".
+     */
+    public record AllyEntry(String uuid, String name, String teamName, int colour, String state, String server, String dimension, String coords,
+                            String seen, boolean reachable, boolean nearRaid) {
     }
 
     /**
@@ -117,6 +128,15 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
                 buf.writeBoolean(m.reachable());
                 buf.writeBoolean(m.nearRaid());
             }
+            buf.writeUtf(team.alliance());
+            buf.writeVarInt(team.allies().size());
+            for (AllyEntry a : team.allies()) {
+                buf.writeUtf(a.uuid()).writeUtf(a.name()).writeUtf(a.teamName()).writeUtf(a.state()).writeUtf(a.server())
+                        .writeUtf(a.dimension()).writeUtf(a.coords()).writeUtf(a.seen());
+                buf.writeInt(a.colour());
+                buf.writeBoolean(a.reachable());
+                buf.writeBoolean(a.nearRaid());
+            }
         }
     }
 
@@ -170,7 +190,15 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
                 String mu = buf.readUtf(), mn = buf.readUtf(), ms = buf.readUtf(), msv = buf.readUtf(), mseen = buf.readUtf();
                 mates.add(new MateEntry(mu, mn, buf.readBoolean(), ms, msv, mseen, buf.readBoolean(), buf.readBoolean()));
             }
-            team = new TeamEntry(tn, colour, tl, mates);
+            String alliance = buf.readUtf();
+            n = buf.readVarInt();
+            List<AllyEntry> allies = new ArrayList<>(n);
+            for (int i = 0; i < n; i++) {
+                String au = buf.readUtf(), an = buf.readUtf(), at = buf.readUtf(), as = buf.readUtf(), asv = buf.readUtf(), ad = buf.readUtf(), ac = buf.readUtf(), aseen = buf.readUtf();
+                int acolour = buf.readInt();
+                allies.add(new AllyEntry(au, an, at, acolour, as, asv, ad, ac, aseen, buf.readBoolean(), buf.readBoolean()));
+            }
+            team = new TeamEntry(tn, colour, tl, mates, alliance, allies);
         }
         return new BandData(server, slots, used, extra, swift, cooldown, raidDistance, raid, ignoring, hasSpawn, hasBack, skipCoins, coins, homes, warps, players, rtp, request, admin, accessOn, access, refreshOnly, team);
     }

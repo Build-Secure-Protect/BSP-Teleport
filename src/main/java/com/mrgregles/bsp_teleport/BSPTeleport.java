@@ -94,6 +94,8 @@ public class BSPTeleport {
         MinecraftForge.EVENT_BUS.addListener(TeleportRequests::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(com.mrgregles.bsp_teleport.team.TeamTeleports::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(com.mrgregles.bsp_teleport.team.TeamTeleports::onLoggedOut);
+        MinecraftForge.EVENT_BUS.addListener(com.mrgregles.bsp_teleport.team.AllyTeleports::onLoggedOut);
+        MinecraftForge.EVENT_BUS.addListener(com.mrgregles.bsp_teleport.shop.AccessShops::onLoggedOut);
         MinecraftForge.EVENT_BUS.addListener(Portals::onServerStopping);
         MinecraftForge.EVENT_BUS.addListener(Portals::onServerTick);
         // Access runs after storage (HIGH) and the landing (normal) have had their say on login.

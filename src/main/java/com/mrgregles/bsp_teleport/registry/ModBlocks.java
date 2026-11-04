@@ -29,6 +29,11 @@ public final class ModBlocks {
     public static final RegistryObject<BlockEntityType<AccessBoardBlockEntity>> ACCESS_BOARD_ENTITY = BLOCK_ENTITIES.register("access_board",
             () -> BlockEntityType.Builder.of(AccessBoardBlockEntity::new, ACCESS_BOARD.get()).build(null));
 
+    /** The Access Shop (D174 to D180). */
+    public static final RegistryObject<Block> ACCESS_SHOP = BLOCKS.register("access_shop", com.mrgregles.bsp_teleport.block.AccessShopBlock::new);
+    public static final RegistryObject<BlockEntityType<com.mrgregles.bsp_teleport.block.AccessShopBlockEntity>> ACCESS_SHOP_ENTITY = BLOCK_ENTITIES.register("access_shop",
+            () -> BlockEntityType.Builder.of(com.mrgregles.bsp_teleport.block.AccessShopBlockEntity::new, ACCESS_SHOP.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<PortalCoreBlockEntity>> PORTAL_CORE_ENTITY = BLOCK_ENTITIES.register("portal_core",
             () -> BlockEntityType.Builder.of(PortalCoreBlockEntity::new, PORTAL_CORE.get()).build(null));
 

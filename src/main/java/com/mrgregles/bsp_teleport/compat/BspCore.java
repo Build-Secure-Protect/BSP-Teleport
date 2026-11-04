@@ -92,8 +92,14 @@ public final class BspCore {
         MinecraftForge.EVENT_BUS.addListener(BspCore::onTeamLeft);
         MinecraftForge.EVENT_BUS.addListener(BspCore::onTeamLeaderChanged);
         MinecraftForge.EVENT_BUS.addListener(BspCore::onTeamDisbanded);
+        MinecraftForge.EVENT_BUS.addListener(BspCore::onAllyTeleport);
+        MinecraftForge.EVENT_BUS.addListener(BspCore::onAllied);
+        MinecraftForge.EVENT_BUS.addListener(BspCore::onAllianceLeft);
+        MinecraftForge.EVENT_BUS.addListener(BspCore::onAllianceBroken);
         // T-3: from now on BSP-Core's Team screen draws a TELEPORT key on every online teammate's row.
         BspTeams.teleportsHandledBy(BSPTeleport.MODID);
+        // A-3: and on every online ally's row of its ALLIES page.
+        BspTeams.allyTeleportsHandledBy(BSPTeleport.MODID);
     }
 
     // Boards on the Score Screen (R8, D85)
@@ -435,6 +441,75 @@ public final class BspCore {
         }
         BspTeams.team(event.getServer(), event.getTeamId()).ifPresent(t -> who.addAll(t.members()));
         com.mrgregles.bsp_teleport.band.BandService.refreshTeam(event.getServer(), who);
+    }
+
+    // Alliances (BSP-Core's A-1 to A-3, D167 to D171)
+
+    /** Whether two players are allies: in two different teams of the same alliance (teammates are not). */
+    public static boolean allied(net.minecraft.server.MinecraftServer server, UUID a, UUID b) {
+        return BspTeams.allied(server, a, b);
+    }
+
+    /** The name of the player's alliance, or "" when their team is in none. */
+    public static String allianceName(net.minecraft.server.MinecraftServer server, UUID player) {
+        return BspTeams.allianceOf(server, player).map(BspTeams.Alliance::name).orElse("");
+    }
+
+    /** Whether the player is the thief of a steal running anywhere on the network. */
+    public static boolean isStealing(net.minecraft.server.MinecraftServer server, UUID player) {
+        for (BspTotems.StealAnywhere steal : BspTotems.stealsAnywhere(server)) {
+            if (player.equals(steal.thief())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** The player's allies with where they are; servers as proxy names, "" when offline. */
+    public static List<com.mrgregles.bsp_teleport.team.AllyTeleports.Ally> allies(net.minecraft.server.MinecraftServer server, UUID player) {
+        List<com.mrgregles.bsp_teleport.team.AllyTeleports.Ally> out = new ArrayList<>();
+        for (BspTeams.Ally a : BspTeams.allies(server, player)) {
+            boolean here = server.getPlayerList().getPlayer(a.uuid()) != null;
+            String where = here ? TeleportConfig.serverName() : a.server().isEmpty() ? "" : proxyNameFor(a.server());
+            Integer rgb = a.colour() == null ? null : a.colour().getColor();
+            out.add(new com.mrgregles.bsp_teleport.team.AllyTeleports.Ally(a.uuid(), a.name(), a.teamName(), rgb == null ? DEFAULT_TEAM_COLOUR : rgb,
+                    here, where, a.dimension(), a.pos().orElse(null), a.seenMs()));
+        }
+        return out;
+    }
+
+    /** BSP-Core's ALLIES page: a player pressed TELEPORT on an ally's row. The ally is asked first; always handled. */
+    private static void onAllyTeleport(TeamEvent.AllyTeleportRequest event) {
+        ServerPlayer player = event.getPlayer();
+        event.setHandled();
+        if (player != null && event.getTarget() != null) {
+            com.mrgregles.bsp_teleport.team.AllyTeleports.ask(player, event.getTarget());
+        }
+    }
+
+    private static void onAllied(TeamEvent.Allied event) {
+        allianceChanged(event.getServer());
+    }
+
+    private static void onAllianceLeft(TeamEvent.AllianceLeft event) {
+        allianceChanged(event.getServer());
+    }
+
+    /** Also fired, with no AllianceLeft first, when a team steals from one it left within {@code alliance.leftStealHours}. */
+    private static void onAllianceBroken(TeamEvent.AllianceBroken event) {
+        allianceChanged(event.getServer());
+    }
+
+    /**
+     * An alliance changed on this server: asks and warm-ups between players no longer allied end, and every open band
+     * here refreshes (refresh-only, so closed screens ignore it). Changes made on other servers fire nothing here; the
+     * ask and the move check {@link #allied} again on accept and when the warm-up ends.
+     */
+    private static void allianceChanged(net.minecraft.server.MinecraftServer server) {
+        com.mrgregles.bsp_teleport.team.AllyTeleports.recheck(server);
+        List<UUID> online = new ArrayList<>();
+        server.getPlayerList().getPlayers().forEach(p -> online.add(p.getUUID()));
+        com.mrgregles.bsp_teleport.band.BandService.refreshTeam(server, online);
     }
 
     /**

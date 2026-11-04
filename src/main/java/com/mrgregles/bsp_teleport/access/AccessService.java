@@ -323,6 +323,7 @@ public final class AccessService {
             return fail(player, refusal, mainServer(player));
         }
         tell(player, "access.main_set", server);
+        com.mrgregles.bsp_teleport.shop.AccessShops.afterChoice(player);
         return true;
     }
 
