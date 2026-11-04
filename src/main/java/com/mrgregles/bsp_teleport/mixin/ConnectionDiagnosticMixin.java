@@ -37,7 +37,9 @@ public abstract class ConnectionDiagnosticMixin {
     private void bsp_teleport$checkSend(Packet<?> packet, @Nullable PacketSendListener listener, CallbackInfo ci) {
         try {
             Channel ch = channel;
-            if (ch == null) {
+            // B44: only the client's own connection to a server. In single player and LAN the built-in server's
+            // connections live in the client too; their packets (Forge's login registry, bundles) are not this bug.
+            if (ch == null || receiving != PacketFlow.CLIENTBOUND) {
                 return;
             }
             ConnectionProtocol protocol = ch.attr(Connection.ATTRIBUTE_PROTOCOL).get();
