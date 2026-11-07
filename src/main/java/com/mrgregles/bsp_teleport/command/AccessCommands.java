@@ -82,7 +82,8 @@ public final class AccessCommands {
                 }))
                 .then(Commands.literal("hours").then(Commands.argument("hours", IntegerArgumentType.integer(1, 8760)).executes(ctx -> editToken(ctx, t -> t.withHours(IntegerArgumentType.getInteger(ctx, "hours")), "access.token_hours"))))
                 .then(Commands.literal("hint").executes(ctx -> editToken(ctx, t -> t.withHint(""), "access.token_hint"))
-                        .then(Commands.argument("text", StringArgumentType.greedyString()).executes(ctx -> editToken(ctx, t -> t.withHint(StringArgumentType.getString(ctx, "text")), "access.token_hint")))));
+                        .then(Commands.argument("text", StringArgumentType.greedyString()).executes(ctx -> editToken(ctx, t -> t.withHint(StringArgumentType.getString(ctx, "text")), "access.token_hint"))))
+                .then(Commands.literal("price").then(priceTier("rent", false)).then(priceTier("full", true))));
         for (AccessGrant.Kind kind : AccessGrant.Kind.values()) {
             String word = kind.name().toLowerCase(java.util.Locale.ROOT);
             var targetArg = Commands.argument("target", StringArgumentType.string());
@@ -109,6 +110,28 @@ public final class AccessCommands {
                     .then(Commands.argument("hours", IntegerArgumentType.integer(1, 8760)).executes(ctx -> assign(ctx, kind, IntegerArgumentType.getInteger(ctx, "hours"))))));
         }
         return root.then(grant).then(revoke).then(token);
+    }
+
+    /** D189: {@code price rent|full off} or {@code price rent|full <amount> pieces|coins}. */
+    private static LiteralArgumentBuilder<CommandSourceStack> priceTier(String word, boolean full) {
+        return Commands.literal(word)
+                .then(Commands.literal("off").executes(ctx -> setPrice(ctx, full, false, 0, true)))
+                .then(Commands.argument("amount", IntegerArgumentType.integer(0, com.mrgregles.bsp_teleport.access.TokenPrice.MAX_PRICE))
+                        .then(Commands.literal("pieces").executes(ctx -> setPrice(ctx, full, true, IntegerArgumentType.getInteger(ctx, "amount"), true)))
+                        .then(Commands.literal("coins").executes(ctx -> setPrice(ctx, full, true, IntegerArgumentType.getInteger(ctx, "amount"), false))));
+    }
+
+    private static int setPrice(CommandContext<CommandSourceStack> ctx, boolean full, boolean on, int amount, boolean pieces) {
+        int n = IntegerArgumentType.getInteger(ctx, "n");
+        TokenAssignment existing = AccessService.tokens(ctx.getSource().getServer()).get(n);
+        if (existing == null) {
+            tell(ctx, "access.token_unknown", TokenAssignment.roman(n));
+            return 0;
+        }
+        com.mrgregles.bsp_teleport.access.TokenPrice price = existing.price().with(full, on, on ? amount : existing.price().price(full), on ? pieces : existing.price().pieces(full));
+        AccessService.setToken(ctx.getSource().getServer(), existing.withPrice(price));
+        tell(ctx, "access.token_price", TokenAssignment.roman(n), AccessService.describePrice(price, full, existing.rentHours()));
+        return 1;
     }
 
     /** Gives the admin a stack to put in a shop (D74). */
@@ -150,7 +173,8 @@ public final class AccessCommands {
             target = TeleportConfig.serverName() + ":" + target;
         }
         TokenAssignment existing = AccessService.tokens(ctx.getSource().getServer()).get(n);
-        TokenAssignment token = new TokenAssignment(n, kind, target, hours, existing == null ? "" : existing.hint());
+        TokenAssignment token = new TokenAssignment(n, kind, target, hours, existing == null ? "" : existing.hint(),
+                existing == null ? com.mrgregles.bsp_teleport.access.TokenPrice.NONE : existing.price());
         AccessService.setToken(ctx.getSource().getServer(), token);
         tell(ctx, "access.token_set", TokenAssignment.roman(n), token.describe(), hours);
         return 1;

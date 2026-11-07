@@ -76,4 +76,25 @@ public final class ClientNet {
             BSPTeleport.LOGGER.debug("Dropped admin action {} while the connection was changing", action);
         }
     }
+
+    /** D185: BUY in the access pop-up, which can open around a server switch (the arrival bounce). */
+    public static void sendOfferBuy(int token, int price, boolean full, boolean take) {
+        if (ready()) {
+            BandPackets.sendOfferBuy(token, price, full, take);
+        } else {
+            BSPTeleport.LOGGER.debug("Dropped a pop-up purchase while the connection was changing");
+        }
+    }
+
+    public static void sendShopBuy(BlockPos pos, int index, int token, int price, boolean full, boolean take) {
+        if (ready()) {
+            BandPackets.sendShopBuy(pos, index, token, price, full, take);
+        }
+    }
+
+    public static void sendShopSave(BlockPos pos, String name, String message, String copyFrom, java.util.List<com.mrgregles.bsp_teleport.shop.ShopEntry> entries) {
+        if (ready()) {
+            BandPackets.sendShopSave(pos, name, message, copyFrom, entries);
+        }
+    }
 }

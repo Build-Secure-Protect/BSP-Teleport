@@ -612,30 +612,51 @@ def access_hud():
 
 
 def access_popups():
-    s = Svg(1200, 560)
+    s = Svg(1200, 620)
     s.text(40, 48, "When a door is shut to you", 28, TEXT, "bold")
-    s.text(40, 78, "A refused teleport, portal or warp shows what you need and where to buy it. A player with no main server yet is offered the free choice instead.", 16, MUTED)
-    # denied banner
-    x, y, w, h = 40, 110, 1120, 190
-    s.rect(x - 2, y - 2, w + 4, h + 4, BAD, r=0)
+    s.text(40, 78, "A refused trip opens a small Access Shop for the token you need. Use now buys it and the trip goes ahead.", 16, MUTED)
+    # D185: the one-card shop
+    x, y, w, h = 40, 110, 540, 250
+    s.rect(x - 2, y - 2, w + 4, h + 4, GOLD, r=0)
     s.rect(x, y, w, h, PANEL, r=0)
-    s.text(x + 16, y + 30, "ACCESS NEEDED: BSP-WILDS", 20, BAD, "bold", spacing=2)
-    s.text(x + 16, y + 50, "Buy one of these and right-click it. Sold at the Spawn Market, next to the bank.", 13, MUTED)
-    for k, (sub, hours) in enumerate((("BSP-Wilds, rented 48 hours", True), ("BSP-Wilds, full access", False))):
-        ix = x + 16 + k * 548
-        s.rect(ix, y + 66, 532, 60, INSET, LINE, r=0)
-        s.pixels(KEYCARD, token_pal(8), ix + 12, y + 80, 2)
-        s.text(ix + 56, y + 90, "Access Token IX", 15, TEXT, "bold")
-        s.text(ix + 56, y + 112, sub, 13, GOLD)
-    bx = s.button(x + w - 16, y + 150, "close", LINE, True) - 8
-    s.button(bx, y + 150, "choose main server", GOLD)
+    s.text(x + 16, y + 30, "ACCESS SHOP", 20, ACCENT, "bold", spacing=2)
+    s.text(x + w - 16, y + 29, "61,200 pieces   83 coins", 13, GOLD, anchor="end")
+    s.text(x + 16, y + 54, "You need access to go to BSP-Wilds.", 14, TEXT)
+    cx, cy, cw, ch = x + 16, y + 68, w - 32, 120
+    s.rect(cx, cy, cw, ch, INSET, LINE, r=0)
+    s.pixels(KEYCARD, token_pal(8), cx + 10, cy + 10, 2)
+    s.text(cx + 52, cy + 26, "BSP-Wilds", 15, TEXT, "bold")
+    s.text(cx + 52, cy + 44, "Token IX  server", 11, MUTED)
+    half = (cw - 30) / 2
+    for i, label in enumerate(("rent", "full")):
+        on = i == 0
+        s.rect(cx + 12 + i * (half + 6), cy + 58, half, 22, INSET, ACCENT if on else LINE, r=0)
+        s.text(cx + 12 + i * (half + 6) + half / 2, cy + 73, label.upper(), 11, ACCENT if on else MUTED, "bold", "middle", spacing=1)
+    s.text(cx + 12, cy + 104, "25,000p   7d", 14, GOLD, family=MONO)
+    s.button(cx + cw - 10, cy + ch - 30, "buy", GOLD)
+    s.text(x + 16, y + 208, "Also sold at: the Spawn Market, next to the bank.", 13, MUTED)
+    s.button(x + w - 16, y + h - 34, "close", LINE, True)
+    # D193: a token without a price keeps the banner
+    x1, w1 = 620, 540
+    s.rect(x1 - 2, y - 2, w1 + 4, h + 4, BAD, r=0)
+    s.rect(x1, y, w1, h, PANEL, r=0)
+    s.text(x1 + 16, y + 30, "ACCESS NEEDED: BSP-ISLES", 20, BAD, "bold", spacing=2)
+    s.text(x1 + 16, y + 50, "No price set yet. Sold at the Spawn Market, next to the bank.", 13, MUTED)
+    for k, sub in enumerate(("BSP-Isles, rented 7d", "BSP-Isles, full access")):
+        iy = y + 66 + k * 68
+        s.rect(x1 + 16, iy, w1 - 32, 60, INSET, LINE, r=0)
+        s.pixels(KEYCARD, token_pal(11), x1 + 28, iy + 14, 2)
+        s.text(x1 + 72, iy + 24, "Access Token XII", 15, TEXT, "bold")
+        s.text(x1 + 72, iy + 46, sub, 13, GOLD)
+    s.button(x1 + w1 - 16, y + h - 34, "close", LINE, True)
+    s.caption(x1, y + h + 24, "A token without a price shows where to buy it instead.")
     # choose banner
-    y2 = 330
-    h2 = 200
+    x, w = 40, 1120
+    y2, h2 = 400, 200
     s.rect(x - 2, y2 - 2, w + 4, h2 + 4, GOLD, r=0)
     s.rect(x, y2, w, h2, PANEL, r=0)
     s.text(x + 16, y2 + 30, "CHOOSE YOUR MAIN SERVER", 20, GOLD, "bold", spacing=2)
-    s.text(x + 16, y2 + 50, "One choice, free, for ever. Your base goes there and you always have access.", 13, MUTED)
+    s.text(x + 16, y2 + 50, "A player with no main server is asked first. One choice, free, for ever. Your base goes there and you always have access.", 13, MUTED)
     ry = y2 + 62
     for name, tok, counts, sel in (("BSP-Forest", 6, "12 call this home, 4 full, 7 renting", True), ("BSP-Wilds", 8, "9 call this home, 6 full, 11 renting", False)):
         s.rect(x + 16, ry, w - 32, 30, INSET, GOLD if sel else LINE, r=0)
@@ -683,36 +704,44 @@ def access_board_img():
 def admin_tokens():
     s = Svg(1200, 640)
     x, y, w, h = 40, 40, 1120, 560
-    s.hud(x, y, w, h, "Admin", VIOLET, "Pick a token on the left, then click what it should stand for on the right. Rent and Full give you the stack to put in a shop.", ("Network", "Settings", "Warps", "Portals", "Tokens"), 4)
+    s.hud(x, y, w, h, "Admin", VIOLET, "Pick a token, then what it stands for. Its prices apply everywhere.", ("Network", "Settings", "Warps", "Portals", "Tokens"), 4)
     lx, ly = x + 16, y + 74
     s.text(lx, ly, "TOKENS", 12, MUTED, "bold", spacing=2)
     assigned = {6, 8, 13, 2}
     for i in range(20):
-        cx, cy = lx + (i % 5) * 46, ly + 10 + (i // 5) * 46
+        cx, cy = lx + (i % 7) * 46, ly + 10 + (i // 7) * 46
         picked = i == 13
         s.rect(cx, cy, 42, 42, ACCENT if picked else VIOLET if i in assigned else LINE, r=0)
         s.rect(cx + 2, cy + 2, 38, 38, "#0F2A28" if picked else INSET, r=0)
         s.pixels(KEYCARD, token_pal(i), cx + 5, cy + 5, 2)
         if i not in assigned and not picked:
             s.rect(cx + 2, cy + 2, 38, 38, "rgba(0,0,0,0.55)", r=0)
-    iy = ly + 10 + 4 * 46 + 6
-    s.rect(lx, iy, 230, 104, INSET, LINE, r=0)
+    iy = ly + 10 + 3 * 46 + 6
+    iw = 7 * 46 - 4
+    s.rect(lx, iy, iw, 150, INSET, LINE, r=0)
     s.text(lx + 10, iy + 20, "TOKEN XIV", 12, ACCENT, "bold", spacing=1.5)
     s.text(lx + 10, iy + 38, "server BSP-Caves", 13, VIOLET)
-    bx = s.button(lx + 220, iy + 46, "+", GOLD) - 6
-    s.text(bx, iy + 61, "168 h", 13, GOLD, anchor="end")
-    s.button(bx - 44, iy + 46, "-", GOLD)
-    bx = s.button(lx + 220, iy + 74, "clear", BAD) - 6
-    bx = s.button(bx, iy + 74, "full", GOLD) - 6
-    s.button(bx, iy + 74, "rent", GOLD)
-    s.rect(lx, iy + 112, 180, 24, INSET, LINE, r=0)
-    s.text(lx + 8, iy + 129, "hint", 12, LINE)
-    s.button(lx + 230, iy + 113, "set", ACCENT)
-    rx = x + 300
+    # D185: the prices under the picked token
+    s.button(lx + 10 + 7 * 7.6 + 18, iy + 50, "rent on", ACCENT)
+    s.button(lx + 128, iy + 50, "-", GOLD)
+    s.text(lx + 156, iy + 65, "7d", 13, GOLD, "bold", "middle")
+    s.button(lx + 210, iy + 50, "+", GOLD)
+    s.button(lx + iw - 10, iy + 50, "25,000p", GOLD)
+    s.button(lx + 10 + 7 * 7.6 + 18, iy + 80, "full on", ACCENT)
+    s.button(lx + iw - 10, iy + 80, "4,000c", GOLD)
+    bx = s.button(lx + iw - 10, iy + 116, "clear", BAD) - 6
+    bx = s.button(bx, iy + 116, "full", GOLD) - 6
+    s.button(bx, iy + 116, "rent", GOLD)
+    s.rect(lx, iy + 160, iw - 60, 24, INSET, LINE, r=0)
+    s.text(lx + 8, iy + 177, "hint", 12, LINE)
+    s.button(lx + iw, iy + 161, "set", ACCENT)
+    s.caption(lx, iy + 210, "Click a price or the length to type it; - and + step a day.")
+    rx = x + 370
+    rw = w - 386
     s.text(rx, ly, "TARGETS", 12, MUTED, "bold", spacing=2)
     ry = ly + 10
     for name, kind, tok, hint in (("BSP-Forest", "server", 6, ""), ("BSP-Wilds", "server", 8, ""), ("BSP-Caves", "server", 13, ""), ("BSP-Isles", "server", None, "place here"), ("Market Gate", "portal", 2, ""), ("arena", "warp", None, "place here"), ("BSP-SafeRoom:arena", "region", None, "place here")):
-        s.rect(rx, ry, w - 316, 40, INSET, VIOLET if tok is not None else LINE, r=0)
+        s.rect(rx, ry, rw, 40, INSET, VIOLET if tok is not None else LINE, r=0)
         if tok is not None:
             s.pixels(KEYCARD, token_pal(tok), rx + 8, ry + 6, 1.75)
         s.text(rx + 48, ry + 18, name, 14, TEXT, "bold")
@@ -958,10 +987,10 @@ def access_shop():
         tx = x + 16 + i * 112
         s.rect(tx, ty, 104, 24, INSET, ACCENT if i == 0 else LINE, r=0)
         s.text(tx + 52, ty + 16, t.upper(), 12, ACCENT if i == 0 else MUTED, "bold", "middle", spacing=1)
-    cards = (("BSP-Frostwarf", 1, "rent", "25,000p   72 h", GOLD, "", True),
+    cards = (("BSP-Frostwarf", 1, "rent", "25,000p   3d", GOLD, "", True),
              ("BSP-Moongrove", 4, None, "", OK, "YOUR MAIN SERVER", False),
              ("BSP-Stormfall", 6, "full", "200,000p", GOLD, "Rented: 2d 4h left", True),
-             ("BSP-Isles", 11, "rent", "90,000p   24 h", BAD, "", False))
+             ("BSP-Isles", 11, "rent", "90,000p   1d", BAD, "", False))
     cw, ch = (w - 32 - 2 * 12) / 3, 150
     for n, (name, tok, tier, price, pcol, note, buy) in enumerate(cards):
         cx, cy = x + 16 + (n % 3) * (cw + 12), ty + 40 + (n // 3) * (ch + 12)
@@ -1010,7 +1039,7 @@ def access_shop_buy():
     bx, by, bw, bh = x2 + 40, y + 80, w2 - 80, 170
     s.rect(bx - 2, by - 2, bw + 4, bh + 4, GOLD, r=0)
     s.rect(bx, by, bw, bh, PANEL, r=0)
-    s.text(bx + 16, by + 32, "Rent 72 hours of access to BSP-Frostwarf", 15, TEXT, "bold")
+    s.text(bx + 16, by + 32, "Rent 3d of access to BSP-Frostwarf", 15, TEXT, "bold")
     s.text(bx + 16, by + 54, "for 25,000 pieces?", 15, TEXT, "bold")
     s.text(bx + 16, by + 86, "Use now starts the access at once.", 13, MUTED)
     s.text(bx + 16, by + 104, "Take token puts the token in your inventory.", 13, MUTED)
@@ -1049,7 +1078,7 @@ def access_shop_settings():
         s.text(tx + 52, ty + 16, t.upper(), 12, ACCENT if i == 0 else MUTED, "bold", "middle", spacing=1)
     gy = ty + 36
     sw = (w - 32 - 3 * 10) / 4
-    slots = (("BSP-Frostwarf", 1, "25,000p/72h 200,000p", True), ("BSP-Stormfall", 6, "40,000p/24h", False), ("BSP-Isles", 11, "90,000p/24h", False), None)
+    slots = (("BSP-Frostwarf", 1, "25,000p/3d 200,000p", True), ("BSP-Stormfall", 6, "40,000p/1d", False), ("BSP-Isles", 11, "No price set", False), None)
     for n, slot in enumerate(slots):
         sx = x + 16 + n * (sw + 10)
         if slot is None:
@@ -1069,22 +1098,18 @@ def access_shop_settings():
     kx = s.button(x + w - 16, ey, "remove", BAD) - 8
     kx = s.button(kx, ey, ">>", LINE, True) - 6
     s.button(kx, ey, "<<", LINE, True)
-    for row, (label, on, hours, price, cur) in enumerate((("rent on", True, "72", "25000", "pieces"), ("full on", True, None, "200000", "pieces"))):
+    # D189: the slot only says which tiers this shop sells; the prices are the token's own
+    for row, (label, price) in enumerate((("rent on", "25,000p   3d"), ("full on", "200,000p"))):
         ly = ey + 44 + row * 44
         s.button(x + 16 + len(label) * 7.6 + 18, ly, label, ACCENT)
-        if hours:
-            s.text(x + 130, ly + 16, "HOURS", 11, MUTED, "bold", spacing=1)
-            s.rect(x + 184, ly, 60, 24, INSET, LINE, r=0)
-            s.text(x + 194, ly + 17, hours, 13, TEXT, family=MONO)
-        s.text(x + 270, ly + 16, "PRICE", 11, MUTED, "bold", spacing=1)
-        s.rect(x + 322, ly, 120, 24, INSET, LINE, r=0)
-        s.text(x + 332, ly + 17, price, 13, TEXT, family=MONO)
-        s.button(x + w - 16, ly, cur, GOLD)
+        s.text(x + 150, ly + 16, "PRICE", 11, MUTED, "bold", spacing=1)
+        s.text(x + 210, ly + 16, price, 13, GOLD, family=MONO)
+    s.text(x + 16, ey + 142, "Prices are set per token on the admin TOKENS tab.", 12, MUTED)
     s.footer(x, y + h - 40, w, "Save sends the shop's new list; the screen on the block changes at once.", "", OK)
     rx = 800
     s.text(rx, 70, "Laying out a shop", 22, TEXT, "bold")
     ny = text_lines(s, rx, 100, "Admins see a SETTINGS key on the shop. Give the shop a name and the message its screen shows.", 40)
-    ny = text_lines(s, rx, ny + 20, "Each tab is a grid of slots. + ADD puts a token in; the picked slot sets its token (only tokens assigned to that tab's kind), its place, rent on or off with its hours and price, and full access on or off with its price, each in pieces or coins.", 40)
+    ny = text_lines(s, rx, ny + 20, "Each tab is a grid of slots. + ADD puts a token in; the picked slot sets its token (only tokens assigned to that tab's kind), its place, and whether this shop sells its rent, its full access or both. The prices and the rent length are the token's own, set once on the admin panel's TOKENS tab, so every shop and the refusal window agree.", 40)
     ny = text_lines(s, rx, ny + 20, "Every shop block has its own list. COPY FROM takes another shop's list and message on the same server, so a second shop starts from the first.", 40)
     s.save("access-shop-settings")
 

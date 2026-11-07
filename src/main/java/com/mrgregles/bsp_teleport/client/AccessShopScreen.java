@@ -2,9 +2,10 @@ package com.mrgregles.bsp_teleport.client;
 
 import com.mrgregles.bsp_teleport.ClientConfig;
 import com.mrgregles.bsp_teleport.access.AccessGrant;
+import com.mrgregles.bsp_teleport.access.AccessPopup;
 import com.mrgregles.bsp_teleport.access.TokenAssignment;
+import com.mrgregles.bsp_teleport.access.TokenPrice;
 import com.mrgregles.bsp_teleport.block.AccessShopBlockEntity;
-import com.mrgregles.bsp_teleport.network.BandPackets;
 import com.mrgregles.bsp_teleport.registry.ModItems;
 import com.mrgregles.bsp_teleport.shop.ShopEntry;
 import com.mrgregles.bsp_teleport.shop.ShopTab;
@@ -13,6 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
@@ -39,10 +41,17 @@ import static com.mrgregles.bsp_teleport.client.BandClient.VIO;
  * chosen tier's price and BUY; BUY asks USE NOW, TAKE TOKEN or CANCEL (D175). An admin also gets SETTINGS (D179): the
  * shop's name and message, Copy from, a 4-wide grid of slots per tab and the picked slot's prices and hours.
  *
- * <p>What each token opens and what the player holds come from {@link ClientAccess}; the server checks every purchase.
+ * <p>What each token opens, what it costs (D189) and what the player holds come from {@link ClientAccess}; the server
+ * checks every purchase.
+ *
+ * <p>The same screen is the access pop-up (look A, D185): a small window with one card for the token the player was
+ * refused for, opened by {@link #offer}. BUY there goes to the server without a shop.
  */
 public class AccessShopScreen extends Screen {
-    private static final int W = 280, H = 212, PAD = 10, HEAD = 22, CARD_H = 64, CARD_COLS = 3, SLOT_H = 26, SLOT_COLS = 4, GAP = 4;
+    private static final int PAD = 10, HEAD = 22, CARD_H = 64, CARD_COLS = 3, SLOT_H = 26, SLOT_COLS = 4, GAP = 4;
+    /** The shop's size, and the pop-up's. */
+    private static final int SHOP_W = 280, SHOP_H = 212, OFFER_W = 220, OFFER_H = 138;
+    private final int W, H;
 
     private record Hit(int x, int y, int w, int h, Runnable action) {
         boolean contains(double mx, double my) {
@@ -58,6 +67,9 @@ public class AccessShopScreen extends Screen {
     }
 
     private ShopView view;
+    /** D185: the refusal this pop-up answers, or null for a shop. */
+    @Nullable
+    private AccessPopup offer;
     private ShopTab tab = ShopTab.SERVERS;
     private int scroll;
     private boolean settings;
@@ -72,24 +84,43 @@ public class AccessShopScreen extends Screen {
     private final List<Hit> hits = new ArrayList<>();
     private float scale = 1f;
     private int left, top;
-    private EditBox nameBox, messageBox, hoursBox, rentBox, fullBox;
-    /** True while the boxes are being filled from the picked slot, so their responders do not write back. */
-    private boolean loading;
+    private EditBox nameBox, messageBox;
 
-    private AccessShopScreen(ShopView view) {
+    private AccessShopScreen(ShopView view, @Nullable AccessPopup offer) {
         super(Component.translatable("screen.bsp_teleport.shop.title"));
         this.view = view;
+        this.offer = offer;
         this.edit = new ArrayList<>(view.entries());
+        this.W = offer == null ? SHOP_W : OFFER_W;
+        this.H = offer == null ? SHOP_H : OFFER_H;
     }
 
     /** A view from the server: refreshes the open screen of the same shop, else opens one. */
     public static void show(ShopView view) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.screen instanceof AccessShopScreen open && open.view.pos().equals(view.pos())) {
+        if (mc.screen instanceof AccessShopScreen open && open.offer == null && open.view.pos().equals(view.pos())) {
             open.update(view);
         } else {
-            mc.setScreen(new AccessShopScreen(view));
+            mc.setScreen(new AccessShopScreen(view, null));
         }
+    }
+
+    /**
+     * D185, D193, D194: whether a refusal opens the one-card shop: the token is known here and has a tier on sale, and the
+     * player has a main server (or there is none to choose). Otherwise the banner shows instead.
+     */
+    public static boolean canOffer(AccessPopup popup) {
+        if (popup.type() != AccessPopup.Type.DENIED || popup.token() <= 0 || !ClientAccess.enabled()) {
+            return false;
+        }
+        TokenAssignment t = ClientAccess.token(popup.token());
+        return t != null && t.price().sellsAny() && (!popup.noMain() || ClientAccess.restricted().isEmpty());
+    }
+
+    /** D185: the access pop-up as a small shop with one card for the token the player needs. */
+    public static void offer(AccessPopup popup) {
+        ShopView one = new ShopView(BlockPos.ZERO, "", "", List.of(ShopEntry.fresh(popup.token())), false, popup.coins(), popup.pieces(), List.of());
+        Minecraft.getInstance().setScreen(new AccessShopScreen(one, popup));
     }
 
     private void update(ShopView view) {
@@ -112,45 +143,18 @@ public class AccessShopScreen extends Screen {
         scale = ClientConfig.screenScale(width, height, W, H);
         left = ((int) (width / scale) - W) / 2;
         top = ((int) (height / scale) - H) / 2;
-        nameBox = box(left + PAD + 30, top + HEAD + 3, 74, AccessShopBlockEntity.NAME_MAX, view.name(), null);
-        messageBox = box(left + PAD + 150, top + HEAD + 3, W - 2 * PAD - 150, AccessShopBlockEntity.MESSAGE_MAX, view.message(), null);
-        int ey = editorTop();
-        hoursBox = box(left + PAD + 76, ey + 17, 34, 5, "", v -> change(e -> new ShopEntry(e.token(), e.rent(), number(v, 1), e.rentPrice(), e.rentPieces(), e.full(), e.fullPrice(), e.fullPieces())));
-        rentBox = box(left + PAD + 140, ey + 17, 62, 10, "", v -> change(e -> new ShopEntry(e.token(), e.rent(), e.rentHours(), number(v, 0), e.rentPieces(), e.full(), e.fullPrice(), e.fullPieces())));
-        fullBox = box(left + PAD + 140, ey + 34, 62, 10, "", v -> change(e -> new ShopEntry(e.token(), e.rent(), e.rentHours(), e.rentPrice(), e.rentPieces(), e.full(), number(v, 0), e.fullPieces())));
-        for (EditBox b : new EditBox[]{hoursBox, rentBox, fullBox}) {
-            b.setFilter(s -> s.matches("\\d*"));
-        }
-        select(selected);
+        nameBox = box(left + PAD + 30, top + HEAD + 3, 74, AccessShopBlockEntity.NAME_MAX, view.name());
+        messageBox = box(left + PAD + 150, top + HEAD + 3, W - 2 * PAD - 150, AccessShopBlockEntity.MESSAGE_MAX, view.message());
     }
 
-    private EditBox box(int x, int y, int w, int max, String value, @Nullable java.util.function.Consumer<String> responder) {
+    private EditBox box(int x, int y, int w, int max, String value) {
         EditBox b = new EditBox(font, x, y, w, 12, Component.empty());
         b.setMaxLength(max);
         b.setValue(value);
         b.setBordered(true);
-        if (responder != null) {
-            b.setResponder(v -> {
-                if (!loading) {
-                    responder.accept(v);
-                }
-            });
-        }
         b.visible = false;
         addRenderableWidget(b);
         return b;
-    }
-
-    /** The box's number, at least {@code min}; audit: a number too big for an int is the most a price may be, never 0. */
-    private static int number(String v, int min) {
-        if (v.isEmpty()) {
-            return min;
-        }
-        try {
-            return (int) Math.max(min, Math.min(ShopEntry.MAX_PRICE, Long.parseLong(v)));
-        } catch (NumberFormatException e) {
-            return ShopEntry.MAX_PRICE;
-        }
     }
 
     @Override
@@ -189,9 +193,26 @@ public class AccessShopScreen extends Screen {
         return amount <= 0 ? tr("screen.bsp_teleport.shop.free") : String.format("%,d", amount) + (pieces ? "p" : "c");
     }
 
+    /** The token's price (D189), or nothing for sale when the client does not know the token. */
+    private static TokenPrice priceOf(ShopEntry e) {
+        TokenAssignment t = assignment(e);
+        return t == null ? TokenPrice.NONE : t.price();
+    }
+
+    /** D190: a tier is on sale when this shop sells it and the token's price has it on. */
+    private static boolean onSale(ShopEntry e, boolean full) {
+        return e.sells(full) && priceOf(e).sells(full);
+    }
+
     private boolean affords(ShopEntry e, boolean full) {
-        int p = e.price(full);
-        return p <= 0 || (e.pieces(full) ? view.pieces() >= p : view.coins() >= p);
+        TokenPrice tp = priceOf(e);
+        int p = tp.price(full);
+        return p <= 0 || (tp.pieces(full) ? view.pieces() >= p : view.coins() >= p);
+    }
+
+    private static int rentHours(ShopEntry e) {
+        TokenAssignment t = assignment(e);
+        return t == null ? 0 : t.rentHours();
     }
 
     private static String tr(String key, Object... args) {
@@ -206,16 +227,14 @@ public class AccessShopScreen extends Screen {
         g.pose().pushPose();
         g.pose().scale(scale, scale, 1f);
         hits.clear();
-        g.fill(left - 1, top - 1, left + W + 1, top + H + 1, settings ? VIO : TQ);
+        g.fill(left - 1, top - 1, left + W + 1, top + H + 1, settings ? VIO : offer != null ? GOLD : TQ);
         g.fill(left, top, left + W, top + H, BG);
-        boolean editing = settings && ask == null;
+        boolean editing = settings && ask == null && offer == null;
         nameBox.visible = editing;
         messageBox.visible = editing;
-        boolean slot = editing && selected >= 0 && selected < edit.size();
-        hoursBox.visible = slot;
-        rentBox.visible = slot;
-        fullBox.visible = slot;
-        if (settings) {
+        if (offer != null) {
+            drawOffer(g);
+        } else if (settings) {
             drawSettings(g);
         } else {
             drawShop(g);
@@ -272,6 +291,24 @@ public class AccessShopScreen extends Screen {
         }
     }
 
+    /** D185: the pop-up: why it opened, one card for the needed token, where else it is sold, CLOSE. */
+    private void drawOffer(GuiGraphics g) {
+        String wallet = tr("screen.bsp_teleport.shop.wallet", String.format("%,d", view.pieces()), String.format("%,d", view.coins()));
+        int walletX = left + W - PAD - (int) (font.width(wallet) * 0.75f);
+        small(g, wallet, walletX, top + 9, GOLD);
+        g.drawString(font, clipFull(tr("screen.bsp_teleport.shop.title").toUpperCase(), walletX - left - PAD - 6), left + PAD, top + 8, TQ, false);
+        TokenAssignment t = ClientAccess.token(offer.token());
+        String kind = t == null ? "server" : t.kind().name().toLowerCase(java.util.Locale.ROOT);
+        small(g, clip(tr("screen.bsp_teleport.offer.need_" + kind, offer.target()), W - 2 * PAD), left + PAD, top + HEAD + 2, TEXT);
+        if (t == null || view.entries().isEmpty()) {
+            return;
+        }
+        card(g, 0, left + PAD, top + HEAD + 14, W - 2 * PAD);
+        String where = offer.hint().isEmpty() ? tr("screen.bsp_teleport.offer.elsewhere") : tr("screen.bsp_teleport.offer.hint", offer.hint());
+        small(g, clip(where, W - 2 * PAD), left + PAD, top + HEAD + 14 + CARD_H + 5, MUTED);
+        key(g, left + W - PAD, top + H - 17, tr("screen.bsp_teleport.access.close"), DIM, MUTED, this::onClose);
+    }
+
     private int drawTabs(GuiGraphics g, int y) {
         int tw = 60;
         for (int i = 0; i < ShopTab.values().length; i++) {
@@ -307,19 +344,25 @@ public class AccessShopScreen extends Screen {
         if (held != null) {
             small(g, clip(tr("screen.bsp_teleport.shop.rent_left", AccessGrant.describeLeft(held.remainingMs())), w - 8), x + 5, y + 22, GOLD);
         }
-        boolean full = fullPick.getOrDefault(index, !e.rent());
-        if (!e.sells(full)) {
+        boolean rentOn = onSale(e, false), fullOn = onSale(e, true);
+        if (!rentOn && !fullOn) {
+            small(g, tr("screen.bsp_teleport.shop.no_price"), x + 5, y + 34, MUTED); // D190
+            return;
+        }
+        boolean full = fullPick.getOrDefault(index, !rentOn);
+        if (!onSale(e, full)) {
             full = !full;
         }
         int half = (w - 10 - 2) / 2;
         boolean chosen = full;
-        tierKey(g, x + 5, y + 31, half, tr("screen.bsp_teleport.shop.rent"), !chosen, e.rent(), () -> fullPick.put(index, false));
-        tierKey(g, x + 5 + half + 2, y + 31, half, tr("screen.bsp_teleport.shop.full"), chosen, e.full(), () -> fullPick.put(index, true));
+        tierKey(g, x + 5, y + 31, half, tr("screen.bsp_teleport.shop.rent"), !chosen, rentOn, () -> fullPick.put(index, false));
+        tierKey(g, x + 5 + half + 2, y + 31, half, tr("screen.bsp_teleport.shop.full"), chosen, fullOn, () -> fullPick.put(index, true));
         boolean affords = affords(e, chosen);
-        String p = price(e.price(chosen), e.pieces(chosen)) + (chosen ? "" : "  " + tr("screen.bsp_teleport.shop.hours", e.rentHours()));
+        TokenPrice tp = priceOf(e);
+        String p = price(tp.price(chosen), tp.pieces(chosen)) + (chosen ? "" : "  " + TokenPrice.describeLength(rentHours(e)));
         small(g, clip(p, w - 8), x + 5, y + 43, affords ? GOLD : BAD);
         String buy = tr("screen.bsp_teleport.shop.buy");
-        key(g, x + w - 4, y + CARD_H - 14, buy, affords ? GOLD : DIM, affords ? GOLD : MUTED, affords ? () -> ask = new Ask(index, e.token(), e.price(chosen), chosen, question(e, chosen)) : null);
+        key(g, x + w - 4, y + CARD_H - 14, buy, affords ? GOLD : DIM, affords ? GOLD : MUTED, affords ? () -> ask = new Ask(index, e.token(), tp.price(chosen), chosen, question(e, chosen)) : null);
     }
 
     private void tierKey(GuiGraphics g, int x, int y, int w, String label, boolean on, boolean sold, Runnable pick) {
@@ -334,14 +377,15 @@ public class AccessShopScreen extends Screen {
     private String question(ShopEntry e, boolean full) {
         TokenAssignment t = assignment(e);
         String what = t == null ? "?" : t.target();
-        String cost = e.price(full) <= 0 ? tr("screen.bsp_teleport.shop.free").toLowerCase()
-                : String.format("%,d", e.price(full)) + " " + tr(e.pieces(full) ? "screen.bsp_teleport.shop.pieces" : "screen.bsp_teleport.shop.coins");
-        return full ? tr("screen.bsp_teleport.shop.ask_full", what, cost) : tr("screen.bsp_teleport.shop.ask_rent", e.rentHours(), what, cost);
+        TokenPrice tp = priceOf(e);
+        String cost = tp.price(full) <= 0 ? tr("screen.bsp_teleport.shop.free").toLowerCase()
+                : String.format("%,d", tp.price(full)) + " " + tr(tp.pieces(full) ? "screen.bsp_teleport.shop.pieces" : "screen.bsp_teleport.shop.coins");
+        return full ? tr("screen.bsp_teleport.shop.ask_full", what, cost) : tr("screen.bsp_teleport.shop.ask_rent", TokenPrice.describeLength(rentHours(e)), what, cost);
     }
 
     /** D175: the confirm box over the shop; only its keys answer while it is up. */
     private void drawAsk(GuiGraphics g) {
-        int cw = 230, ch = 74;
+        int cw = Math.min(230, W - 10), ch = 74;
         int cx = left + (W - cw) / 2, cy = top + (H - ch) / 2;
         g.pose().pushPose();
         g.pose().translate(0, 0, 300);
@@ -360,15 +404,20 @@ public class AccessShopScreen extends Screen {
         hits.clear();
         Ask a = ask;
         int bx = key(g, cx + cw - 7, cy + ch - 17, tr("screen.bsp_teleport.shop.cancel"), DIM, MUTED, () -> ask = null) - 4;
-        bx = key(g, bx, cy + ch - 17, tr("screen.bsp_teleport.shop.take"), GOLD, GOLD, () -> {
-            ask = null;
-            BandPackets.sendShopBuy(view.pos(), a.index(), a.token(), a.price(), a.full(), true);
-        }) - 4;
-        key(g, bx, cy + ch - 17, tr("screen.bsp_teleport.shop.use_now"), OK, OK, () -> {
-            ask = null;
-            BandPackets.sendShopBuy(view.pos(), a.index(), a.token(), a.price(), a.full(), false);
-        });
+        bx = key(g, bx, cy + ch - 17, tr("screen.bsp_teleport.shop.take"), GOLD, GOLD, () -> buy(a, true)) - 4;
+        key(g, bx, cy + ch - 17, tr("screen.bsp_teleport.shop.use_now"), OK, OK, () -> buy(a, false));
         g.pose().popPose();
+    }
+
+    /** USE NOW or TAKE TOKEN: a shop stays open for the next purchase; the pop-up closes, since the trip goes ahead (D187). */
+    private void buy(Ask a, boolean take) {
+        ask = null;
+        if (offer != null) {
+            ClientNet.sendOfferBuy(a.token(), a.price(), a.full(), take);
+            onClose();
+        } else {
+            ClientNet.sendShopBuy(view.pos(), a.index(), a.token(), a.price(), a.full(), take);
+        }
     }
 
     // Settings (admins)
@@ -380,7 +429,7 @@ public class AccessShopScreen extends Screen {
     private void drawSettings(GuiGraphics g) {
         g.drawString(font, tr("screen.bsp_teleport.shop.settings_title"), left + PAD, top + 8, VIO, false);
         int kx = key(g, left + W - PAD, top + 6, tr("screen.bsp_teleport.shop.save"), OK, OK,
-                () -> BandPackets.sendShopSave(view.pos(), nameBox.getValue(), messageBox.getValue(), "", edit)) - 4;
+                () -> ClientNet.sendShopSave(view.pos(), nameBox.getValue(), messageBox.getValue(), "", edit)) - 4;
         key(g, kx, top + 6, tr("screen.bsp_teleport.shop.back"), DIM, MUTED, () -> {
             settings = false;
             edit = new ArrayList<>(view.entries());
@@ -398,7 +447,7 @@ public class AccessShopScreen extends Screen {
         } else {
             source = Math.floorMod(source, view.sources().size());
             ShopView.Source s = view.sources().get(source);
-            int cx = key(g, left + W - PAD, y, tr("screen.bsp_teleport.shop.copy"), VIO, VIO, () -> BandPackets.sendShopSave(view.pos(), "", "", s.key(), List.of())) - 4;
+            int cx = key(g, left + W - PAD, y, tr("screen.bsp_teleport.shop.copy"), VIO, VIO, () -> ClientNet.sendShopSave(view.pos(), "", "", s.key(), List.of())) - 4;
             cx = key(g, cx, y, ">", DIM, MUTED, () -> source++) - 2;
             int lx = left + PAD + 64;
             key(g, lx, y, "<", DIM, MUTED, () -> source--);
@@ -447,10 +496,21 @@ public class AccessShopScreen extends Screen {
         }
     }
 
+    /** A slot's tiers on sale with the token's prices; "No price set" when neither is (D190). */
     private static String summary(ShopEntry e) {
-        String r = e.rent() ? price(e.rentPrice(), e.rentPieces()) + "/" + e.rentHours() + "h" : "";
-        String f = e.full() ? price(e.fullPrice(), e.fullPieces()) : "";
-        return r.isEmpty() ? f.isEmpty() ? "-" : f : f.isEmpty() ? r : r + " " + f;
+        TokenPrice tp = priceOf(e);
+        String r = onSale(e, false) ? price(tp.rentPrice(), tp.rentPieces()) + "/" + TokenPrice.describeLength(rentHours(e)) : "";
+        String f = onSale(e, true) ? price(tp.fullPrice(), tp.fullPieces()) : "";
+        return r.isEmpty() ? f.isEmpty() ? tr("screen.bsp_teleport.shop.no_price") : f : f.isEmpty() ? r : r + " " + f;
+    }
+
+    /** One tier of the token's price for the settings rows: "500p for 7d", "Free", or "No price set". */
+    private static String tierText(ShopEntry e, boolean full) {
+        TokenPrice tp = priceOf(e);
+        if (!tp.sells(full)) {
+            return tr("screen.bsp_teleport.shop.no_price");
+        }
+        return price(tp.price(full), tp.pieces(full)) + (full ? "" : "  " + TokenPrice.describeLength(rentHours(e)));
     }
 
     private void drawEditor(GuiGraphics g, int y) {
@@ -469,30 +529,21 @@ public class AccessShopScreen extends Screen {
         int rx = key(g, left + W - PAD, y, tr("screen.bsp_teleport.shop.remove"), BAD, BAD, this::removeEntry) - 4;
         rx = key(g, rx, y, tr("screen.bsp_teleport.shop.later"), DIM, MUTED, () -> moveEntry(1)) - 2;
         key(g, rx, y, tr("screen.bsp_teleport.shop.earlier"), DIM, MUTED, () -> moveEntry(-1));
-        // line 2: rent on or off, its hours, price and currency
+        // lines 2 and 3: whether this shop sells rent and full; the prices are the token's (D189), shown for reference
         int ly = y + 17;
-        onOff(g, left + PAD, ly, tr("screen.bsp_teleport.shop.rent"), e.rent(),
-                () -> change(c -> new ShopEntry(c.token(), !c.rent(), c.rentHours(), c.rentPrice(), c.rentPieces(), c.full(), c.fullPrice(), c.fullPieces())));
-        small(g, tr("screen.bsp_teleport.shop.hours_label"), left + PAD + 50, ly + 3, MUTED);
-        small(g, tr("screen.bsp_teleport.shop.price"), left + PAD + 116, ly + 3, MUTED);
-        currency(g, left + W - PAD, ly, e.rentPieces(),
-                () -> change(c -> new ShopEntry(c.token(), c.rent(), c.rentHours(), c.rentPrice(), !c.rentPieces(), c.full(), c.fullPrice(), c.fullPieces())));
-        // line 3: full access on or off, its price and currency
+        onOff(g, left + PAD, ly, tr("screen.bsp_teleport.shop.rent"), e.rent(), () -> change(c -> new ShopEntry(c.token(), !c.rent(), c.full())));
+        small(g, tr("screen.bsp_teleport.shop.price"), left + PAD + 64, ly + 3, MUTED);
+        small(g, clip(tierText(e, false), W - 2 * PAD - 100), left + PAD + 100, ly + 3, priceOf(e).rent() ? GOLD : MUTED);
         ly += 17;
-        onOff(g, left + PAD, ly, tr("screen.bsp_teleport.shop.full"), e.full(),
-                () -> change(c -> new ShopEntry(c.token(), c.rent(), c.rentHours(), c.rentPrice(), c.rentPieces(), !c.full(), c.fullPrice(), c.fullPieces())));
-        small(g, tr("screen.bsp_teleport.shop.price"), left + PAD + 116, ly + 3, MUTED);
-        currency(g, left + W - PAD, ly, e.fullPieces(),
-                () -> change(c -> new ShopEntry(c.token(), c.rent(), c.rentHours(), c.rentPrice(), c.rentPieces(), c.full(), c.fullPrice(), !c.fullPieces())));
+        onOff(g, left + PAD, ly, tr("screen.bsp_teleport.shop.full"), e.full(), () -> change(c -> new ShopEntry(c.token(), c.rent(), !c.full())));
+        small(g, tr("screen.bsp_teleport.shop.price"), left + PAD + 64, ly + 3, MUTED);
+        small(g, clip(tierText(e, true), W - 2 * PAD - 100), left + PAD + 100, ly + 3, priceOf(e).full() ? GOLD : MUTED);
+        small(g, clip(tr("screen.bsp_teleport.shop.prices_note"), W - 2 * PAD), left + PAD, ly + 16, MUTED);
     }
 
     private void onOff(GuiGraphics g, int x, int y, String label, boolean on, Runnable flip) {
         String text = label.toUpperCase() + " " + tr(on ? "screen.bsp_teleport.shop.on" : "screen.bsp_teleport.shop.off");
         key(g, x + keyWidth(text), y, text, on ? TQ : DIM, on ? TQ : MUTED, flip);
-    }
-
-    private void currency(GuiGraphics g, int right, int y, boolean pieces, Runnable flip) {
-        key(g, right, y, tr(pieces ? "screen.bsp_teleport.shop.pieces" : "screen.bsp_teleport.shop.coins"), GOLD, GOLD, flip);
     }
 
     /** The tokens assigned to what this tab sells, in number order. */
@@ -533,7 +584,7 @@ public class AccessShopScreen extends Screen {
         }
         int at = tokens.indexOf(edit.get(selected).token());
         int next = tokens.get(Math.floorMod(at + step, tokens.size()));
-        change(c -> new ShopEntry(next, c.rent(), c.rentHours(), c.rentPrice(), c.rentPieces(), c.full(), c.fullPrice(), c.fullPieces()));
+        change(c -> new ShopEntry(next, c.rent(), c.full()));
     }
 
     /** Swaps the picked entry with the one before or after it on this tab. */
@@ -564,20 +615,8 @@ public class AccessShopScreen extends Screen {
         }
     }
 
-    /** Picks a slot and fills the hour and price boxes from it. */
     private void select(int index) {
         selected = index;
-        if (hoursBox == null) {
-            return;
-        }
-        loading = true;
-        if (index >= 0 && index < edit.size()) {
-            ShopEntry e = edit.get(index);
-            hoursBox.setValue(String.valueOf(e.rentHours()));
-            rentBox.setValue(String.valueOf(e.rentPrice()));
-            fullBox.setValue(String.valueOf(e.fullPrice()));
-        }
-        loading = false;
     }
 
     // Small parts
@@ -659,7 +698,7 @@ public class AccessShopScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mx, double my, double delta) {
-        if (ask == null) {
+        if (ask == null && offer == null) {
             scroll = Math.max(0, scroll - (int) Math.signum(delta));
         }
         return true;

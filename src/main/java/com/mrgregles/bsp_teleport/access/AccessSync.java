@@ -32,6 +32,7 @@ public record AccessSync(boolean enabled, List<Grant> grants, List<TokenAssignme
             buf.writeEnum(t.kind()).writeUtf(t.target());
             buf.writeVarInt(t.rentHours());
             buf.writeUtf(t.hint());
+            t.price().write(buf);
         }
         buf.writeVarInt(restricted.size());
         restricted.forEach(buf::writeUtf);
@@ -60,7 +61,7 @@ public record AccessSync(boolean enabled, List<Grant> grants, List<TokenAssignme
             int token = buf.readVarInt();
             AccessGrant.Kind kind = buf.readEnum(AccessGrant.Kind.class);
             String target = buf.readUtf();
-            tokens.add(new TokenAssignment(token, kind, target, buf.readVarInt(), buf.readUtf()));
+            tokens.add(new TokenAssignment(token, kind, target, buf.readVarInt(), buf.readUtf(), TokenPrice.read(buf)));
         }
         n = buf.readVarInt();
         List<String> restricted = new ArrayList<>(n);

@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 /** The mod's own channel: the band screen's data down, its actions up. */
 public final class BandPackets {
     /** "2" since T69 and T73 changed packets 2, 11 and added 13; "3" added 14 (B21); "4" since T82 changed the band and core screen data. An older client is told to update instead of misreading them. */
-    private static final String PROTOCOL = "8"; // 8: D174 added the Access Shop packets (15 to 17)
+    private static final String PROTOCOL = "9"; // 8: D174 added the Access Shop packets (15 to 17); 9: token prices (D189 to D195) changed 2, 6, 7, 15 to 17 and added 18
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(new ResourceLocation(BSPTeleport.MODID, "main"), () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
 
     private BandPackets() {
@@ -86,6 +86,12 @@ public final class BandPackets {
             }
             return new ShopSave(pos, name, message, copyFrom, entries);
         }, ShopSave::handle);
+        CHANNEL.registerMessage(18, OfferBuy.class, (m, buf) -> {
+            buf.writeVarInt(m.token());
+            buf.writeVarInt(m.price());
+            buf.writeBoolean(m.full());
+            buf.writeBoolean(m.take());
+        }, buf -> new OfferBuy(buf.readVarInt(), buf.readVarInt(), buf.readBoolean(), buf.readBoolean()), OfferBuy::handle);
         CHANNEL.registerMessage(3, AdminDo.class, (m, buf) -> buf.writeEnum(m.action()).writeUtf(m.arg()), buf -> new AdminDo(buf.readEnum(AdminAction.class), buf.readUtf()), AdminDo::handle);
     }
 
@@ -166,6 +172,11 @@ public final class BandPackets {
         CHANNEL.sendToServer(new ShopBuy(pos, index, token, price, full, take));
     }
 
+    /** D185: BUY in the access pop-up; {@code price} is what it showed, so a price changed meanwhile refuses the purchase. */
+    public static void sendOfferBuy(int token, int price, boolean full, boolean take) {
+        CHANNEL.sendToServer(new OfferBuy(token, price, full, take));
+    }
+
     /** An admin's settings, or with {@code copyFrom} set a Copy from that other shop instead. */
     public static void sendShopSave(BlockPos pos, String name, String message, String copyFrom, java.util.List<com.mrgregles.bsp_teleport.shop.ShopEntry> entries) {
         CHANNEL.sendToServer(new ShopSave(pos, name, message, copyFrom, entries));
@@ -184,6 +195,18 @@ public final class BandPackets {
                 ServerPlayer player = ctx.get().getSender();
                 if (player != null) {
                     com.mrgregles.bsp_teleport.shop.AccessShops.buy(player, pos, index, token, price, full, take);
+                }
+            });
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    public record OfferBuy(int token, int price, boolean full, boolean take) {
+        void handle(Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> {
+                ServerPlayer player = ctx.get().getSender();
+                if (player != null) {
+                    com.mrgregles.bsp_teleport.shop.AccessShops.buyOffered(player, token, price, full, take);
                 }
             });
             ctx.get().setPacketHandled(true);

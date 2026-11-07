@@ -147,12 +147,13 @@ public final class AccessShops extends SavedData {
         return level.getBlockEntity(controller) instanceof AccessShopBlockEntity shop ? shop : null;
     }
 
-    // Buying (D175, D177)
+    // Buying (D175, D177, D189)
 
     /**
      * The player confirmed a purchase of entry {@code index}: {@code take} puts the token item in their inventory, else the
      * access is granted at once. Nothing is taken when the access could not be granted. {@code token} and {@code price} are
-     * what the player's screen showed: when an admin changed the shop since, the purchase is refused (audit).
+     * what the player's screen showed: when an admin changed the shop or the token's price since, the purchase is refused
+     * (audit). The price is the token's own (D189); the shop only says which tiers it sells.
      */
     public static void buy(ServerPlayer player, BlockPos controller, int index, int token0, int price0, boolean fullTier, boolean take) {
         AccessShopBlockEntity shop = shopAt(player, controller);
@@ -164,21 +165,63 @@ public final class AccessShops extends SavedData {
             return;
         }
         List<ShopEntry> entries = shop.entries();
-        if (index < 0 || index >= entries.size() || !entries.get(index).sells(fullTier)
-                || entries.get(index).token() != token0 || entries.get(index).price(fullTier) != price0) {
+        TokenAssignment token = index >= 0 && index < entries.size() ? AccessService.tokens(player.server).get(entries.get(index).token()) : null;
+        if (index < 0 || index >= entries.size() || !entries.get(index).sells(fullTier) || entries.get(index).token() != token0
+                || (token != null && (!token.price().sells(fullTier) || token.price().price(fullTier) != price0))) {
             tell(player, "shop.changed");
             open(player, player.serverLevel(), controller, shop);
             return;
         }
-        ShopEntry entry = entries.get(index);
-        MinecraftServer server = player.server;
-        TokenAssignment token = AccessService.tokens(server).get(entry.token());
         if (token == null) {
-            tell(player, "access.token_unassigned", TokenAssignment.roman(entry.token()));
+            tell(player, "access.token_unassigned", TokenAssignment.roman(token0));
             return;
         }
+        sell(player, token, fullTier, take, () -> {
+            AccessShopBlockEntity still = shopAt(player, controller);
+            if (still != null) {
+                open(player, player.serverLevel(), controller, still);
+            }
+        });
+    }
+
+    /**
+     * D185: a purchase from the access pop-up, outside any shop. Only a token the player lacks the access of is sold this
+     * way (the pop-up offers nothing else); the price must still be what the pop-up showed. USE NOW then carries on with
+     * the trip that was refused, when there was one (D187).
+     */
+    public static void buyOffered(ServerPlayer player, int token0, int price0, boolean fullTier, boolean take) {
+        if (!AccessService.enabled()) {
+            tell(player, "access.disabled");
+            return;
+        }
+        TokenAssignment token = AccessService.tokens(player.server).get(token0);
+        if (token == null) {
+            tell(player, "access.token_unassigned", TokenAssignment.roman(token0));
+            return;
+        }
+        if (!token.price().sells(fullTier) || token.price().price(fullTier) != price0) {
+            tell(player, "shop.price_changed");
+            AccessService.reoffer(player, token.kind(), token.target());
+            return;
+        }
+        // Audit: a server goes by mayEnter, so a main server, an open server or an admin is not sold what they have.
+        boolean has = token.kind() == AccessGrant.Kind.SERVER ? AccessService.mayEnter(player, token.target())
+                : AccessRules.has(AccessService.grantsOf(player.server, player.getUUID()), token.kind(), token.target(), System.currentTimeMillis());
+        if (has) {
+            tell(player, "shop.offer_held", token.target());
+            return;
+        }
+        sell(player, token, fullTier, take, take ? null : () -> AccessService.resumeTrip(player, token.kind(), token.target()));
+    }
+
+    /**
+     * Charges for one tier of {@code token} at its own price and grants it ({@code take} false) or hands over the token
+     * item. {@code after} runs once it went through.
+     */
+    static void sell(ServerPlayer player, TokenAssignment token, boolean fullTier, boolean take, @Nullable Runnable after) {
+        MinecraftServer server = player.server;
         AccessGrant.Tier tier = fullTier ? AccessGrant.Tier.FULL : AccessGrant.Tier.RENT;
-        int hours = entry.rentHours();
+        int hours = token.rentHours();
         if (!take) {
             String refusal = AccessRules.refuse(AccessService.grantsOf(server, player.getUUID()), token.kind(), token.target(), tier, System.currentTimeMillis());
             if (refusal != null) {
@@ -186,9 +229,10 @@ public final class AccessShops extends SavedData {
                 return;
             }
         }
-        int price = entry.price(fullTier);
-        boolean pieces = entry.pieces(fullTier);
-        String reason = "Access Token " + TokenAssignment.roman(entry.token()) + (fullTier ? " (full)" : " (rent)");
+        int price = token.price().price(fullTier);
+        boolean pieces = token.price().pieces(fullTier);
+        String name = "Access Token " + TokenAssignment.roman(token.token());
+        String reason = name + (fullTier ? " (full)" : " (rent)");
         AccessChecks.charge(player, new AccessChecks.Result(null, 0, 0, List.of()), pieces ? 0 : price, pieces ? price : 0, reason, paid -> {
             if (paid == null) {
                 return;
@@ -199,11 +243,11 @@ public final class AccessShops extends SavedData {
                     AccessChecks.refund(server, paid, null);
                     return;
                 }
-                ItemStack stack = ((AccessTokenItem) ModItems.ACCESS_TOKENS[entry.token() - 1].get()).stack(tier, fullTier ? 0 : hours);
+                ItemStack stack = ((AccessTokenItem) ModItems.ACCESS_TOKENS[token.token() - 1].get()).stack(tier, fullTier ? 0 : hours);
                 if (!player.getInventory().add(stack)) {
                     player.drop(stack, false);
                 }
-                tell(player, "shop.took", "Access Token " + TokenAssignment.roman(entry.token()), token.target());
+                tell(player, "shop.took", name, token.target());
             } else {
                 String refused = AccessService.grant(server, player.getUUID(), token.kind(), token.target(), tier, hours);
                 if (refused != null) {
@@ -218,9 +262,8 @@ public final class AccessShops extends SavedData {
                 }
             }
             player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.6F, 1.4F);
-            AccessShopBlockEntity still = shopAt(player, controller);
-            if (still != null) {
-                open(player, player.serverLevel(), controller, still);
+            if (after != null) {
+                after.run();
             }
         });
     }

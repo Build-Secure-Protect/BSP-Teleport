@@ -145,6 +145,8 @@ final class MySqlStore implements AutoCloseable {
                     + "tier VARCHAR(8) NOT NULL, expires_ms BIGINT NOT NULL DEFAULT 0, granted_ms BIGINT NOT NULL DEFAULT 0, PRIMARY KEY (uuid, kind, target), INDEX (kind, target, tier))");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("access_tokens") + " (token INT NOT NULL PRIMARY KEY, kind VARCHAR(16) NOT NULL, target VARCHAR(128) NOT NULL, "
                     + "rent_hours INT NOT NULL DEFAULT 168, hint VARCHAR(255) NOT NULL DEFAULT '')");
+            // D189: token prices; empty (tokens from before) means not for sale.
+            addColumn(st, "access_tokens", "prices", "VARCHAR(64) NOT NULL DEFAULT ''");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("access_servers") + " (server VARCHAR(64) NOT NULL PRIMARY KEY)");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("spawns") + " (server VARCHAR(64) NOT NULL PRIMARY KEY, position VARCHAR(255) NOT NULL)");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS " + t("pending") + " (uuid CHAR(36) NOT NULL PRIMARY KEY, destination VARCHAR(512) NOT NULL, created_ms BIGINT NOT NULL)");
@@ -442,10 +444,11 @@ final class MySqlStore implements AutoCloseable {
 
     List<TokenAssignment> loadTokens() throws SQLException {
         List<TokenAssignment> out = new ArrayList<>();
-        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT token, kind, target, rent_hours, hint FROM " + t("access_tokens") + " ORDER BY token")) {
+        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT token, kind, target, rent_hours, hint, prices FROM " + t("access_tokens") + " ORDER BY token")) {
             while (rs.next()) {
                 try {
-                    out.add(new TokenAssignment(rs.getInt(1), AccessGrant.Kind.valueOf(rs.getString(2)), rs.getString(3), rs.getInt(4), rs.getString(5)));
+                    out.add(new TokenAssignment(rs.getInt(1), AccessGrant.Kind.valueOf(rs.getString(2)), rs.getString(3), rs.getInt(4), rs.getString(5),
+                            com.mrgregles.bsp_teleport.access.TokenPrice.decode(rs.getString(6))));
                 } catch (IllegalArgumentException ignored) {
                 }
             }
@@ -454,13 +457,14 @@ final class MySqlStore implements AutoCloseable {
     }
 
     void saveToken(TokenAssignment a) throws SQLException {
-        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("access_tokens") + " (token, kind, target, rent_hours, hint) VALUES (?, ?, ?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE kind = VALUES(kind), target = VALUES(target), rent_hours = VALUES(rent_hours), hint = VALUES(hint)")) {
+        try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("access_tokens") + " (token, kind, target, rent_hours, hint, prices) VALUES (?, ?, ?, ?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE kind = VALUES(kind), target = VALUES(target), rent_hours = VALUES(rent_hours), hint = VALUES(hint), prices = VALUES(prices)")) {
             ps.setInt(1, a.token());
             ps.setString(2, a.kind().name());
             ps.setString(3, a.target());
             ps.setInt(4, a.rentHours());
             ps.setString(5, a.hint());
+            ps.setString(6, a.price().encode());
             ps.executeUpdate();
         }
     }

@@ -9,8 +9,9 @@ import net.minecraft.nbt.CompoundTag;
  * @param token     1 to 20
  * @param rentHours the rent length a rent stack of this token grants (D77)
  * @param hint      where to buy it, shown on the denied popup (D81); empty for none
+ * @param price     what it costs in every Access Shop and the access pop-up (D189)
  */
-public record TokenAssignment(int token, AccessGrant.Kind kind, String target, int rentHours, String hint) {
+public record TokenAssignment(int token, AccessGrant.Kind kind, String target, int rentHours, String hint, TokenPrice price) {
     public static final int COUNT = 20;
     private static final String[] ROMAN = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX"};
 
@@ -23,11 +24,15 @@ public record TokenAssignment(int token, AccessGrant.Kind kind, String target, i
     }
 
     public TokenAssignment withHours(int hours) {
-        return new TokenAssignment(token, kind, target, hours, hint);
+        return new TokenAssignment(token, kind, target, hours, hint, price);
     }
 
     public TokenAssignment withHint(String hint) {
-        return new TokenAssignment(token, kind, target, rentHours, hint);
+        return new TokenAssignment(token, kind, target, rentHours, hint, price);
+    }
+
+    public TokenAssignment withPrice(TokenPrice price) {
+        return new TokenAssignment(token, kind, target, rentHours, hint, price.clean());
     }
 
     public CompoundTag save() {
@@ -37,10 +42,12 @@ public record TokenAssignment(int token, AccessGrant.Kind kind, String target, i
         tag.putString("Target", target);
         tag.putInt("RentHours", rentHours);
         tag.putString("Hint", hint);
+        price.save(tag);
         return tag;
     }
 
     public static TokenAssignment load(CompoundTag tag) {
-        return new TokenAssignment(tag.getInt("Token"), AccessGrant.Kind.valueOf(tag.getString("Kind")), tag.getString("Target"), tag.getInt("RentHours"), tag.getString("Hint"));
+        return new TokenAssignment(tag.getInt("Token"), AccessGrant.Kind.valueOf(tag.getString("Kind")), tag.getString("Target"), tag.getInt("RentHours"), tag.getString("Hint"),
+                TokenPrice.load(tag));
     }
 }

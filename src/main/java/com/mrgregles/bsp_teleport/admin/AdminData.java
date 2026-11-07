@@ -19,7 +19,7 @@ public record AdminData(String server, boolean readOnly, String storage, String 
     }
 
     /** One Access Token's assignment (D74); kind and target empty when free. */
-    public record TokenRow(int token, String kind, String target, int hours, String hint) {
+    public record TokenRow(int token, String kind, String target, int hours, String hint, com.mrgregles.bsp_teleport.access.TokenPrice price) {
     }
 
     /** One portal on the network, from its shared row. */
@@ -74,6 +74,7 @@ public record AdminData(String server, boolean readOnly, String storage, String 
             buf.writeUtf(t.kind()).writeUtf(t.target());
             buf.writeVarInt(t.hours());
             buf.writeUtf(t.hint());
+            t.price().write(buf);
         }
         buf.writeVarInt(restricted.size());
         restricted.forEach(buf::writeUtf);
@@ -129,7 +130,7 @@ public record AdminData(String server, boolean readOnly, String storage, String 
         for (int i = 0; i < n; i++) {
             int token = buf.readVarInt();
             String kind = buf.readUtf(), target = buf.readUtf();
-            tokens.add(new TokenRow(token, kind, target, buf.readVarInt(), buf.readUtf()));
+            tokens.add(new TokenRow(token, kind, target, buf.readVarInt(), buf.readUtf(), com.mrgregles.bsp_teleport.access.TokenPrice.read(buf)));
         }
         n = buf.readVarInt();
         List<String> restricted = new ArrayList<>(n);

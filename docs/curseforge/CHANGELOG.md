@@ -1,3 +1,19 @@
+# BSP-Teleport 3.6.0
+
+Minecraft 1.20.1, Forge 47.4, Java 17. Requires BSP-Core 1.10.1 or newer. Needed on the client and the server, and both must run this version (the network protocol changed). BSP-Region Guard is optional, as before.
+
+## Added
+
+**Buy access where you are refused.** A player who tries to enter a server they have no access to (through a world edge, a portal, a warp, the band's server switcher or `/rtp`) now gets a small Access Shop window with one card for the token they need: a Rent / Full switch, the price, their pieces and coins, and BUY. Use now grants the access and carries on with the trip at once; Take token puts the token in the inventory. Tokens with no price still show the old "Access needed" banner.
+
+## Changed
+
+**Token prices are set once, on the token.** The admin panel's TOKENS tab now sets each token's prices under the picked token: rent on or off with its length (typed as 7d, 1d 12h or 36h, or stepped a day at a time) and price, and full access on or off with its price, each in pieces or coins. Every Access Shop and the new window use these prices. Shops only choose which tokens they sell and whether they sell rent, full access or both. **Shops built before this version lose their prices:** nothing is for sale until an admin prices the token on the TOKENS tab, and until then shops show "No price set". Also `/bsptp access token <n> price rent|full <amount> pieces|coins` and `price rent|full off`.
+
+## Fixed
+
+**Region Guard edges and triggers sent players without access across.** A move to another server from a Region Guard edge link or trigger was not checked for access before leaving: the player crossed, was bounced to the lobby and saw the "Access needed" banner, if it survived the switch. The check now happens before leaving, so the player stays put and gets the window above.
+
 # BSP-Teleport 3.5.5
 
 Minecraft 1.20.1, Forge 47.4, Java 17. Requires BSP-Core 1.10.1 or newer, on every server of the network. The network protocol is the same as 3.5.0, so 3.5.x clients and servers work together.

@@ -656,7 +656,7 @@
 <text x="515.8333333333334" y="295" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">RENT</text>
 <rect x="569.6666666666666" y="280" width="95.66666666666667" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
 <text x="617.5" y="295" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">FULL</text>
-<text x="468.0" y="322" font-family="Menlo, Monaco, monospace" font-size="14" font-weight="normal" fill="#FFD23A" text-anchor="start">25,000p   72 h</text>
+<text x="468.0" y="322" font-family="Menlo, Monaco, monospace" font-size="14" font-weight="normal" fill="#FFD23A" text-anchor="start">25,000p   3d</text>
 <rect x="626.5333333333334" y="326" width="40.8" height="22" rx="0" fill="#0C0E12" stroke="#FFD23A" stroke-width="1.5" opacity="1"/>
 <text x="646.9333333333334" y="341" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#FFD23A" text-anchor="middle" letter-spacing="1">BUY</text>
 <rect x="689.3333333333334" y="206" width="221.33333333333334" height="150" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
@@ -1137,7 +1137,7 @@
 <text x="515.8333333333334" y="457" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#19D3B0" text-anchor="middle" letter-spacing="1">RENT</text>
 <rect x="569.6666666666666" y="442" width="95.66666666666667" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
 <text x="617.5" y="457" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">FULL</text>
-<text x="468.0" y="484" font-family="Menlo, Monaco, monospace" font-size="14" font-weight="normal" fill="#FF6B5C" text-anchor="start">90,000p   24 h</text>
+<text x="468.0" y="484" font-family="Menlo, Monaco, monospace" font-size="14" font-weight="normal" fill="#FF6B5C" text-anchor="start">90,000p   1d</text>
 <rect x="626.5333333333334" y="488" width="40.8" height="22" rx="0" fill="#0C0E12" stroke="#2A2F3A" stroke-width="1.5" opacity="1"/>
 <text x="646.9333333333334" y="503" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11" font-weight="bold" fill="#9AA3B5" text-anchor="middle" letter-spacing="1">BUY</text>
 <line x1="456" y1="570" x2="1144" y2="570" stroke="#2A2F3A" stroke-width="1" stroke-linecap="round"/>

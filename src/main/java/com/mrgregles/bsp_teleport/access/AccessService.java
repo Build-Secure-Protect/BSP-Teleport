@@ -2,6 +2,7 @@ package com.mrgregles.bsp_teleport.access;
 
 import com.mrgregles.bsp_teleport.BSPTeleport;
 import com.mrgregles.bsp_teleport.TeleportConfig;
+import com.mrgregles.bsp_teleport.compat.BspCore;
 import com.mrgregles.bsp_teleport.compat.RegionGuard;
 import com.mrgregles.bsp_teleport.data.Position;
 import com.mrgregles.bsp_teleport.data.TeleportData;
@@ -122,15 +123,6 @@ public final class AccessService {
         return AccessRules.mayEnter(grantsOf(player.server, player.getUUID()), restricted(player.server), server, System.currentTimeMillis());
     }
 
-    /** {@link #mayEnter}, telling the player what they need when the answer is no (D81's popup comes with T60). */
-    public static boolean checkServer(ServerPlayer player, String server) {
-        if (mayEnter(player, server)) {
-            return true;
-        }
-        deny(player, AccessGrant.Kind.SERVER, server);
-        return false;
-    }
-
     /** Region access for Region Guard's exemption (D83): any region at the spot the player holds a live grant for. */
     public static boolean hasRegionAccess(ServerPlayer player, List<String> regionIds) {
         if (!enabled()) {
@@ -146,8 +138,34 @@ public final class AccessService {
         return false;
     }
 
+    /**
+     * D187: a trip refused for want of access, kept for a short while so USE NOW in the pop-up can carry on with it.
+     * Only while the player is still near where they were refused, on the same level.
+     */
+    private record Trip(AccessGrant.Kind kind, String target, Runnable retry, net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> level,
+                        net.minecraft.world.phys.Vec3 pos, long at) {
+    }
+
+    private static final Map<UUID, Trip> TRIPS = new HashMap<>();
+    /** How long a refused trip waits for USE NOW, and how far the player may have walked meanwhile. */
+    static final long TRIP_MS = 120_000;
+    static final double TRIP_REACH = 8;
+
     /** The chat lines and the popup (D81); a player with no main server yet gets the choice instead (D82). */
     public static void deny(ServerPlayer player, AccessGrant.Kind kind, String target) {
+        deny(player, kind, target, null);
+    }
+
+    /**
+     * {@link #deny(ServerPlayer, AccessGrant.Kind, String)}; {@code retry} is the refused trip, run again when the player
+     * buys the access with USE NOW in the pop-up (D187). Null for a refusal that has nothing to carry on with.
+     */
+    public static void deny(ServerPlayer player, AccessGrant.Kind kind, String target, @Nullable Runnable retry) {
+        if (retry != null) {
+            TRIPS.put(player.getUUID(), new Trip(kind, target, retry, player.level().dimension(), player.position(), System.currentTimeMillis()));
+        } else {
+            TRIPS.remove(player.getUUID());
+        }
         boolean noMain = mainServer(player) == null;
         if (kind == AccessGrant.Kind.SERVER) {
             tell(player, "access.denied_server", target);
@@ -169,9 +187,55 @@ public final class AccessService {
         if (kind == AccessGrant.Kind.SERVER && noMain && !restricted(player.server).isEmpty()) {
             showChoose(player);
         } else {
-            BandPackets.sendPopup(player, new AccessPopup(AccessPopup.Type.DENIED, target, token == null ? 0 : token.token(),
-                    token == null ? 0 : token.rentHours(), token == null ? "" : token.hint(), noMain, List.of()));
+            reoffer(player, kind, target);
         }
+    }
+
+    /**
+     * Sends the access pop-up for {@code target} without the chat lines (D185, D188): the one-card shop when its token has
+     * a price on, else the banner (D193; the client decides from the synced token).
+     */
+    public static void reoffer(ServerPlayer player, AccessGrant.Kind kind, String target) {
+        TokenAssignment token = tokenFor(player.server, kind, target);
+        BandPackets.sendPopup(player, new AccessPopup(AccessPopup.Type.DENIED, target, token == null ? 0 : token.token(),
+                token == null ? 0 : token.rentHours(), token == null ? "" : token.hint(), mainServer(player) == null, List.of(),
+                BspCore.coins(player), BspCore.pieces(player)));
+    }
+
+    /**
+     * D187: the player just bought access to {@code target} with USE NOW; the trip refused for it goes ahead, if it was
+     * refused less than {@link #TRIP_MS} ago and the player is still near where they were.
+     */
+    public static void resumeTrip(ServerPlayer player, AccessGrant.Kind kind, String target) {
+        Trip trip = TRIPS.get(player.getUUID());
+        if (trip == null || trip.kind() != kind || !trip.target().equalsIgnoreCase(target)) {
+            return;
+        }
+        TRIPS.remove(player.getUUID());
+        if (!tripStillOn(trip.at(), System.currentTimeMillis(), trip.level().equals(player.level().dimension()), trip.pos().distanceTo(player.position()))) {
+            return;
+        }
+        trip.retry().run();
+    }
+
+    /** Whether a refused trip may still go ahead (D187): soon enough, on the same level, near enough. */
+    static boolean tripStillOn(long refusedAt, long now, boolean sameLevel, double moved) {
+        return sameLevel && now - refusedAt <= TRIP_MS && moved <= TRIP_REACH;
+    }
+
+    /**
+     * D189: one tier of a token's price as players read it: "rent 7d for 500 pieces", "full access for free", or "rent not
+     * for sale".
+     */
+    public static Component describePrice(TokenPrice price, boolean full, int rentHours) {
+        if (!price.sells(full)) {
+            return Component.translatable(full ? "message.bsp_teleport.access.price_full_off" : "message.bsp_teleport.access.price_rent_off");
+        }
+        int amount = price.price(full);
+        Component cost = amount <= 0 ? Component.translatable("message.bsp_teleport.access.amount_free")
+                : Component.translatable(price.pieces(full) ? "message.bsp_teleport.access.amount_pieces" : "message.bsp_teleport.access.amount_coins", String.format("%,d", amount));
+        return full ? Component.translatable("message.bsp_teleport.access.price_full", cost)
+                : Component.translatable("message.bsp_teleport.access.price_rent", TokenPrice.describeLength(rentHours), cost);
     }
 
     /** The choose-main-server popup (D82): every restricted server with its counts. */
@@ -182,7 +246,7 @@ public final class AccessService {
             TokenAssignment token = tokenFor(player.server, AccessGrant.Kind.SERVER, server);
             choices.add(new AccessPopup.ServerChoice(server, token == null ? 0 : token.token(), c[0], c[1], c[2]));
         }
-        BandPackets.sendPopup(player, new AccessPopup(AccessPopup.Type.CHOOSE, "", 0, 0, "", mainServer(player) == null, choices));
+        BandPackets.sendPopup(player, new AccessPopup(AccessPopup.Type.CHOOSE, "", 0, 0, "", mainServer(player) == null, choices, 0, 0));
     }
 
     public static void handle(ServerPlayer player, AccessAction action, String arg) {
@@ -455,6 +519,7 @@ public final class AccessService {
         LAST_SENT.remove(event.getEntity().getUUID());
         GRANTS.remove(event.getEntity().getUUID());
         WARNED.remove(event.getEntity().getUUID());
+        TRIPS.remove(event.getEntity().getUUID());
     }
 
     /** A player who arrived without access (by any route, or whose rent ran out while away) goes to the lobby (D68). */

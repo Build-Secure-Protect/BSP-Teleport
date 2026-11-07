@@ -48,11 +48,20 @@ public class AccessShopGameTests {
             h.assertTrue(level.getBlockEntity(a.above()) == null, "the other parts hold none");
 
             AccessShopBlockEntity shop = (AccessShopBlockEntity) level.getBlockEntity(a);
-            shop.configure("  Spawn shop  ", "Tokens here", List.of(new ShopEntry(2, true, 72, 25_000, true, true, 200_000, true),
-                    new ShopEntry(99, true, -5, -1, false, false, 0, false)));
+            shop.configure("  Spawn shop  ", "Tokens here", List.of(new ShopEntry(2, true, true), new ShopEntry(99, true, false)));
             h.assertTrue("Spawn shop".equals(shop.name()), "the name is trimmed: " + shop.name());
             ShopEntry bad = shop.entries().get(1);
-            h.assertTrue(bad.token() == 20 && bad.rentHours() == 1 && bad.rentPrice() == 0, "values are kept in range: " + bad);
+            h.assertTrue(bad.token() == 20 && bad.rent() && !bad.full(), "values are kept in range: " + bad);
+
+            // D190: a slot saved before prices moved to the token keeps its token and tiers; its old prices are dropped.
+            CompoundTag old = new CompoundTag();
+            old.putInt("Token", 3);
+            old.putBoolean("Rent", false);
+            old.putInt("RentHours", 48);
+            old.putInt("RentPrice", 500);
+            old.putBoolean("Full", true);
+            old.putInt("FullPrice", 9000);
+            h.assertTrue(ShopEntry.load(old).equals(new ShopEntry(3, false, true)), "an old slot loads as token and tiers: " + ShopEntry.load(old));
 
             CompoundTag tag = shop.saveWithoutMetadata();
             AccessShopBlockEntity copy = new AccessShopBlockEntity(a, level.getBlockState(a));

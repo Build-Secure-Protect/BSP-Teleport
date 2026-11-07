@@ -126,15 +126,15 @@ Off by default (`access.enabled` in the config), because it is made for the BSP 
 
 What you may enter sits above your hotbar: a gold frame for your main server, turquoise for full access, violet with a countdown for rented. Three layouts, Row, Strip or Column, picked on the band's MORE tab. Rent warns you an hour, ten minutes and a minute before it runs out; at the end you are moved to your main server.
 
-**Access Tokens.** Twenty items, Access Token I to XX, one colour each. An admin makes a token stand for a server; the Access Shop (below) sells it for rent (so many hours) or full access. Use it at once, or keep the token until you want it, give it to a team mate, and right-click it to use it. Rent adds up; full access replaces rent. Token stacks also sell in BSP-Core's shops like any other item.
+**Access Tokens.** Twenty items, Access Token I to XX, one colour each. An admin makes a token stand for a server and gives it its prices: rent (for a length the admin picks) and full access, each in pieces or coins. The Access Shop (below) and the refusal window sell it at those prices. Use it at once, or keep the token until you want it, give it to a team mate, and right-click it to use it. Rent adds up; full access replaces rent. Token stacks also sell in BSP-Core's shops like any other item.
 
 ![Access needed and choose](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/access-popups.png)
 
-A refused teleport, portal or warp tells you what you need: the server, the token that sells it, and where the admin says it is sold. A player who arrives on a restricted server by any other route, or whose rent ran out while they were away, is sent to the network's main spawn.
+A refused teleport, portal or warp opens a small Access Shop with the token you need and its price; Use now buys it and the trip goes ahead. A token without a price shows where the admin says it is sold instead. A player who arrives on a restricted server by any other route, or whose rent ran out while they were away, is sent to the network's main spawn.
 
 ![Assigning tokens](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/admin-tokens.png)
 
-**Setting it up.** On the panel's NETWORK tab switch "needs access" on for each server that needs it. On the TOKENS tab pick a token and click the server it stands for, set the rent length and a shop hint, and press Rent or Full to get the stack for your shop. The same tab puts tokens on admin regions, portals and warps, so a token can sell access to a single arena, a single portal or a single warp. Everything is shared through the database, so every server agrees.
+**Setting it up.** On the panel's NETWORK tab switch "needs access" on for each server that needs it. On the TOKENS tab pick a token and click the server it stands for, then set its prices under it (rent on or off with its length and price, full access on or off with its price, pieces or coins for each) and a shop hint. Rent or Full gives you the stack to sell anywhere else. The same tab puts tokens on admin regions, portals and warps, so a token can sell access to a single arena, a single portal or a single warp. Everything is shared through the database, so every server agrees.
 
 ### The Access Shop
 
@@ -146,9 +146,11 @@ An admin block, two wide and two tall in the steel of BSP-Core's Trade Post, who
 
 A player with no main server who clicks the shop gets the free main-server pick first, then the shop. BUY asks before anything is taken: **Use now** starts the access at once, **Take token** puts the token in your inventory to use, trade or gift later.
 
+**Refused? Buy it there.** Try to enter a server you have no access to, through a world edge, a portal, a warp or the band, and a small Access Shop window opens with one card for the token you need, its price and BUY. **Use now** buys the access and the trip goes ahead at once. A token without a price shows where to buy it instead.
+
 ![Laying out a shop](https://raw.githubusercontent.com/Build-Secure-Protect/BSP-Teleport/main/docs/curseforge/images/access-shop-settings.png)
 
-Admins get a SETTINGS key: the shop's name and screen message, and a grid of slots per tab. Each slot holds a token with a rent price and hours and a full price, each in pieces or coins, and can be moved or removed. Every shop block has its own list, so two shops on a server can sell different things; **Copy from** takes another shop's list and message to start from.
+Admins get a SETTINGS key: the shop's name and screen message, and a grid of slots per tab. Each slot holds a token and says whether this shop sells its rent, its full access or both; the prices are the token's own, from the TOKENS tab. Slots can be moved or removed. Every shop block has its own list, so two shops on a server can sell different things; **Copy from** takes another shop's list and message to start from.
 
 ### Rules on portals and warps
 

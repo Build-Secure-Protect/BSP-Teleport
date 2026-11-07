@@ -145,7 +145,8 @@ public final class AdminService {
                 if (n >= 1 && n <= TokenAssignment.COUNT && kind != null && !c.isEmpty()) {
                     String target = kind == AccessGrant.Kind.SERVER ? AccessService.properName(player.server, c) : kind == AccessGrant.Kind.REGION && !c.contains(":") ? TeleportConfig.serverName() + ":" + c : c;
                     TokenAssignment existing = AccessService.tokens(player.server).get(n);
-                    TokenAssignment token = new TokenAssignment(n, kind, target, existing == null ? TeleportConfig.getOr(TeleportConfig.ACCESS_RENT_HOURS, 168) : existing.rentHours(), existing == null ? "" : existing.hint());
+                    TokenAssignment token = new TokenAssignment(n, kind, target, existing == null ? TeleportConfig.getOr(TeleportConfig.ACCESS_RENT_HOURS, 168) : existing.rentHours(), existing == null ? "" : existing.hint(),
+                            existing == null ? com.mrgregles.bsp_teleport.access.TokenPrice.NONE : existing.price());
                     AccessService.setToken(player.server, token);
                     tell(player, "access.token_set", TokenAssignment.roman(n), token.describe(), token.rentHours());
                 }
@@ -166,6 +167,20 @@ public final class AdminService {
                     TokenAssignment edited = action == AdminAction.TOKEN_HOURS ? existing.withHours(Math.max(1, Math.min(8760, parseInt(b, existing.rentHours())))) : existing.withHint(b.trim());
                     AccessService.setToken(player.server, edited);
                     tell(player, action == AdminAction.TOKEN_HOURS ? "access.token_hours" : "access.token_hint", TokenAssignment.roman(n), edited.rentHours());
+                }
+                open(player);
+            }
+            case TOKEN_PRICE -> {
+                // D189: one tier of the token's price; every shop and the pop-up use it from the next sync.
+                int n = parseInt(a, 0);
+                TokenAssignment existing = AccessService.tokens(player.server).get(n);
+                String d = parts.length > 3 ? parts[3] : "", e = parts.length > 4 ? parts[4] : "";
+                if (existing != null && ("rent".equals(b) || "full".equals(b))) {
+                    boolean full = "full".equals(b);
+                    com.mrgregles.bsp_teleport.access.TokenPrice price = existing.price().with(full, Boolean.parseBoolean(c),
+                            Math.max(0, parseInt(d, existing.price().price(full))), Boolean.parseBoolean(e)).clean();
+                    AccessService.setToken(player.server, existing.withPrice(price));
+                    tell(player, "access.token_price", TokenAssignment.roman(n), AccessService.describePrice(price, full, existing.rentHours()));
                 }
                 open(player);
             }
@@ -338,7 +353,8 @@ public final class AdminService {
         Map<Integer, TokenAssignment> assigned = AccessService.tokens(player.server);
         for (int n = 1; n <= TokenAssignment.COUNT; n++) {
             TokenAssignment t = assigned.get(n);
-            tokens.add(t == null ? new AdminData.TokenRow(n, "", "", 0, "") : new AdminData.TokenRow(n, t.kind().name().toLowerCase(java.util.Locale.ROOT), t.target(), t.rentHours(), t.hint()));
+            tokens.add(t == null ? new AdminData.TokenRow(n, "", "", 0, "", com.mrgregles.bsp_teleport.access.TokenPrice.NONE)
+                    : new AdminData.TokenRow(n, t.kind().name().toLowerCase(java.util.Locale.ROOT), t.target(), t.rentHours(), t.hint(), t.price()));
         }
         return new AdminData(TeleportConfig.serverName(), !Permissions.isAdmin(player), Storage.status(player.server), Messenger.status(), settings, warps, servers, portals,
                 tokens, new ArrayList<>(AccessService.restricted(player.server)), AccessService.enabled(), TeleportConfig.singlePlayer());

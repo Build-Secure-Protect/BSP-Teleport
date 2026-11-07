@@ -171,7 +171,16 @@ public final class RegionGuard {
             event.setCanceled(true);
             Destination destination = new Destination(event.destinationServer(), event.destinationWorld(),
                     event.x(), event.y(), event.z(), event.message()).withProtect(TRIGGER_PROTECT_SECONDS);
-            BspTeleportApi.get().teleport(event.player(), destination);
+            ServerPlayer player = event.player();
+            // D186 (B46): checked before leaving, so a player without access stays here and gets the pop-up, rather
+            // than crossing, being bounced to the lobby and maybe losing the pop-up in the switch. USE NOW in it
+            // carries on with this same move (D187).
+            if (!com.mrgregles.bsp_teleport.access.AccessService.mayEnter(player, destination.server())) {
+                com.mrgregles.bsp_teleport.access.AccessService.deny(player, com.mrgregles.bsp_teleport.access.AccessGrant.Kind.SERVER, destination.server(),
+                        () -> BspTeleportApi.get().teleport(player, destination));
+                return;
+            }
+            BspTeleportApi.get().teleport(player, destination);
         }
 
         /** A landing announced by another server for a player heading here. */

@@ -1,0 +1,249 @@
+<title>Edge Access Shop</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: what happens today, then three options. Each option shows the pop-up at the edge and the admin TOKENS tab with prices (game windows, scroll sideways on phones). Questions last. One dark look on purpose: these are game screens. */
+:root {
+    color-scheme: dark;
+    --page: #0b0e13; --panel: rgba(16,21,28,.97); --inset: #0c0e12; --line: #2a2f3a;
+    --tq: #19d3b0; --gold: #ffd23a; --vio: #b58cff; --bad: #ff6b5c; --ok: #8fe04a; --text: #e6eaf2; --muted: #9aa3b5; --hint: #6f7788;
+    --mc: "VT323", ui-monospace, Menlo, monospace; --ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+body { background: var(--page); color: var(--text); font-family: var(--ui); }
+.wrap { max-width: 1020px; margin: 0 auto; padding-block: 28px 64px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-family: var(--mc); font-weight: normal; font-size: 2.6rem; color: var(--tq); margin: 0 0 4px; text-wrap: balance; }
+h2 { font-family: var(--mc); font-weight: normal; font-size: 1.9rem; margin: 48px 0 4px; text-wrap: balance; }
+h2 .tag { color: var(--muted); font-size: 1.2rem; margin-left: 8px; }
+h3 { font-family: var(--mc); font-weight: normal; font-size: 1.35rem; color: var(--muted); margin: 22px 0 0; letter-spacing: .04em; }
+p, li { line-height: 1.55; color: var(--muted); max-width: 72ch; }
+p strong, li strong { color: var(--text); font-weight: 600; }
+.lede { color: var(--text); }
+.scroller { overflow-x: auto; margin-top: 10px; padding-bottom: 6px; }
+.win { position: relative; width: 960px; height: 400px; background: #05070a; font-family: var(--mc); overflow: hidden; user-select: none; }
+.win.tall { height: 470px; }
+.terrain { position: absolute; inset: 0; opacity: .4;
+    background: repeating-linear-gradient(90deg, rgba(0,0,0,.08) 0 1px, transparent 1px 16px), repeating-linear-gradient(0deg, rgba(0,0,0,.08) 0 1px, transparent 1px 16px),
+      linear-gradient(160deg, #6f8fa8 0, #8fb0c8 30%, #4c7a35 31%, #5d8b3c 60%, #4a7232); }
+.wall { position: absolute; top: 0; bottom: 0; right: 120px; width: 40px; background: repeating-linear-gradient(180deg, rgba(255,107,92,.35) 0 6px, rgba(255,107,92,.12) 6px 12px); }
+.dim { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
+.pnl { position: absolute; background: var(--panel); border: 1px solid var(--line); color: var(--text); }
+.pnl.tq { border-color: var(--tq); } .pnl.bad { border-color: var(--bad); } .pnl.gold { border-color: var(--gold); }
+.abs { position: absolute; }
+.btn { display: inline-flex; align-items: center; justify-content: center; height: 22px; padding: 0 9px; font-family: var(--mc); font-size: 16px;
+    background: var(--inset); border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.btn.tq { color: var(--tq); border-color: var(--tq); background: rgba(25,211,176,.13); }
+.btn.gold { color: var(--gold); border-color: var(--gold); background: rgba(255,210,58,.12); }
+.btn.vio { color: var(--vio); border-color: var(--vio); background: rgba(181,140,255,.12); }
+.btn.sm { height: 17px; font-size: 14px; padding: 0 6px; }
+.ttl { font-size: 20px; letter-spacing: .05em; }
+.lbl { font-size: 14px; color: var(--muted); letter-spacing: .04em; }
+.tiny { font-size: 13px; color: var(--hint); }
+.flex { display: flex; gap: 6px; align-items: center; }
+.coin { width: 26px; height: 26px; flex: none; display: grid; place-items: center; border-radius: 50%; font-family: Georgia, serif; font-weight: bold; font-size: 11px; color: #1a1406;
+    background: radial-gradient(circle at 35% 30%, #ffe9a0, var(--gold) 55%, #a07a10); }
+.coin.sm { width: 18px; height: 18px; font-size: 8px; }
+.coin.free { background: #1b2029; color: var(--hint); border: 1px solid var(--line); }
+.card { position: absolute; background: var(--inset); border: 1px solid var(--line); padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.card.on { border-color: var(--tq); }
+.sw { display: flex; gap: 2px; }
+.sw span { padding: 0 7px; height: 17px; line-height: 17px; font-size: 14px; border: 1px solid var(--line); color: var(--hint); background: var(--inset); }
+.sw span.on { color: var(--tq); border-color: var(--tq); background: rgba(25,211,176,.13); }
+.sw span.on.gold { color: var(--gold); border-color: var(--gold); background: rgba(255,210,58,.12); }
+.price { color: var(--gold); font-size: 18px; }
+.wallet { color: var(--gold); font-size: 15px; }
+.box { display: inline-flex; align-items: center; height: 18px; padding: 0 5px; min-width: 44px; border: 1px solid var(--line); background: #07090c; color: var(--text); font-size: 15px; }
+.box.on { border-color: var(--tq); }
+.tabs { position: absolute; display: flex; gap: 2px; }
+.tab { font-size: 15px; padding: 0 7px; height: 20px; line-height: 20px; color: var(--muted); border: 1px solid var(--line); border-bottom: none; background: var(--inset); }
+.tab.on { color: var(--tq); border-color: var(--tq); }
+.grid5 { position: absolute; display: grid; grid-template-columns: repeat(5, 26px); gap: 4px; }
+.grid5 .coin.pick { outline: 2px solid var(--tq); outline-offset: 1px; }
+.list { position: absolute; border: 1px solid var(--line); background: var(--inset); overflow: hidden; }
+.trow { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px; border-bottom: 1px solid #141821; font-size: 15px; color: var(--muted); white-space: nowrap; }
+.trow .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.trow.sel { color: var(--tq); background: rgba(25,211,176,.08); }
+.trow .p { width: 92px; text-align: right; color: var(--gold); font-size: 14px; }
+.trow .p.off { color: var(--hint); }
+.prow { display: flex; align-items: center; gap: 6px; height: 24px; }
+.prow .k { width: 40px; font-size: 15px; color: var(--muted); }
+.note { position: absolute; font-family: var(--ui); font-size: 12px; color: var(--hint); }
+.arrow { color: var(--tq); }
+.qs li { margin-bottom: 8px; }
+.qs li b { color: var(--text); font-weight: 600; }
+.qs .def { color: var(--tq); }
+.who { display: inline-block; font-family: var(--mc); font-size: 1rem; padding: 0 6px; border: 1px solid var(--vio); color: var(--vio); margin-right: 6px; }
+.who.rg { border-color: var(--tq); color: var(--tq); }
+</style>
+
+<div class="wrap">
+<h1>Edge Access Shop</h1>
+<p class="lede">A player walks to a world edge linked to another server, says TRAVEL, and has no access there. Today they are sent across, bounced to the lobby, and shown a small "Access needed" banner with no way to buy. These options show what they could see instead, and where an admin sets the prices.</p>
+<p><span class="who">BSP-Teleport</span> owns access tokens, the Access Shop and the TOKENS tab. Options A and B are built there only. <span class="who rg">Region Guard</span> option C also changes Region Guard's edge question.</p>
+
+<h3>Today</h3>
+<p>The edge move goes straight to the other server. That server sees no access, sends the player to the lobby (BSP-Spawn) and shows the banner: "ACCESS NEEDED: BSP-FROSTWARF", the two token stacks and CLOSE. Each Access Shop sets its own price, so nothing outside a shop knows what a token costs.</p>
+
+<!-- ============ A ============ -->
+<h2>A. The shop, one card <span class="tag">small Access Shop window, RENT / FULL switch</span></h2>
+<p>The player stays at the edge. A small copy of the Access Shop opens with one card for the token they need. The switch picks RENT or FULL, BUY asks USE NOW, TAKE TOKEN or CANCEL, the same as the shop. USE NOW grants access and the trip goes ahead.</p>
+<div class="scroller"><div class="win">
+  <div class="terrain"></div><div class="wall"></div><div class="dim"></div>
+  <div class="pnl tq" style="left:90px;top:70px;width:330px;height:250px">
+    <div class="abs flex" style="left:12px;top:9px;right:12px;justify-content:space-between"><span class="ttl" style="color:var(--tq)">ACCESS SHOP</span><span class="wallet">Bank 1,240 pieces</span></div>
+    <div class="abs" style="left:12px;top:36px;right:12px;font-size:16px;color:var(--text)">You need access to go to <span style="color:var(--vio)">BSP-Frostwarf</span>.</div>
+    <div class="card on" style="left:12px;top:62px;width:288px">
+      <div class="flex"><span class="coin">III</span><div><div style="font-size:17px">Access Token III</div><div class="tiny">Opens BSP-Frostwarf</div></div></div>
+      <div class="flex" style="justify-content:space-between"><div class="sw"><span class="on">RENT</span><span>FULL</span></div><span class="price">500 pieces</span></div>
+      <div class="flex" style="justify-content:space-between"><span class="tiny">7 days. Rent again to add time.</span><span class="btn gold sm">BUY</span></div>
+    </div>
+    <div class="abs tiny" style="left:12px;top:172px;right:12px">Or buy it at any Access Shop.</div>
+    <div class="abs flex" style="right:12px;bottom:12px"><span class="btn">CLOSE</span></div>
+  </div>
+  <div class="note" style="left:446px;top:150px">BUY <span class="arrow">&rarr;</span></div>
+  <div class="pnl gold" style="left:500px;top:110px;width:330px;height:130px">
+    <div class="abs ttl" style="left:12px;top:9px;color:var(--gold)">RENT BSP-FROSTWARF</div>
+    <div class="abs" style="left:12px;top:36px;right:12px;font-size:16px">7 days for 500 pieces.</div>
+    <div class="abs tiny" style="left:12px;top:58px;right:12px">USE NOW opens it and you travel. TAKE TOKEN puts it in your bag.</div>
+    <div class="abs flex" style="left:12px;bottom:12px"><span class="btn gold">USE NOW</span><span class="btn">TAKE TOKEN</span><span class="btn">CANCEL</span></div>
+  </div>
+</div></div>
+<p><strong>Admin, TOKENS tab A:</strong> the prices go under the picked token, on the left, where the rent hours are today.</p>
+<div class="scroller"><div class="win tall">
+  <div class="terrain"></div><div class="dim"></div>
+  <div class="pnl tq" style="left:150px;top:24px;width:660px;height:420px">
+    <div class="abs ttl" style="left:14px;top:9px;color:var(--tq)">BSP-TELEPORT ADMIN</div>
+    <div class="tabs" style="left:14px;top:38px"><span class="tab">WARPS</span><span class="tab">PORTALS</span><span class="tab">SERVERS</span><span class="tab on">TOKENS</span><span class="tab">MORE</span></div>
+    <div class="abs" style="left:14px;right:14px;top:58px;border-top:1px solid var(--tq)"></div>
+    <div class="abs tiny" style="left:14px;top:66px">Pick a token, then what it stands for. Set its prices here.</div>
+    <div class="abs lbl" style="left:14px;top:88px">TOKENS</div>
+    <div class="grid5" style="left:14px;top:106px">
+      <span class="coin sm" style="width:26px;height:26px;font-size:10px">I</span><span class="coin" style="font-size:10px">II</span><span class="coin pick" style="font-size:10px">III</span><span class="coin" style="font-size:10px">IV</span><span class="coin free">V</span>
+      <span class="coin free">VI</span><span class="coin free">VII</span><span class="coin free">VIII</span><span class="coin free">IX</span><span class="coin free">X</span>
+    </div>
+    <div class="abs" style="left:14px;top:178px;width:300px;border:1px solid var(--line);background:var(--inset);padding:8px;display:flex;flex-direction:column;gap:4px">
+      <div style="color:var(--tq);font-size:16px">TOKEN III</div>
+      <div style="color:var(--vio);font-size:15px">server BSP-Frostwarf</div>
+      <div class="prow"><span class="k">RENT</span><div class="sw"><span class="on">ON</span><span>OFF</span></div><span class="btn sm">-</span><span class="box">7 d</span><span class="btn sm">+</span><span class="box on">500</span><div class="sw"><span class="on gold">PIECES</span><span>COINS</span></div></div>
+      <div class="prow"><span class="k">FULL</span><div class="sw"><span class="on">ON</span><span>OFF</span></div><span class="box on" style="margin-left:0">5000</span><div class="sw"><span class="on gold">PIECES</span><span>COINS</span></div></div>
+      <div class="tiny">Every Access Shop and the edge pop-up use these prices.</div>
+      <div class="prow"><span class="box" style="flex:1;color:var(--hint)">Hint: Access Shop at spawn</span></div>
+    </div>
+    <div class="abs lbl" style="left:336px;top:88px">STANDS FOR</div>
+    <div class="list" style="left:336px;top:106px;width:310px;height:300px">
+      <div class="trow"><span class="coin sm">I</span><span class="nm">BSP-Stormfall</span><span class="tiny">server</span></div>
+      <div class="trow"><span class="coin sm">II</span><span class="nm">BSP-Moongrove</span><span class="tiny">server</span></div>
+      <div class="trow sel"><span class="coin sm">III</span><span class="nm">BSP-Frostwarf</span><span class="tiny">server</span></div>
+      <div class="trow"><span class="coin sm">IV</span><span class="nm">BSP-Bouderbrook</span><span class="tiny">server</span></div>
+      <div class="trow"><span class="coin sm free"></span><span class="nm">BSP-Sanctuary</span><span class="tiny">server</span></div>
+      <div class="trow"><span class="coin sm free"></span><span class="nm">vault_room</span><span class="tiny">region</span></div>
+      <div class="trow"><span class="coin sm free"></span><span class="nm">north_gate</span><span class="tiny">portal</span></div>
+    </div>
+  </div>
+</div></div>
+
+<!-- ============ B ============ -->
+<h2>B. The banner, both prices <span class="tag">today's banner with a BUY on each tier</span></h2>
+<p>The player stays at the edge. Today's "Access needed" banner across the top of the screen gets a price and a BUY key on each stack, so both choices show at once with no switch. BUY asks the same three answers as the shop.</p>
+<div class="scroller"><div class="win">
+  <div class="terrain"></div><div class="wall"></div>
+  <div class="pnl bad" style="left:250px;top:16px;width:460px;height:150px">
+    <div class="abs flex" style="left:12px;top:9px;right:12px;justify-content:space-between"><span class="ttl" style="color:var(--bad)">ACCESS NEEDED: BSP-FROSTWARF</span><span class="wallet">Bank 1,240</span></div>
+    <div class="abs tiny" style="left:12px;top:32px;right:12px">Buy one here, or at an Access Shop. Access Shop at spawn.</div>
+    <div class="card" style="left:12px;top:52px;width:200px">
+      <div class="flex"><span class="coin">III</span><div><div style="font-size:16px">Rent, 7 days</div><div class="price" style="font-size:16px">500 pieces</div></div><span class="btn gold sm" style="margin-left:auto">BUY</span></div>
+    </div>
+    <div class="card" style="left:232px;top:52px;width:200px">
+      <div class="flex"><span class="coin">III</span><div><div style="font-size:16px">Full access</div><div class="price" style="font-size:16px">5,000 pieces</div></div><span class="btn gold sm" style="margin-left:auto">BUY</span></div>
+    </div>
+    <div class="abs flex" style="right:12px;bottom:10px"><span class="btn sm">CLOSE</span></div>
+  </div>
+  <div class="note" style="left:250px;top:186px;max-width:460px">The game stays visible under the banner. The player can still walk away.</div>
+</div></div>
+<p><strong>Admin, TOKENS tab B:</strong> each row on the right shows its token's prices. Click a row's price to edit it in the strip at the foot.</p>
+<div class="scroller"><div class="win tall">
+  <div class="terrain"></div><div class="dim"></div>
+  <div class="pnl tq" style="left:150px;top:24px;width:660px;height:420px">
+    <div class="abs ttl" style="left:14px;top:9px;color:var(--tq)">BSP-TELEPORT ADMIN</div>
+    <div class="tabs" style="left:14px;top:38px"><span class="tab">WARPS</span><span class="tab">PORTALS</span><span class="tab">SERVERS</span><span class="tab on">TOKENS</span><span class="tab">MORE</span></div>
+    <div class="abs" style="left:14px;right:14px;top:58px;border-top:1px solid var(--tq)"></div>
+    <div class="abs lbl" style="left:14px;top:72px">TOKENS</div>
+    <div class="grid5" style="left:14px;top:90px">
+      <span class="coin" style="font-size:10px">I</span><span class="coin" style="font-size:10px">II</span><span class="coin pick" style="font-size:10px">III</span><span class="coin" style="font-size:10px">IV</span><span class="coin free">V</span>
+      <span class="coin free">VI</span><span class="coin free">VII</span><span class="coin free">VIII</span><span class="coin free">IX</span><span class="coin free">X</span>
+    </div>
+    <div class="abs lbl" style="left:190px;top:72px;width:456px;display:flex"><span style="flex:1">STANDS FOR</span><span style="width:100px;text-align:right">RENT</span><span style="width:100px;text-align:right">FULL</span></div>
+    <div class="list" style="left:190px;top:90px;width:456px;height:230px">
+      <div class="trow"><span class="coin sm">I</span><span class="nm">BSP-Stormfall</span><span class="p">300 / 7 d</span><span class="p">3,000</span></div>
+      <div class="trow"><span class="coin sm">II</span><span class="nm">BSP-Moongrove</span><span class="p">300 / 7 d</span><span class="p off">off</span></div>
+      <div class="trow sel"><span class="coin sm">III</span><span class="nm">BSP-Frostwarf</span><span class="p">500 / 7 d</span><span class="p">5,000</span></div>
+      <div class="trow"><span class="coin sm">IV</span><span class="nm">BSP-Bouderbrook</span><span class="p off">no price</span><span class="p off">no price</span></div>
+      <div class="trow"><span class="coin sm free"></span><span class="nm">BSP-Sanctuary</span><span class="p off"></span><span class="p off"></span></div>
+      <div class="trow"><span class="coin sm free"></span><span class="nm">vault_room (region)</span><span class="p off"></span><span class="p off"></span></div>
+    </div>
+    <div class="abs" style="left:14px;right:14px;top:334px;border:1px solid var(--tq);background:var(--inset);padding:8px;display:flex;flex-direction:column;gap:4px">
+      <div style="color:var(--tq);font-size:16px">TOKEN III &middot; BSP-FROSTWARF</div>
+      <div class="flex" style="gap:14px">
+        <div class="prow"><span class="k">RENT</span><div class="sw"><span class="on">ON</span><span>OFF</span></div><span class="btn sm">-</span><span class="box">7 d</span><span class="btn sm">+</span><span class="box on">500</span><div class="sw"><span class="on gold">PIECES</span><span>COINS</span></div></div>
+        <div class="prow"><span class="k">FULL</span><div class="sw"><span class="on">ON</span><span>OFF</span></div><span class="box on">5000</span><div class="sw"><span class="on gold">PIECES</span><span>COINS</span></div></div>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<!-- ============ C ============ -->
+<h2>C. In the edge question <span class="tag">Region Guard's pop-up asks before TRAVEL</span></h2>
+<p>Region Guard asks BSP-Teleport before showing the edge question. A player without access sees the token and its prices in the same window, with RENT AND GO, BUY AND GO and STAY. Nobody is sent across and refused. This needs work in both mods and a new BSP-Teleport API.</p>
+<div class="scroller"><div class="win">
+  <div class="terrain"></div><div class="wall"></div><div class="dim"></div>
+  <div class="pnl tq" style="left:300px;top:60px;width:360px;height:270px">
+    <div class="abs ttl" style="left:12px;top:9px;color:var(--tq)">THE EDGE OF THE WORLD</div>
+    <div class="abs" style="left:12px;top:36px;font-size:16px">Beyond this edge is <span style="color:var(--vio)">BSP-Frostwarf</span>.</div>
+    <div class="abs tiny" style="left:12px;top:56px">You arrive in its Overworld near x 4200, z -310.</div>
+    <div class="abs" style="left:12px;top:80px;right:12px;font-size:16px;color:var(--bad)">You need Access Token III to go there.</div>
+    <div class="card" style="left:12px;top:104px;width:318px">
+      <div class="flex"><span class="coin sm">III</span><span style="font-size:16px;flex:1">Rent, 7 days</span><span class="price" style="font-size:16px">500 pieces</span><span class="btn gold sm">RENT AND GO</span></div>
+      <div class="flex"><span class="coin sm">III</span><span style="font-size:16px;flex:1">Full access</span><span class="price" style="font-size:16px">5,000 pieces</span><span class="btn gold sm">BUY AND GO</span></div>
+    </div>
+    <div class="abs flex" style="left:12px;bottom:12px"><span class="btn">STAY</span><span class="wallet" style="margin-left:10px">Bank 1,240 pieces</span></div>
+    <div class="abs tiny" style="right:12px;bottom:16px">Esc to stay</div>
+  </div>
+  <div class="note" style="left:680px;top:140px;max-width:240px">A player who has access sees today's window: TRAVEL and STAY.</div>
+</div></div>
+<p><strong>Admin, TOKENS tab C:</strong> the tab stays as it is, with a PRICES key on the picked token. It opens a small window over the tab.</p>
+<div class="scroller"><div class="win tall">
+  <div class="terrain"></div><div class="dim"></div>
+  <div class="pnl" style="left:150px;top:24px;width:660px;height:420px;opacity:.55">
+    <div class="abs ttl" style="left:14px;top:9px;color:var(--tq)">BSP-TELEPORT ADMIN</div>
+    <div class="tabs" style="left:14px;top:38px"><span class="tab">WARPS</span><span class="tab">PORTALS</span><span class="tab">SERVERS</span><span class="tab on">TOKENS</span><span class="tab">MORE</span></div>
+    <div class="grid5" style="left:14px;top:90px">
+      <span class="coin" style="font-size:10px">I</span><span class="coin" style="font-size:10px">II</span><span class="coin pick" style="font-size:10px">III</span><span class="coin" style="font-size:10px">IV</span><span class="coin free">V</span>
+    </div>
+    <div class="abs" style="left:14px;top:136px;width:300px;border:1px solid var(--line);background:var(--inset);padding:8px">
+      <div style="color:var(--tq);font-size:16px">TOKEN III</div><div style="color:var(--vio);font-size:15px">server BSP-Frostwarf</div>
+      <div class="flex" style="margin-top:4px"><span class="btn tq sm">PRICES</span><span class="tiny">500 / 7 d, full 5,000</span></div>
+    </div>
+  </div>
+  <div class="pnl tq" style="left:330px;top:150px;width:300px;height:168px">
+    <div class="abs ttl" style="left:12px;top:9px;color:var(--tq)">PRICES: TOKEN III</div>
+    <div class="abs" style="left:12px;top:36px;right:12px;display:flex;flex-direction:column;gap:6px">
+      <div class="prow"><span class="k">RENT</span><div class="sw"><span class="on">ON</span><span>OFF</span></div><span class="box">7 d 0 h</span><span class="box on">500</span></div>
+      <div class="prow"><span class="k"></span><div class="sw"><span class="on gold">PIECES</span><span>COINS</span></div></div>
+      <div class="prow"><span class="k">FULL</span><div class="sw"><span class="on">ON</span><span>OFF</span></div><span class="box on">5000</span><div class="sw"><span class="on gold">PIECES</span><span>COINS</span></div></div>
+    </div>
+    <div class="abs flex" style="right:12px;bottom:12px"><span class="btn tq">SAVE</span><span class="btn">CANCEL</span></div>
+  </div>
+</div></div>
+
+<h2>Questions <span class="tag">each with a default</span></h2>
+<ol class="qs">
+  <li><b>Check before leaving.</b> <span class="def">Default: yes.</span> BSP-Teleport checks access when the edge move reaches it, so the player stays at the edge and is not bounced to the lobby.</li>
+  <li><b>USE NOW at the edge.</b> <span class="def">Default: the trip goes ahead at once</span>, as if they had said TRAVEL again.</li>
+  <li><b>Same pop-up everywhere.</b> <span class="def">Default: yes.</span> Every refused server entry (portals, warps, the server switcher, the arrival bounce) uses the new pop-up, not only edges.</li>
+  <li><b>Shops lose their own prices.</b> <span class="def">Default: yes.</span> A shop only picks which tokens and which tiers it sells. The price comes from the token.</li>
+  <li><b>Shops built before this.</b> <span class="def">Default: their prices are dropped.</span> A token is not for sale until an admin prices it. Shops and the pop-up show "No price set".</li>
+  <li><b>Rent length.</b> <span class="def">Default: the token's existing rent hours</span>, shown as days and hours, typed or stepped a day at a time.</li>
+  <li><b>Pieces or coins.</b> <span class="def">Default: chosen per tier</span>, as in the shop today.</li>
+  <li><b>No price or tier off.</b> <span class="def">Default: the pop-up shows today's banner text</span> (the token and the hint) with no BUY.</li>
+  <li><b>No main server yet.</b> <span class="def">Default: the free main-server choice comes first</span>, as today (D82).</li>
+</ol>
+</div>

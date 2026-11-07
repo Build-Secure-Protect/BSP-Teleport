@@ -331,7 +331,9 @@ public final class TeleportActions {
             if (TeleportConfig.singlePlayer()) {
                 return fail(player, "single_player");
             }
-            if (!com.mrgregles.bsp_teleport.access.AccessService.checkServer(player, server)) {
+            if (!com.mrgregles.bsp_teleport.access.AccessService.mayEnter(player, server)) {
+                com.mrgregles.bsp_teleport.access.AccessService.deny(player, com.mrgregles.bsp_teleport.access.AccessGrant.Kind.SERVER, server,
+                        () -> rtp(player, server)); // D187: USE NOW carries on
                 return false;
             }
             if (Teleports.isWaiting(player) || Teleports.cooldownBlocks(player, TeleportKind.RANDOM)) {

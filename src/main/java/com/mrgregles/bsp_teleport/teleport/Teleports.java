@@ -114,7 +114,10 @@ public final class Teleports {
             tell(player, "blocked_thief", thief);
             return false;
         }
-        if (!com.mrgregles.bsp_teleport.access.AccessService.checkServer(player, destination.server())) {
+        if (!com.mrgregles.bsp_teleport.access.AccessService.mayEnter(player, destination.server())) {
+            BeforeMove again = beforeMove;
+            com.mrgregles.bsp_teleport.access.AccessService.deny(player, com.mrgregles.bsp_teleport.access.AccessGrant.Kind.SERVER, destination.server(),
+                    () -> start(player, destination, label, kind, again)); // D187: USE NOW carries on
             return false;
         }
         // D39: during a raid every teleport still works, except one that would land near the totem being stolen,

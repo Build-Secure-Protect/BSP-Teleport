@@ -46,6 +46,10 @@ public class AccessScreen extends Screen {
 
     public static void show(AccessPopup data) {
         Minecraft mc = Minecraft.getInstance();
+        if (AccessShopScreen.canOffer(data)) {
+            AccessShopScreen.offer(data); // D185: a token with a price on gets the one-card shop
+            return;
+        }
         if (mc.screen instanceof AccessScreen screen) {
             screen.data = data;
             screen.confirming = null;

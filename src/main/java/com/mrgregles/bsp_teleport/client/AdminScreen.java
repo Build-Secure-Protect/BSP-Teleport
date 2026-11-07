@@ -44,6 +44,12 @@ public class AdminScreen extends Screen {
     private String selectedPortal = "";
     /** TOKENS tab (D89, pick then place): the token picked on the left, 0 for none. */
     private int pickedToken;
+    /** TOKENS tab (D185): what the box under the picked token is typing. */
+    private enum TokenEdit { HINT, RENT_PRICE, FULL_PRICE, LENGTH }
+
+    private TokenEdit tokenEdit = TokenEdit.HINT;
+    /** The currency picked while typing a price. */
+    private boolean editPieces = true;
     /** WARPS tab: the warp whose rules are being edited (D86), or null for the list. */
     @Nullable
     private String accessWarp;
@@ -102,7 +108,9 @@ public class AdminScreen extends Screen {
         addRenderableWidget(nameBox);
         textBox = new EditBox(font, left + 10, top + H - 40, 120, 14, Component.literal("value"));
         textBox.setMaxLength(16);
+        textBox.setResponder(v -> textBox.setTextColor(0xE0E0E0)); // a length marked wrong turns back as the admin types
         addRenderableWidget(textBox);
+        tokenEdit = TokenEdit.HINT;
         // A resize makes new boxes, so what was typed is gone: the cost strip closes with it.
         costWarp = null;
         refreshBoxes();
@@ -113,8 +121,69 @@ public class AdminScreen extends Screen {
         textBox.visible = (tab == Tab.SETTINGS || tab == Tab.TOKENS || (tab == Tab.WARPS && (accessWarp != null || costWarp != null))) && !data.readOnly();
         nameBox.setHint(Component.translatable(tab == Tab.TOKENS ? "screen.bsp_teleport.admin.region_id" : "screen.bsp_teleport.band.name_hint"));
         nameBox.setMaxLength(tab == Tab.TOKENS ? 64 : 16);
-        textBox.setMaxLength(tab == Tab.TOKENS ? 64 : costWarp != null ? 9 : 16);
-        textBox.setFilter(costWarp != null ? text -> text.chars().allMatch(Character::isDigit) : text -> true);
+        boolean pricing = tab == Tab.TOKENS && (tokenEdit == TokenEdit.RENT_PRICE || tokenEdit == TokenEdit.FULL_PRICE);
+        textBox.setMaxLength(pricing ? 10 : tab == Tab.TOKENS ? (tokenEdit == TokenEdit.LENGTH ? 12 : 64) : costWarp != null ? 9 : 16);
+        textBox.setFilter(costWarp != null || pricing ? text -> text.chars().allMatch(Character::isDigit) : text -> true);
+        textBox.setTextColor(0xE0E0E0);
+    }
+
+    /**
+     * D185: the box under the picked token types a price or the rent length, selected so typing replaces it; HINT puts
+     * it back to the hint.
+     */
+    private void editToken(TokenEdit what, AdminData.TokenRow t) {
+        tokenEdit = what;
+        refreshBoxes();
+        switch (what) {
+            case RENT_PRICE, FULL_PRICE -> {
+                boolean full = what == TokenEdit.FULL_PRICE;
+                editPieces = t.price().pieces(full);
+                textBox.setValue(String.valueOf(t.price().price(full)));
+            }
+            case LENGTH -> textBox.setValue(com.mrgregles.bsp_teleport.access.TokenPrice.describeLength(t.hours()));
+            default -> textBox.setValue("");
+        }
+        if (what != TokenEdit.HINT) {
+            textBox.moveCursorToEnd();
+            textBox.setHighlightPos(0);
+            setFocused(textBox);
+        } else {
+            setFocused(null);
+        }
+    }
+
+    /** SET (or Enter) under the picked token: the hint, a price, or the rent length. */
+    private void saveTokenEdit(AdminData.TokenRow t) {
+        int n = t.token();
+        String typed = textBox.getValue().trim();
+        switch (tokenEdit) {
+            case HINT -> {
+                send(AdminAction.TOKEN_HINT, n + ";" + typed);
+                textBox.setValue("");
+            }
+            case RENT_PRICE, FULL_PRICE -> {
+                boolean full = tokenEdit == TokenEdit.FULL_PRICE;
+                long amount;
+                try {
+                    amount = typed.isEmpty() ? t.price().price(full) : Long.parseLong(typed);
+                } catch (NumberFormatException e) {
+                    amount = com.mrgregles.bsp_teleport.access.TokenPrice.MAX_PRICE;
+                }
+                amount = Math.min(amount, com.mrgregles.bsp_teleport.access.TokenPrice.MAX_PRICE);
+                // Typing a price puts that tier on sale.
+                send(AdminAction.TOKEN_PRICE, n + ";" + (full ? "full" : "rent") + ";true;" + amount + ";" + editPieces);
+                editToken(TokenEdit.HINT, t);
+            }
+            case LENGTH -> {
+                int hours = com.mrgregles.bsp_teleport.access.TokenPrice.parseLength(typed);
+                if (hours < 0) {
+                    textBox.setTextColor(BAD); // not a length: stays for the admin to fix
+                    return;
+                }
+                send(AdminAction.TOKEN_HOURS, n + ";" + hours);
+                editToken(TokenEdit.HINT, t);
+            }
+        }
     }
 
     /** B24: the cost key opens the bottom strip with the warp's cost selected, so typing replaces it. */
@@ -199,6 +268,11 @@ public class AdminScreen extends Screen {
                 tab = t;
                 scroll = 0;
                 pickingTarget = false;
+                if (tokenEdit != TokenEdit.HINT) {
+                    tokenEdit = TokenEdit.HINT;
+                    textBox.setValue("");
+                    setFocused(null);
+                }
                 refreshBoxes();
             }));
         }
@@ -729,13 +803,13 @@ public class AdminScreen extends Screen {
         int y = top + 28;
         small(g, clip(Component.translatable("screen.bsp_teleport.admin.tokens_help").getString(), W - 20), left + 10, y, MUTED);
         y += 12;
-        // Left: the twenty tokens, five across; dim means free, violet assigned, turquoise picked.
+        // Left: the twenty tokens, seven across; dim means free, violet assigned, turquoise picked.
         int lx = left + 10;
         small(g, Component.translatable("screen.bsp_teleport.admin.tokens_list").getString().toUpperCase(), lx, y, MUTED);
         int gy = y + 10;
         for (AdminData.TokenRow t : data.tokens()) {
             int i = t.token() - 1;
-            int cx = lx + (i % 5) * 19, cy = gy + (i / 5) * 19;
+            int cx = lx + (i % 7) * 19, cy = gy + (i / 7) * 19;
             boolean picked = t.token() == pickedToken, assigned = !t.kind().isEmpty();
             g.fill(cx, cy, cx + 18, cy + 18, picked ? TQ : assigned ? VIO : DIM);
             g.fill(cx + 1, cy + 1, cx + 17, cy + 17, picked ? 0xFF0F2A28 : SLOT);
@@ -744,50 +818,65 @@ public class AdminScreen extends Screen {
                 g.fill(cx + 1, cy + 1, cx + 17, cy + 17, 0x90000000);
             }
             int n = t.token();
-            hits.add(new Hit(cx, cy, 18, 18, () -> pickedToken = pickedToken == n ? 0 : n));
+            hits.add(new Hit(cx, cy, 18, 18, () -> {
+                pickedToken = pickedToken == n ? 0 : n;
+                if (tokenEdit != TokenEdit.HINT) {
+                    tokenEdit = TokenEdit.HINT;
+                    textBox.setValue("");
+                    refreshBoxes();
+                }
+            }));
         }
-        int infoY = gy + 4 * 19 + 2;
+        int infoY = gy + 3 * 19 + 2;
         AdminData.TokenRow picked = pickedToken > 0 ? data.tokens().get(pickedToken - 1) : null;
-        int lw = 118;
-        g.fill(lx, infoY, lx + lw, infoY + 46, DIM);
-        g.fill(lx + 1, infoY + 1, lx + lw - 1, infoY + 45, SLOT);
+        int lw = 140;
+        g.fill(lx, infoY, lx + lw, infoY + 58, DIM);
+        g.fill(lx + 1, infoY + 1, lx + lw - 1, infoY + 57, SLOT);
+        boolean assignedPick = picked != null && !picked.kind().isEmpty();
         if (picked == null) {
             small(g, Component.translatable("screen.bsp_teleport.admin.token_free").getString(), lx + 4, infoY + 4, MUTED);
         } else {
             small(g, Component.translatable("screen.bsp_teleport.admin.token_picked", com.mrgregles.bsp_teleport.access.TokenAssignment.roman(picked.token())).getString().toUpperCase(), lx + 4, infoY + 4, TQ);
-            boolean assigned = !picked.kind().isEmpty();
-            small(g, assigned ? clip(Component.translatable("screen.bsp_teleport.admin.kind." + picked.kind()).getString() + " " + picked.target(), lw - 8)
-                    : Component.translatable("screen.bsp_teleport.admin.token_free").getString(), lx + 4, infoY + 13, assigned ? VIO : MUTED);
-            if (assigned && !data.readOnly()) {
+            small(g, assignedPick ? clip(Component.translatable("screen.bsp_teleport.admin.kind." + picked.kind()).getString() + " " + picked.target(), lw - 8)
+                    : Component.translatable("screen.bsp_teleport.admin.token_free").getString(), lx + 4, infoY + 13, assignedPick ? VIO : MUTED);
+            if (assignedPick) {
+                drawTokenPrices(g, picked, lx + 4, infoY + 22, lw - 8);
+            }
+            if (assignedPick && !data.readOnly()) {
                 int n = picked.token();
                 int bx = lx + lw - 4;
-                bx = button(g, bx, infoY + 22, "+", DIM, GOLD, () -> send(AdminAction.TOKEN_HOURS, n + ";" + (picked.hours() + 24))) - 2;
-                String hrs = Component.translatable("screen.bsp_teleport.admin.hours", picked.hours()).getString();
-                int tw = (int) (font.width(hrs) * 0.75f) + 6;
-                small(g, hrs, bx - tw + 3, infoY + 25, GOLD);
-                bx -= tw + 2;
-                button(g, bx, infoY + 22, "-", DIM, GOLD, () -> send(AdminAction.TOKEN_HOURS, n + ";" + Math.max(1, picked.hours() - 24)));
-                bx = lx + lw - 4;
-                bx = button(g, bx, infoY + 34, Component.translatable("screen.bsp_teleport.admin.clear").getString(), BAD, BAD, () -> send(AdminAction.TOKEN_CLEAR, String.valueOf(n))) - 2;
-                bx = button(g, bx, infoY + 34, Component.translatable("screen.bsp_teleport.admin.full_stack").getString(), GOLD, GOLD, () -> send(AdminAction.TOKEN_STACK, n + ";full;0")) - 2;
-                button(g, bx, infoY + 34, Component.translatable("screen.bsp_teleport.admin.rent_stack").getString(), GOLD, GOLD, () -> send(AdminAction.TOKEN_STACK, n + ";rent;0"));
+                bx = button(g, bx, infoY + 46, Component.translatable("screen.bsp_teleport.admin.clear").getString(), BAD, BAD, () -> send(AdminAction.TOKEN_CLEAR, String.valueOf(n))) - 2;
+                bx = button(g, bx, infoY + 46, Component.translatable("screen.bsp_teleport.admin.full_stack").getString(), GOLD, GOLD, () -> send(AdminAction.TOKEN_STACK, n + ";full;0")) - 2;
+                button(g, bx, infoY + 46, Component.translatable("screen.bsp_teleport.admin.rent_stack").getString(), GOLD, GOLD, () -> send(AdminAction.TOKEN_STACK, n + ";rent;0"));
             }
         }
-        // The hint box under the info (left) and the region box at the foot of the targets (right): both act on the picked token.
+        if (!assignedPick && tokenEdit != TokenEdit.HINT) {
+            tokenEdit = TokenEdit.HINT;
+            refreshBoxes();
+        }
+        // The box under the info (left: the hint, or a price or the rent length being typed) and the region box at the
+        // foot of the targets (right): both act on the picked token.
         int rx = left + 10 + lw + 8, rw = W - 20 - lw - 8;
+        boolean pricing = tokenEdit == TokenEdit.RENT_PRICE || tokenEdit == TokenEdit.FULL_PRICE;
         textBox.setX(lx);
-        textBox.setY(infoY + 48);
-        textBox.setWidth(lw - 30);
-        textBox.setHint(Component.translatable("screen.bsp_teleport.admin.hint"));
+        textBox.setY(infoY + 60);
+        textBox.setWidth(lw - 30 - (pricing ? 40 : 0));
+        textBox.setHint(Component.translatable(switch (tokenEdit) {
+            case HINT -> "screen.bsp_teleport.admin.hint";
+            case LENGTH -> "screen.bsp_teleport.admin.length_hint";
+            default -> "screen.bsp_teleport.admin.price_hint";
+        }));
         nameBox.setX(rx);
         nameBox.setY(top + H - 40);
         nameBox.setWidth(rw - 44);
         if (!data.readOnly() && picked != null) {
             int n = picked.token();
-            button(g, lx + lw, infoY + 49, Component.translatable("screen.bsp_teleport.admin.set").getString(), TQ, TQ, () -> {
-                send(AdminAction.TOKEN_HINT, n + ";" + textBox.getValue().trim());
-                textBox.setValue("");
-            });
+            AdminData.TokenRow row = picked;
+            int sx = button(g, lx + lw, infoY + 61, Component.translatable("screen.bsp_teleport.admin.set").getString(), TQ, TQ, () -> saveTokenEdit(row)) - 2;
+            if (pricing) {
+                button(g, sx, infoY + 61, Component.translatable(editPieces ? "screen.bsp_teleport.shop.pieces" : "screen.bsp_teleport.shop.coins").getString(), GOLD, GOLD,
+                        () -> editPieces = !editPieces);
+            }
             button(g, rx + rw, top + H - 39, Component.translatable("screen.bsp_teleport.admin.assign_region").getString(), VIO, VIO, () -> {
                 if (!nameBox.getValue().trim().isEmpty()) {
                     send(AdminAction.TOKEN_ASSIGN, n + ";region;" + nameBox.getValue().trim());
@@ -821,6 +910,41 @@ public class AdminScreen extends Screen {
                 hits.add(new Hit(rx, ry, rw, 18, () -> send(AdminAction.TOKEN_ASSIGN, n + ";" + t.kind() + ";" + t.name())));
             }
             ry += 20;
+        }
+    }
+
+    /**
+     * D185, D189: the picked token's prices, two rows. RENT on/off, - length +, price; FULL on/off, price. A click on a
+     * price or the length types it in the box below; the keys step the length a day at a time (D191).
+     */
+    private void drawTokenPrices(GuiGraphics g, AdminData.TokenRow t, int x, int y, int w) {
+        com.mrgregles.bsp_teleport.access.TokenPrice p = t.price();
+        boolean edit = !data.readOnly();
+        int n = t.token();
+        for (boolean full : new boolean[]{false, true}) {
+            int ry = full ? y + 12 : y;
+            boolean on = p.sells(full);
+            String tier = Component.translatable(full ? "screen.bsp_teleport.shop.full" : "screen.bsp_teleport.shop.rent").getString();
+            String toggle = tier + " " + Component.translatable(on ? "screen.bsp_teleport.shop.on" : "screen.bsp_teleport.shop.off").getString();
+            int after = button(g, x + keyWidth(toggle), ry, toggle, on ? TQ : DIM, on ? TQ : MUTED,
+                    edit ? () -> send(AdminAction.TOKEN_PRICE, n + ";" + (full ? "full" : "rent") + ";" + !on + ";" + p.price(full) + ";" + p.pieces(full)) : null)
+                    + keyWidth(toggle) + 3;
+            if (!full) {
+                // - length +
+                after = button(g, after + keyWidth("-"), ry, "-", DIM, GOLD, edit ? () -> send(AdminAction.TOKEN_HOURS, n + ";" + Math.max(1, t.hours() - 24)) : null) + keyWidth("-") + 1;
+                String len = com.mrgregles.bsp_teleport.access.TokenPrice.describeLength(t.hours());
+                boolean typing = tokenEdit == TokenEdit.LENGTH && pickedToken == n;
+                int lw = (int) (font.width(len) * 0.75f) + 4;
+                small(g, len, after + 2, ry + 3, typing ? TQ : GOLD);
+                if (edit) {
+                    hits.add(new Hit(after, ry, lw, 12, () -> editToken(TokenEdit.LENGTH, t)));
+                }
+                after += lw + 1;
+                button(g, after + keyWidth("+"), ry, "+", DIM, GOLD, edit ? () -> send(AdminAction.TOKEN_HOURS, n + ";" + Math.min(24 * 365, t.hours() + 24)) : null);
+            }
+            String amount = on ? costLabel(p.price(full), p.pieces(full)) : Component.translatable("screen.bsp_teleport.shop.no_price").getString();
+            boolean typing = tokenEdit == (full ? TokenEdit.FULL_PRICE : TokenEdit.RENT_PRICE) && pickedToken == n;
+            button(g, x + w, ry, amount, typing ? TQ : on ? GOLD : DIM, on ? GOLD : MUTED, edit ? () -> editToken(full ? TokenEdit.FULL_PRICE : TokenEdit.RENT_PRICE, t) : null);
         }
     }
 
@@ -975,6 +1099,17 @@ public class AdminScreen extends Screen {
             }
             if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER || key == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_ENTER) {
                 saveCost();
+                return true;
+            }
+        }
+        if (tab == Tab.TOKENS && textBox.isFocused() && confirm == null && pickedToken > 0) {
+            AdminData.TokenRow t = data.tokens().get(pickedToken - 1);
+            if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER || key == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_ENTER) {
+                saveTokenEdit(t);
+                return true;
+            }
+            if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE && tokenEdit != TokenEdit.HINT) {
+                editToken(TokenEdit.HINT, t);
                 return true;
             }
         }

@@ -11,8 +11,10 @@ import java.util.List;
  *
  * @param token  the token number that stands for the target, or 0
  * @param noMain whether the player still has no main server (a DENIED popup then offers the choice)
+ * @param coins  the player's Shatter Coins, for the pop-up's BUY (D185)
+ * @param pieces the player's bank pieces, likewise
  */
-public record AccessPopup(Type type, String target, int token, int rentHours, String hint, boolean noMain, List<ServerChoice> servers) {
+public record AccessPopup(Type type, String target, int token, int rentHours, String hint, boolean noMain, List<ServerChoice> servers, int coins, long pieces) {
     public enum Type { DENIED, CHOOSE }
 
     /** A restricted server and how many players call it home, hold full access, or rent it. */
@@ -33,6 +35,8 @@ public record AccessPopup(Type type, String target, int token, int rentHours, St
             buf.writeVarInt(s.full());
             buf.writeVarInt(s.rent());
         }
+        buf.writeVarInt(coins);
+        buf.writeVarLong(pieces);
     }
 
     public static AccessPopup decode(FriendlyByteBuf buf) {
@@ -46,6 +50,6 @@ public record AccessPopup(Type type, String target, int token, int rentHours, St
         for (int i = 0; i < n; i++) {
             servers.add(new ServerChoice(buf.readUtf(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt()));
         }
-        return new AccessPopup(type, target, token, hours, hint, noMain, servers);
+        return new AccessPopup(type, target, token, hours, hint, noMain, servers, buf.readVarInt(), buf.readVarLong());
     }
 }

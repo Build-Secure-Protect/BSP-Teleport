@@ -54,5 +54,7 @@ public enum AdminAction {
     /** name;kind;value;count;consume: a rule on a warp (D86) */
     WARP_RULE_ADD,
     /** name;index */
-    WARP_RULE_DEL
+    WARP_RULE_DEL,
+    /** token;rent|full;on (true|false);price;pieces (true|false): one tier of a token's price (D189) */
+    TOKEN_PRICE
 }

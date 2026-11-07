@@ -487,3 +487,25 @@ Setup: the network on MySQL; a player whose totem, placed on their home server, 
 2. Go to the spawn hub. The HOMES tab shows the same count (not "Homes 4 of 3"), no home is locked, and `/home` there uses the same shorter cooldown.
 3. Back on the home server, break the totem (or let it be stolen). Return to the hub: within a few seconds the count and cooldown drop to the base values, and homes above the base slots show as locked.
 4. A stolen totem counts for its new owner only: the thief sees the levels on the hub, the old owner does not.
+
+## The access pop-up and token prices (D185 to D195, B46, 2026-11-07)
+
+Every server and every client needs this jar: the band protocol is now 9, so a 3.5.x client cannot join a server running this. The database gets a new `prices` column on the access tokens table by itself. Region Guard is needed for steps 7 to 9.
+
+Setup: access on, BSP-Frostwarf restricted, token III assigned to it, an Access Shop at spawn selling III (from before this version), a player with a main server other than BSP-Frostwarf and some pieces and coins, an admin.
+
+1. Open the old shop as the player: the III card says "No price set" and has no BUY (shops lost their own prices).
+2. As the admin, `/bsptp admin`, TOKENS tab. The tokens sit seven across; pick III. Under it: RENT OFF, a length (7d), "No price set"; FULL OFF, "No price set"; CLEAR, FULL STACK, RENT STACK.
+3. Click the rent price: the box below shows "0" selected with a PIECES key and SET. Type 500, SET (or Enter): RENT turns ON and shows 500p. Click the full price, type 5000, press PIECES to make it COINS, SET: FULL ON, 5,000c. Chat says "Access Token III: full access for 5,000 coins."
+4. Rent length: press + and -, a day each. Click the length, type `1d 12h`, Enter: it shows 1d 12h. Type `a week`: the text turns red and nothing is saved; Esc puts the hint box back. Set it back to 7d.
+5. The old shop as the player: III now shows RENT 500p 7d and FULL 5,000c, BUY works as before (USE NOW, TAKE TOKEN, CANCEL), and the price in the chat and the confirm box match. In the shop's SETTINGS the slot shows RENT on/off and FULL on/off with the token's prices next to them, and "Prices are set per token on the admin TOKENS tab." Turn FULL off for this shop and SAVE: the player's card offers only RENT. A second shop still sells both.
+6. With another server's admin panel open, change III's rent price: within a few seconds both servers' shops show the new price.
+7. With Region Guard: an edge of the spawn world linked to BSP-Frostwarf. As the player (no access there), walk to the edge and say TRAVEL. You stay at the edge (no trip to Frostwarf, no bounce to the lobby). Chat says you have no access, and a small gold-framed ACCESS SHOP window opens: "You need access to go to BSP-Frostwarf.", one card for Access Token III with RENT / FULL, your pieces and coins, "Also sold at: <hint>" (or "Or buy it at any Access Shop." without a hint), CLOSE.
+8. BUY on RENT, USE NOW: the pieces are taken, chat says access to BSP-Frostwarf for 7d, the window closes and the edge trip goes ahead at once, landing where the edge leads.
+9. Repeat with a second player but CLOSE the window, walk 10 blocks away, buy III at the shop with USE NOW: no trip starts by itself. TAKE TOKEN in the pop-up puts the token in the inventory and does not start the trip.
+10. A portal and a warp leading to BSP-Frostwarf, and the band's server switcher: each refusal opens the same window; USE NOW from a warp or the switcher carries on with that move (with its usual warm-up). A portal: step in again after buying.
+11. Turn both of III's tiers off (RENT ON and FULL ON keys): a refusal shows the old "Access needed" banner with the token stacks and the hint, no BUY. With a token that has no price, the same.
+12. A player with no main server who is refused: the free main-server pick comes first, as before.
+13. Change III's price while a player has the window open, then press BUY and USE NOW: chat says "The price changed. Check the new one.", nothing is taken, and the window opens again with the new price.
+14. A player logging straight into BSP-Frostwarf without access is still bounced to the lobby; if the window survives the switch, BUY there works on the lobby server.
+15. Console: `bsptp access token 3 price rent 750 pieces`, `bsptp access token 3 price full off`: the TOKENS tab and the shops follow.
