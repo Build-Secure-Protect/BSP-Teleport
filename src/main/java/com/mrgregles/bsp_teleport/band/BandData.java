@@ -7,9 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Everything the band screen shows, built on the server and sent whole. B47: {@code spawnCost} is what Spawn costs this
- * player (the network spawn warp's cost, 0 when free), {@code spawnPieces} whether in bank pieces, {@code spawnAfford}
- * whether they hold it with the warp's money rules.
+ * Everything the band screen shows, built on the server and sent whole. B47: {@code spawnCost} is the network spawn
+ * warp's price (0 when there is none or it is free), {@code spawnPieces} whether in bank pieces, {@code spawnAfford}
+ * whether the player holds it with the warp's money rules. B49: prices are the warps' own, so admins, who travel free
+ * (B29), still see them.
  */
 public record BandData(String server, int slots, int used, int extraHomesLevel, int swiftLevel, int cooldownLeft, int raidDistance,
                        boolean raid, boolean ignoring, boolean hasSpawn, boolean hasBack, int spawnCost, boolean spawnPieces, boolean spawnAfford,
@@ -29,6 +30,7 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
 
     /**
      * @param opensAt D150: -1 with no open hours, -2 when open now, else the minute of the day it next opens (server's zone)
+     * @param cost    the warp's own price; B49: admins see it too, and {@code afford} is true for them (B29)
      * @param pieces  D163: the cost is in bank pieces, else in coins
      * @param afford  whether the player holds the cost (and the warp's money rules) in the right currency now */
     public record WarpEntry(String name, String server, String world, int x, int y, int z, int cost, boolean nearRaid, String icon, int opensAt,

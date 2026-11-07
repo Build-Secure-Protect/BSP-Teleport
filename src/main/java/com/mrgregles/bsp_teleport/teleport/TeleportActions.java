@@ -193,13 +193,14 @@ public final class TeleportActions {
                 .collect(Collectors.toList());
     }
 
+    /** B49: lists each warp's own price, admins included. */
     public static void listWarps(ServerPlayer player) {
         List<Warp> usable = usableWarps(player);
         if (usable.isEmpty()) {
             fail(player, "warp.none");
             return;
         }
-        tell(player, "warp.list", usable.stream().map(w -> costFor(player, w) > 0 ? w.name() + " (" + costText(w, w.cost()) + ")" : w.name()).collect(Collectors.joining(", ")));
+        tell(player, "warp.list", usable.stream().map(w -> w.cost() > 0 ? w.name() + " (" + costText(w, w.cost()) + ")" : w.name()).collect(Collectors.joining(", ")));
     }
 
     public static boolean warp(ServerPlayer player, String name) {

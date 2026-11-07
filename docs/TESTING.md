@@ -304,7 +304,7 @@ Set `portals.timeZone` (for example `Europe/London`) and pick hours a few minute
 
 ## Warps are free for admins and operators (B29, 2026-11-02)
 
-- [ ] As an admin, or an operator (level 2) who is not on BSP-Core's admin list, with no coins: a warp with a cost shows no price and a turquoise GO on the band; GO, `/warp` and the warm-up work, nothing is taken, no "paid" line. `/warps` lists it without a price.
+- [ ] As an admin, or an operator (level 2) who is not on BSP-Core's admin list, with no coins: a warp with a cost shows its price and a gold GO on the band (B49, 3.7.1; before that, no price and a turquoise GO); GO, `/warp` and the warm-up work, nothing is taken, no "paid" line. `/warps` lists it with its price (B49).
 - [ ] As a player: the cost shows, is checked and is taken as before.
 
 ## Config edits after /bsptp reload (B30, 2026-11-02)
@@ -542,7 +542,16 @@ Client and server on the same new version. The network spawn is the warp named `
 2. With fewer than 500 pieces: the key's text is grey (the gold edge stays). Pressing it or typing `/spawn` says the warp costs 500 pieces and how many you have; you do not move.
 3. Give the spawn warp open hours that are closed now: Spawn and `/spawn` are refused with the same message the warp gives. Make it restricted: a player without its permission gets "no permission" from Spawn too.
 4. Set the spawn warp's cost to 0 and no rules: the key is turquoise with no price, and the trip is free.
-5. As an admin or operator: the key shows no price and nothing is taken (as on warps).
+5. As an admin or operator: the key shows the price (B49) but nothing is taken (as on warps).
 6. Delete the spawn warp and `/setspawn` on this server: Spawn goes to that point, free.
 7. A new player (first time on the network) and a bedless respawn still land at spawn without paying.
 8. B48: empty a player's bank and give them a teleport store credit ticket worth 1,000 (BSP-Core 1.14.0). A warp costing 500 pieces has a gold GO key (not greyed), takes the player there, and 500 comes off the ticket. The same for Spawn with a price.
+
+## Admins see warp prices (B49, 3.7.1), 2026-11-07
+
+Server only (no protocol change). Give a few warps and the spawn warp a cost of 50 pieces.
+
+1. As an admin or operator: WARPS shows "50 pieces" after each priced warp's place, with a gold GO key in full colour. MORE shows "Spawn  50 pieces" with a gold edge.
+2. Press a priced warp and Spawn with an empty bank: both go, and nothing is taken (admins travel free, B29).
+3. `/warp` with no name lists the priced warps with "(50 pieces)" for the admin too.
+4. As a player who is not an admin: the band looks the same as before, and the trips are charged.

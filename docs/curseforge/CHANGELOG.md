@@ -1,3 +1,11 @@
+# BSP-Teleport 3.7.1
+
+Minecraft 1.20.1, Forge 47.4, Java 17. Requires BSP-Core 1.10.1 or newer. Works with 3.7.0 clients and servers (the network protocol is unchanged); only the servers need it.
+
+## Fixed
+
+**Admins see warp prices.** Admins and operators travel to warps free, and the band then showed their warps and Spawn as having no price. The band and `/warp` now show every warp's price to them as well; they still are not charged.
+
 # BSP-Teleport 3.7.0
 
 Minecraft 1.20.1, Forge 47.4, Java 17. Requires BSP-Core 1.10.1 or newer. Needed on the client and the server, and both must run this version (the network protocol changed for the Spawn price).

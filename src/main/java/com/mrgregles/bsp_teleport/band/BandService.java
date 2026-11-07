@@ -138,11 +138,12 @@ public final class BandService {
             homes.add(new BandData.HomeEntry(h.name(), p.server(), p.world(), (int) Math.floor(p.x()), (int) Math.floor(p.y()), (int) Math.floor(p.z()),
                     i >= slots, raid && nearRaid(player, p, raidDistance), h.icon()));
         }
+        // B49: each warp's own price, which admins see too though they travel free (B29); affords() says whether this player can go.
         List<BandData.WarpEntry> warps = new ArrayList<>();
         for (Warp w : TeleportActions.usableWarps(player)) {
             Position p = w.position();
             warps.add(new BandData.WarpEntry(w.name(), p.server(), p.world(), (int) Math.floor(p.x()), (int) Math.floor(p.y()), (int) Math.floor(p.z()),
-                    TeleportActions.costFor(player, w), raid && nearRaid(player, p, raidDistance), w.icon(),
+                    w.cost(), raid && nearRaid(player, p, raidDistance), w.icon(),
                     com.mrgregles.bsp_teleport.access.AccessChecks.opensAt(com.mrgregles.bsp_teleport.access.AccessRule.parseList(w.rules())),
                     w.pieces(), TeleportActions.affords(player, w)));
         }
@@ -179,7 +180,7 @@ public final class BandService {
         return new BandData(TeleportConfig.serverName(), slots, mine.size(), BspCore.extraHomeSlots(player), BspCore.swiftTravelLevel(player),
                 (int) Teleports.cooldownLeft(player), raidDistance, raid, data.isIgnoring(player.getUUID()),
                 TeleportActions.spawnPosition(player) != null, Teleports.back(player) != null,
-                spawnWarp == null ? 0 : TeleportActions.costFor(player, spawnWarp), spawnWarp != null && spawnWarp.pieces(),
+                spawnWarp == null ? 0 : spawnWarp.cost(), spawnWarp != null && spawnWarp.pieces(),
                 spawnWarp == null || TeleportActions.affords(player, spawnWarp),
                 TeleportConfig.getOr(TeleportConfig.SKIP_COOLDOWN_COINS, 0), BspCore.coins(player),
                 homes, warps, players, rtpServers, request, com.mrgregles.bsp_teleport.admin.AdminService.mayOpen(player),
