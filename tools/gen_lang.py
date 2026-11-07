@@ -270,8 +270,13 @@ MESSAGES = {
     "access.rule_time": "Closed now. Opens at %s (%s).",
     "access.rule_paid": "Paid %s coins.",
     "access.rule_paid_pieces": "Paid %s from your bank.",
+    # Store credit (BSP-Core SC-1): a teleport ticket pays before the bank
+    "access.paid_credit": "Paid %s with store credit (%s: %s left).",
+    "access.paid_credit_spent": "Paid %s with store credit (%s is now spent).",
+    "access.paid_split": "Paid %s from store credit (%s: %s left) and %s from your bank.",
+    "access.paid_split_spent": "Paid %s from store credit (%s is now spent) and %s from your bank.",
     "access.refunded": "You did not move, so what you paid has been given back.",
-    "access.bank_refused": "Your bank did not pay %s, so nothing was taken. Check your balance, or try again in a moment.",
+    "access.bank_refused": "The payment of %s did not go through, so nothing was taken. Check your balance, or try again in a moment.",
     "access.rule_bad": "That rule makes no sense: rank and node need a name, item needs an item id, coins needs an amount.",
     "access.rule_full": "At most %s rules.",
 }

@@ -207,6 +207,113 @@ public final class BspCore {
         }
     }
 
+    // Store credit (BSP-Core SC-1, 1.14.0): tickets marked for teleports pay pieces prices before the bank
+
+    /**
+     * What a teleport's pieces price took: {@code credit} from a store credit ticket and {@code bank} from the bank.
+     * {@code receipt} is BSP-Core's receipt (kept as an Object so nothing outside {@link Credit} names a BSP-Core 1.14
+     * type), or null for a payment from the bank alone.
+     */
+    public record Payment(long credit, long bank, String ticketName, long creditLeft, boolean ticketSpent, @Nullable Object receipt) {
+        static Payment bankOnly(long pieces) {
+            return new Payment(0, pieces, "", 0, false, null);
+        }
+
+        public long total() {
+            return credit + bank;
+        }
+    }
+
+    /** True once a BSP-Core without store credit (before 1.14.0) was found; every call then goes to the bank. */
+    private static volatile boolean creditMissing;
+
+    private static void noCredit(LinkageError e) {
+        if (!creditMissing) {
+            creditMissing = true;
+            BSPTeleport.LOGGER.info("BSP-Core has no store credit (needs 1.14.0): teleport prices are paid from the bank ({})", e.toString());
+        }
+    }
+
+    /** What the player can pay a teleport's pieces price with: the bank plus their teleport store credit. */
+    public static long teleportPieces(ServerPlayer player) {
+        if (!creditMissing) {
+            try {
+                return Credit.spendable(player);
+            } catch (LinkageError e) {
+                noCredit(e);
+            } catch (RuntimeException e) {
+                // audit: a failure in the credit check counts the bank alone rather than breaking the teleport
+                BSPTeleport.LOGGER.warn("Store credit check failed for {}, counting the bank only: {}", player.getGameProfile().getName(), e.toString());
+            }
+        }
+        return pieces(player);
+    }
+
+    /**
+     * SC-1: takes a teleport's pieces price, store credit first, then the bank, all or nothing. {@code then} runs on the
+     * server thread with what was taken, or null when nothing was. Nothing to pay is an empty bank payment.
+     */
+    public static void payTeleportPieces(ServerPlayer player, long pieces, String reason, Consumer<Payment> then) {
+        if (pieces <= 0) {
+            then.accept(Payment.bankOnly(0));
+            return;
+        }
+        if (!creditMissing) {
+            try {
+                Credit.charge(player, pieces, reason, then);
+                return;
+            } catch (LinkageError e) {
+                noCredit(e);
+            }
+        }
+        payPieces(player, pieces, reason, ok -> then.accept(ok ? Payment.bankOnly(pieces) : null));
+    }
+
+    /**
+     * Gives back what {@link #payTeleportPieces} took: the credit part to the ticket it came from and the bank part to
+     * the bank (BSP-Core does both from the receipt; a second refund of the same receipt does nothing). Works offline.
+     */
+    public static void refundTeleportPieces(net.minecraft.server.MinecraftServer server, UUID player, Payment payment, String reason) {
+        if (payment.receipt() != null) {
+            Credit.refund(server, payment.receipt(), reason);
+        } else {
+            refundPieces(server, player, payment.bank(), reason);
+        }
+    }
+
+    /** The only class here that names BSP-Core 1.14's store credit types, so an older BSP-Core fails only when it runs. */
+    private static final class Credit {
+        private static final com.mrgregles.bsp_core.api.BspStoreCredit.Use USE = com.mrgregles.bsp_core.api.BspStoreCredit.Use.TELEPORT;
+
+        static long spendable(ServerPlayer player) {
+            return com.mrgregles.bsp_core.api.BspStoreCredit.spendable(player, USE);
+        }
+
+        static void charge(ServerPlayer player, long pieces, String reason, Consumer<Payment> then) {
+            com.mrgregles.bsp_core.api.BspStoreCredit.charge(player, pieces, USE, BANK_PARTY, reason, receipt -> then.accept(receipt == null ? null
+                    : new Payment(receipt.credit(), receipt.bank(), receipt.ticketName(), receipt.creditLeft(), receipt.ticketSpent(), receipt)));
+        }
+
+        static void refund(net.minecraft.server.MinecraftServer server, Object receipt, String reason) {
+            com.mrgregles.bsp_core.api.BspStoreCredit.refund(server, (com.mrgregles.bsp_core.api.BspStoreCredit.Receipt) receipt, reason);
+        }
+
+        /** GameTests only: a teleport ticket worth {@code pieces} in the player's inventory. */
+        static net.minecraft.world.item.ItemStack testTicket(ServerPlayer player, long pieces) {
+            return com.mrgregles.bsp_core.api.BspStoreCredit.testTicket(player, pieces, USE);
+        }
+    }
+
+    /** GameTests only: puts a store credit ticket for teleports worth {@code pieces} in the inventory (nothing on a BSP-Core without store credit). */
+    public static net.minecraft.world.item.ItemStack testTeleportTicket(ServerPlayer player, long pieces) {
+        try {
+            return Credit.testTicket(player, pieces);
+        } catch (LinkageError e) {
+            noCredit(e);
+            return net.minecraft.world.item.ItemStack.EMPTY;
+        }
+    }
+
     /** Gives coins worth {@code value} Copper back into the inventory (B34: a move that did not happen). */
     public static void giveCoins(ServerPlayer player, int value) {
         if (value > 0) {

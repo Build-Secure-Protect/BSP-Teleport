@@ -199,7 +199,7 @@ public final class AccessService {
         TokenAssignment token = tokenFor(player.server, kind, target);
         BandPackets.sendPopup(player, new AccessPopup(AccessPopup.Type.DENIED, target, token == null ? 0 : token.token(),
                 token == null ? 0 : token.rentHours(), token == null ? "" : token.hint(), mainServer(player) == null, List.of(),
-                BspCore.coins(player), BspCore.pieces(player)));
+                BspCore.coins(player), BspCore.teleportPieces(player)));
     }
 
     /**

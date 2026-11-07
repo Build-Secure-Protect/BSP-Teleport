@@ -131,7 +131,7 @@ public final class AccessShops extends SavedData {
         if (admin) {
             others(level, controller).forEach(k -> sources.add(new ShopView.Source(k.key(), k.label())));
         }
-        BandPackets.sendShop(player, new ShopView(controller, shop.name(), shop.message(), shop.entries(), admin, BspCore.coins(player), BspCore.pieces(player), sources));
+        BandPackets.sendShop(player, new ShopView(controller, shop.name(), shop.message(), shop.entries(), admin, BspCore.coins(player), BspCore.teleportPieces(player), sources));
     }
 
     private static boolean near(ServerPlayer player, BlockPos pos) {

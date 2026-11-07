@@ -29,16 +29,23 @@ public final class AccessChecks {
     /**
      * B34: what a move took, kept until the move has happened so all of it can be given back when it does not.
      *
-     * @param items copies of the stacks used up
+     * @param items   copies of the stacks used up
+     * @param payment SC-1: how the pieces were paid (store credit and/or bank), so a refund puts credit back on its
+     *                ticket; null for pieces from the bank alone
      */
-    public record Paid(UUID player, String reason, int coins, int pieces, List<ItemStack> items) {
+    public record Paid(UUID player, String reason, int coins, int pieces, List<ItemStack> items, @Nullable BspCore.Payment payment) {
+        /** Pieces from the bank alone. */
+        public Paid(UUID player, String reason, int coins, int pieces, List<ItemStack> items) {
+            this(player, reason, coins, pieces, items, null);
+        }
+
         public boolean nothing() {
             return coins <= 0 && pieces <= 0 && items.isEmpty();
         }
 
         /** The same payment with {@code more} coins taken on top ({@code /tpnow}'s price). */
         public Paid plusCoins(int more) {
-            return new Paid(player, reason, sum(coins, more), pieces, items);
+            return new Paid(player, reason, sum(coins, more), pieces, items, payment);
         }
     }
 
@@ -82,7 +89,7 @@ public final class AccessChecks {
                 }
                 case PIECES -> {
                     pieces = sum(pieces, r.count());
-                    if (BspCore.pieces(player) < pieces) {
+                    if (BspCore.teleportPieces(player) < pieces) { // SC-1: the bank plus teleport store credit
                         return new Result(msg("access.rule_pieces", BspCore.piecesText(pieces)), 0, 0, List.of());
                     }
                 }
@@ -159,13 +166,14 @@ public final class AccessChecks {
             then.accept(null);
             return;
         }
-        if (pieces > 0 && BspCore.pieces(player) < pieces) {
+        if (pieces > 0 && BspCore.teleportPieces(player) < pieces) { // SC-1: the bank plus teleport store credit
             player.displayClientMessage(msg("access.rule_pieces", BspCore.piecesText(pieces)), false);
             then.accept(null);
             return;
         }
-        BspCore.payPieces(player, pieces, reason, paid -> {
-            if (!paid) {
+        // SC-1: store credit first, then the bank, all or nothing; on an older BSP-Core the bank alone, as before.
+        BspCore.payTeleportPieces(player, pieces, reason, payment -> {
+            if (payment == null) {
                 // Short, or the bank's database did not answer: either way nothing was taken.
                 player.displayClientMessage(msg("access.bank_refused", BspCore.piecesText(pieces)), false);
                 then.accept(null);
@@ -176,7 +184,7 @@ public final class AccessChecks {
                 missing = msg("access.rule_coins", coins);
             }
             if (missing != null) {
-                BspCore.refundPieces(player.server, player.getUUID(), pieces, reason + " (not moved)");
+                BspCore.refundTeleportPieces(player.server, player.getUUID(), payment, reason + " (not moved)");
                 if (!missing.getString().isEmpty()) {
                     player.displayClientMessage(missing, false);
                 }
@@ -194,14 +202,31 @@ public final class AccessChecks {
                 player.displayClientMessage(msg("access.rule_paid", coins), false);
             }
             if (pieces > 0) {
-                player.displayClientMessage(msg("access.rule_paid_pieces", BspCore.piecesText(pieces)), false);
+                player.displayClientMessage(paidLine(payment), false);
             }
-            then.accept(new Paid(player.getUUID(), reason, coins, pieces, taken));
+            then.accept(new Paid(player.getUUID(), reason, coins, pieces, taken, payment.receipt() == null ? null : payment));
         });
     }
 
     /**
-     * B34: gives back everything a move took, because the move did not happen. Pieces go to the bank, which works offline.
+     * SC-1: what a pieces price took, in players' words: "Paid 500 pieces from your bank.", "Paid 500 pieces with store
+     * credit (Teleport Pass: 1,000 pieces left).", or both parts when it split.
+     */
+    static Component paidLine(BspCore.Payment p) {
+        if (p.credit() <= 0) {
+            return msg("access.rule_paid_pieces", BspCore.piecesText(p.bank()));
+        }
+        String credit = BspCore.piecesText(p.credit()), left = BspCore.piecesText(p.creditLeft());
+        if (p.bank() <= 0) {
+            return p.ticketSpent() ? msg("access.paid_credit_spent", credit, p.ticketName()) : msg("access.paid_credit", credit, p.ticketName(), left);
+        }
+        String bank = BspCore.piecesText(p.bank());
+        return p.ticketSpent() ? msg("access.paid_split_spent", credit, p.ticketName(), bank) : msg("access.paid_split", credit, p.ticketName(), left, bank);
+    }
+
+    /**
+     * B34: gives back everything a move took, because the move did not happen. Pieces go to the bank, and store credit back
+     * to its ticket (SC-1); both work offline.
      * Coins and items go into {@code online}'s inventory (dropped at their feet when full); with the player gone, the
      * coins go to the bank as pieces at its rate and the items wait in {@link #OWED} for their next login on this server.
      */
@@ -210,7 +235,9 @@ public final class AccessChecks {
             return;
         }
         String reason = paid.reason() + " (not moved)";
-        long toBank = paid.pieces();
+        // SC-1: pieces paid partly with store credit go back through the receipt (credit to its ticket, the rest to the bank).
+        boolean byReceipt = paid.payment() != null && paid.payment().receipt() != null;
+        long toBank = byReceipt ? 0 : paid.pieces();
         boolean here = online != null && !online.hasDisconnected() && !online.isRemoved();
         if (here) {
             BspCore.giveCoins(online, paid.coins());
@@ -223,6 +250,9 @@ public final class AccessChecks {
             if (!paid.items().isEmpty()) {
                 OWED.computeIfAbsent(paid.player(), k -> new java.util.ArrayList<>()).addAll(paid.items());
             }
+        }
+        if (byReceipt) {
+            BspCore.refundTeleportPieces(server, paid.player(), paid.payment(), reason);
         }
         BspCore.refundPieces(server, paid.player(), toBank, reason);
         BSPTeleport.LOGGER.info("Gave back what {} paid for '{}', the move did not happen: {} pieces, {} coins{}, {} item stacks{}",

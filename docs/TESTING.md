@@ -509,3 +509,15 @@ Setup: access on, BSP-Frostwarf restricted, token III assigned to it, an Access 
 13. Change III's price while a player has the window open, then press BUY and USE NOW: chat says "The price changed. Check the new one.", nothing is taken, and the window opens again with the new price.
 14. A player logging straight into BSP-Frostwarf without access is still bounced to the lobby; if the window survives the switch, BUY there works on the lobby server.
 15. Console: `bsptp access token 3 price rent 750 pieces`, `bsptp access token 3 price full off`: the TOKENS tab and the shops follow.
+
+## Store credit pays teleport prices (BSP-Core SC-1, 2026-11-07)
+
+BSP-Core 1.14.0 or newer on the server. An admin gives a player a store credit ticket marked for teleports (for example a "Teleport Pass" worth 1,000 pieces, with a time limit). Set a warp's cost to 500 pieces and another's to 1,500 pieces.
+
+1. With 2,000 pieces in the bank and the ticket in the inventory, go to the 500-piece warp. Chat: "Paid 500 pieces with store credit (Teleport Pass: 500 pieces left)." The bank is unchanged. BSP-Core shows its own notice that the ticket's clock has started.
+2. Go to the 1,500-piece warp: "Paid 500 pieces from store credit (Teleport Pass is now spent) and 1,000 pieces from your bank." The ticket is gone from the inventory.
+3. Empty the bank, take a fresh ticket worth 1,000, and use the 500-piece warp: it is not refused, and the credit pays.
+4. A move that fails after paying (for example a cross-server warp whose server goes down during the hold, or a portal whose item rule's item was dropped during the warm-up): "You did not move, so what you paid has been given back." The credit is back on the ticket (its tooltip shows it), not in the bank; a ticket that was used up comes back into the inventory.
+5. Buy an access token in an Access Shop or the access pop-up with a pieces price: the ticket pays first there too. The wallet line in the shop counts the credit with the bank.
+6. Coin prices (a warp costing coins, a COINS rule, `/tpnow`) are paid in coins as before; the ticket is not touched.
+7. With BSP-Core 1.10.1 to 1.13.x on a server: everything is paid from the bank as before, and the log says once "BSP-Core has no store credit (needs 1.14.0)".

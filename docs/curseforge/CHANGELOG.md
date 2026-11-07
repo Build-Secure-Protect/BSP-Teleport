@@ -1,3 +1,11 @@
+# BSP-Teleport 3.6.1
+
+Minecraft 1.20.1, Forge 47.4, Java 17. Requires BSP-Core 1.10.1 or newer; store credit needs BSP-Core 1.14.0. Works with 3.6.0 clients and servers (the network protocol is unchanged).
+
+## Added
+
+**Store credit pays teleport prices.** With BSP-Core 1.14.0, a store credit ticket marked for teleports pays every price in pieces (warps, portal and warp rules, access tokens) before your bank, within the ticket's time limit. Chat says what paid: "Paid 500 pieces with store credit (Teleport Pass: 500 pieces left)." or, when it splits, how much came from the ticket and how much from the bank. A player with credit and an empty bank is not refused. A move that does not happen gives the credit back to the ticket, not to the bank. Coin prices are paid in coins as before.
+
 # BSP-Teleport 3.6.0
 
 Minecraft 1.20.1, Forge 47.4, Java 17. Requires BSP-Core 1.10.1 or newer. Needed on the client and the server, and both must run this version (the network protocol changed). BSP-Region Guard is optional, as before.
