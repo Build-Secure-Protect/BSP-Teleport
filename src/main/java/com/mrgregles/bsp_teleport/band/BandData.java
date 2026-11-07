@@ -6,9 +6,14 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Everything the band screen shows, built on the server and sent whole. */
+/**
+ * Everything the band screen shows, built on the server and sent whole. B47: {@code spawnCost} is what Spawn costs this
+ * player (the network spawn warp's cost, 0 when free), {@code spawnPieces} whether in bank pieces, {@code spawnAfford}
+ * whether they hold it with the warp's money rules.
+ */
 public record BandData(String server, int slots, int used, int extraHomesLevel, int swiftLevel, int cooldownLeft, int raidDistance,
-                       boolean raid, boolean ignoring, boolean hasSpawn, boolean hasBack, int skipCoins, int coins,
+                       boolean raid, boolean ignoring, boolean hasSpawn, boolean hasBack, int spawnCost, boolean spawnPieces, boolean spawnAfford,
+                       int skipCoins, int coins,
                        List<HomeEntry> homes, List<WarpEntry> warps, List<PlayerEntry> players, List<String> rtpServers,
                        @Nullable RequestEntry request, boolean admin, boolean accessOn, List<AccessEntry> access,
                        boolean refreshOnly, @Nullable TeamEntry team) {
@@ -16,7 +21,7 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
     /** A refresh for a screen that is already open; the client ignores it when the screen is closed (D92). */
     public BandData asRefresh() {
         return new BandData(server, slots, used, extraHomesLevel, swiftLevel, cooldownLeft, raidDistance, raid, ignoring, hasSpawn, hasBack,
-                skipCoins, coins, homes, warps, players, rtpServers, request, admin, accessOn, access, true, team);
+                spawnCost, spawnPieces, spawnAfford, skipCoins, coins, homes, warps, players, rtpServers, request, admin, accessOn, access, true, team);
     }
 
     public record HomeEntry(String name, String server, String world, int x, int y, int z, boolean locked, boolean nearRaid, String icon) {
@@ -74,6 +79,9 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
         buf.writeBoolean(ignoring);
         buf.writeBoolean(hasSpawn);
         buf.writeBoolean(hasBack);
+        buf.writeVarInt(spawnCost);
+        buf.writeBoolean(spawnPieces);
+        buf.writeBoolean(spawnAfford);
         buf.writeVarInt(skipCoins);
         buf.writeVarInt(coins);
         buf.writeVarInt(homes.size());
@@ -144,6 +152,8 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
         String server = buf.readUtf();
         int slots = buf.readVarInt(), used = buf.readVarInt(), extra = buf.readVarInt(), swift = buf.readVarInt(), cooldown = buf.readVarInt(), raidDistance = buf.readVarInt();
         boolean raid = buf.readBoolean(), ignoring = buf.readBoolean(), hasSpawn = buf.readBoolean(), hasBack = buf.readBoolean();
+        int spawnCost = buf.readVarInt();
+        boolean spawnPieces = buf.readBoolean(), spawnAfford = buf.readBoolean();
         int skipCoins = buf.readVarInt(), coins = buf.readVarInt();
         int n = buf.readVarInt();
         List<HomeEntry> homes = new ArrayList<>(n);
@@ -200,6 +210,6 @@ public record BandData(String server, int slots, int used, int extraHomesLevel, 
             }
             team = new TeamEntry(tn, colour, tl, mates, alliance, allies);
         }
-        return new BandData(server, slots, used, extra, swift, cooldown, raidDistance, raid, ignoring, hasSpawn, hasBack, skipCoins, coins, homes, warps, players, rtp, request, admin, accessOn, access, refreshOnly, team);
+        return new BandData(server, slots, used, extra, swift, cooldown, raidDistance, raid, ignoring, hasSpawn, hasBack, spawnCost, spawnPieces, spawnAfford, skipCoins, coins, homes, warps, players, rtp, request, admin, accessOn, access, refreshOnly, team);
     }
 }

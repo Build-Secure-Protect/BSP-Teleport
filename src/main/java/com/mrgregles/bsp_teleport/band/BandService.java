@@ -174,10 +174,13 @@ public final class BandService {
         BandData.RequestEntry request = TeleportRequests.peek(player).map(r ->
                 new BandData.RequestEntry(r.fromName(), seesServer.test(r.fromName()) ? r.fromServer() : "", r.here(), r.secondsLeft())).orElse(null);
         BandData.TeamEntry team = team(player, raidDistance);
+        Warp spawnWarp = TeleportActions.spawnWarp(player.server);
 
         return new BandData(TeleportConfig.serverName(), slots, mine.size(), BspCore.extraHomeSlots(player), BspCore.swiftTravelLevel(player),
                 (int) Teleports.cooldownLeft(player), raidDistance, raid, data.isIgnoring(player.getUUID()),
                 TeleportActions.spawnPosition(player) != null, Teleports.back(player) != null,
+                spawnWarp == null ? 0 : TeleportActions.costFor(player, spawnWarp), spawnWarp != null && spawnWarp.pieces(),
+                spawnWarp == null || TeleportActions.affords(player, spawnWarp),
                 TeleportConfig.getOr(TeleportConfig.SKIP_COOLDOWN_COINS, 0), BspCore.coins(player),
                 homes, warps, players, rtpServers, request, com.mrgregles.bsp_teleport.admin.AdminService.mayOpen(player),
                 com.mrgregles.bsp_teleport.access.AccessService.enabled(), com.mrgregles.bsp_teleport.access.AccessService.bandEntries(player),

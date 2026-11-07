@@ -207,6 +207,15 @@ public final class TeleportActions {
         if (warp == null || (warp.portal() && !Permissions.isAdmin(player))) {
             return fail(player, "warp.unknown", name);
         }
+        return warpTrip(player, warp, Component.literal(warp.name()), TeleportKind.WARP);
+    }
+
+    /**
+     * A trip to a warp with all its checks: its permission, its rules (open hours, items, money), its cost, and payment
+     * when the warm-up ends. B47: /spawn and the band's Spawn come here too when the network spawn is a warp, so a spawn
+     * warp's price is paid either way; they travel as {@link TeleportKind#SPAWN}.
+     */
+    private static boolean warpTrip(ServerPlayer player, Warp warp, Component label, TeleportKind kind) {
         if (warp.restricted() && !Permissions.has(player, Permissions.warpNode(warp.name()))) {
             return fail(player, "warp.no_permission", warp.name());
         }
@@ -225,7 +234,7 @@ public final class TeleportActions {
             return false;
         }
         String warpName = warp.name();
-        return Teleports.start(player, warp.position().toDestination(""), Component.literal(warp.name()), TeleportKind.WARP, then -> {
+        return Teleports.start(player, warp.position().toDestination(""), label, kind, then -> {
             // Audit: the warp and its rules are read again when the warm-up ends, so an item swapped out meanwhile or a
             // changed warp is not charged from the old answer; nothing is paid unless all of it can be.
             Warp now = TeleportData.get(player.server).warp(warpName);
@@ -260,8 +269,10 @@ public final class TeleportActions {
         if (coins > 0 && BspCore.coins(player) < coins) {
             return fail(player, "warp.cannot_afford", coins, BspCore.coins(player));
         }
-        if (pieces > 0 && BspCore.pieces(player) < pieces) {
-            return fail(player, "warp.cannot_afford_pieces", BspCore.piecesText(pieces), BspCore.piecesText(BspCore.pieces(player)));
+        // B48: the bank plus teleport store credit (SC-1), as the charge itself counts it.
+        long have = BspCore.teleportPieces(player);
+        if (pieces > 0 && have < pieces) {
+            return fail(player, "warp.cannot_afford_pieces", BspCore.piecesText(pieces), BspCore.piecesText(have));
         }
         return true;
     }
@@ -279,7 +290,7 @@ public final class TeleportActions {
                 }
             }
         }
-        return (coins <= 0 || BspCore.coins(player) >= coins) && (pieces <= 0 || BspCore.pieces(player) >= pieces);
+        return (coins <= 0 || BspCore.coins(player) >= coins) && (pieces <= 0 || BspCore.teleportPieces(player) >= pieces); // B48: credit counts
     }
 
     /** A warp's cost as players read it: {@code 250 coins} or {@code 50,000 pieces}. */
@@ -306,12 +317,27 @@ public final class TeleportActions {
         return network != null ? network : TeleportData.get(server).spawn();
     }
 
+    /** B47: the network spawn's warp, when there is one; its cost and rules are the price of /spawn. */
+    @Nullable
+    public static Warp spawnWarp(MinecraftServer server) {
+        return TeleportData.get(server).warp(NetworkSpawn.warpName());
+    }
+
+    /**
+     * /spawn and the band's Spawn. B47: with a network spawn warp the trip goes through that warp's checks and cost (a
+     * free /spawn to a paid spawn warp went round its price); this server's own /setspawn point, used only while there
+     * is no such warp, stays free.
+     */
     public static boolean spawn(ServerPlayer player) {
-        Position spawn = spawnPosition(player);
-        if (spawn == null) {
+        Warp warp = spawnWarp(player.server);
+        if (warp != null) {
+            return warpTrip(player, warp, Component.translatable("message.bsp_teleport.spawn.name"), TeleportKind.SPAWN);
+        }
+        Position own = TeleportData.get(player.server).spawn();
+        if (own == null) {
             return fail(player, "spawn.global_missing", NetworkSpawn.warpName());
         }
-        return Teleports.start(player, spawn.toDestination(""), Component.translatable("message.bsp_teleport.spawn.name"), TeleportKind.SPAWN, null);
+        return Teleports.start(player, own.toDestination(""), Component.translatable("message.bsp_teleport.spawn.name"), TeleportKind.SPAWN, null);
     }
 
     public static boolean back(ServerPlayer player) {

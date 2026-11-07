@@ -1,3 +1,17 @@
+# BSP-Teleport 3.7.0
+
+Minecraft 1.20.1, Forge 47.4, Java 17. Requires BSP-Core 1.10.1 or newer. Needed on the client and the server, and both must run this version (the network protocol changed for the Spawn price).
+
+## Changed
+
+**More rows on the band before it scrolls.** The band is a little taller and its rows a little slimmer: HOMES shows 8 homes (was 5), WARPS and PLAYERS 9 (were 6), and TEAM 8 teammates (was 5). A thin scroll bar shows when there are more, and the mouse wheel stops at the last row.
+
+## Fixed
+
+**Spawn pays the spawn warp's price.** When the network spawn is a warp with a cost or rules (open hours, items, money), `/spawn` and the band's Spawn key now go through them like the warp does, instead of going there for free. The Spawn key on MORE shows the price, gold like a priced warp, and dims when you cannot pay. A server's own `/setspawn` point, used while there is no spawn warp, stays free. New players and respawns still land at spawn for free.
+
+**Store credit pays a warp's own cost.** Since 3.6.1 store credit paid a warp's PIECES rules but not the warp's own price in pieces: a player with credit and too little in the bank was refused, and the band greyed the GO key. Both now count the credit with the bank.
+
 # BSP-Teleport 3.6.1
 
 Minecraft 1.20.1, Forge 47.4, Java 17. Requires BSP-Core 1.10.1 or newer; store credit needs BSP-Core 1.14.0. Works with 3.6.0 clients and servers (the network protocol is unchanged).

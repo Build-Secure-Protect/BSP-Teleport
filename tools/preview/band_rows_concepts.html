@@ -1,0 +1,240 @@
+<title>Band List Rows</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&display=swap">
+<style>
+/* Layout: short intro, then three working copies of the band (A, B, C) drawn to the game's own panel units, each with its facts underneath. Single dark look on purpose: it copies the game screen. */
+:root {
+  --bg: #0B0F14; --panel: #111A21; --slot: #0E1218; --line: #2A2F3A;
+  --accent: #19D3B0; --violet: #B58CFF; --gold: #FFD23A; --bad: #FF6B5C; --ok: #8FE04A;
+  --text: #E6EAF2; --muted: #9AA3B5; --dim: #3A404C;
+  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif; --mono: Menlo, Monaco, monospace;
+  --px: "VT323", Menlo, Monaco, monospace;
+  --u: min(1.55px, calc((100vw - 40px) / 250));
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--sans); margin: 0; padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 28px; margin: 0 0 6px; text-wrap: balance; }
+h2 { font-size: 18px; margin: 0; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; }
+p, li { color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 72ch; }
+code { font-family: var(--mono); color: var(--text); font-size: 13px; }
+.sheets { display: flex; flex-wrap: wrap; gap: 28px 24px; align-items: flex-start; margin-top: 20px; }
+.sheet { flex: 0 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 10px; max-width: calc(var(--u) * 250 + 4px); }
+.sheet p { margin: 0; }
+.facts { margin: 0; padding-left: 18px; }
+.facts li { font-size: 13px; }
+.facts b { color: var(--text); }
+.count { font-family: var(--mono); font-size: 12px; color: var(--gold); letter-spacing: 1px; }
+
+/* The band, in panel units (1 unit = var(--u)). */
+.band { position: relative; width: calc(var(--u) * 248); background: var(--panel); outline: calc(var(--u)) solid var(--accent);
+  margin: calc(var(--u)); font-family: var(--px); overflow: hidden; user-select: none; }
+.band * { position: absolute; box-sizing: border-box; }
+.t { font-size: calc(var(--u) * 11); line-height: calc(var(--u) * 8); white-space: nowrap; }
+.s { font-size: calc(var(--u) * 8.4); line-height: calc(var(--u) * 6); white-space: nowrap; }
+.cut { overflow: hidden; text-overflow: ellipsis; }
+.tab { border: calc(var(--u)) solid var(--dim); background: var(--slot); display: flex; align-items: center; justify-content: center; color: var(--muted); cursor: pointer; }
+.tab.on { border-color: var(--accent); color: var(--accent); }
+.tab:focus-visible, .key:focus-visible { outline: 2px solid var(--gold); }
+.row { border: calc(var(--u)) solid var(--dim); background: var(--slot); }
+.key { border: calc(var(--u)) solid var(--dim); background: var(--slot); color: var(--muted); height: calc(var(--u) * 12); display: flex; align-items: center; justify-content: center; text-transform: uppercase; }
+.key.tq { border-color: var(--accent); color: var(--accent); }
+.key.g { border-color: var(--gold); color: var(--gold); }
+.key.v { border-color: var(--violet); color: var(--violet); }
+.line { display: flex; gap: calc(var(--u) * 5); align-items: baseline; }
+.line > * { position: static; }
+.line .sub { flex: 1 1 auto; min-width: 0; }
+.box { border: calc(var(--u)) solid #A0A0A0; background: #000; color: #6A6A6A; padding-left: calc(var(--u) * 4); display: flex; align-items: center; }
+.track { background: var(--dim); }
+.thumb { background: var(--accent); }
+.bed { image-rendering: pixelated; }
+.list { overflow: visible; }
+</style>
+
+<h1>Eight rows before scrolling</h1>
+<p>Today the band is 248 by 196 units with rows 20 units tall. HOMES shows 5 rows (the Set home strip takes the space of one), WARPS and PLAYERS show 6. Each option below fits 8 homes. Click the tabs, and scroll the list with the mouse wheel or a trackpad: the examples have 12 homes, 11 warps and 10 players. The sizes are the game's own units, so the proportions match the band.</p>
+
+<div class="sheets">
+  <section class="sheet">
+    <h2>A: Taller band</h2>
+    <div class="band" id="A"></div>
+    <div class="count" id="A-n"></div>
+    <ul class="facts">
+      <li>Rows stay exactly as they are now. The band grows from 196 to <b>250</b> units tall.</li>
+      <li>HOMES, WARPS and PLAYERS all show <b>8</b>.</li>
+      <li>On a small window the band shrinks to fit. With Auto GUI scale on a 1080p screen it draws about 21% smaller than today.</li>
+    </ul>
+  </section>
+
+  <section class="sheet">
+    <h2>B: Slim rows</h2>
+    <div class="band" id="B"></div>
+    <div class="count" id="B-n"></div>
+    <ul class="facts">
+      <li>The band keeps its size. Each row is one line, 14 units tall: a smaller icon, the name, then the server and position after it.</li>
+      <li>HOMES shows <b>8</b>, WARPS and PLAYERS show <b>9</b>.</li>
+      <li>The position is cut sooner. Pointing at a row shows all of it in a tooltip.</li>
+    </ul>
+  </section>
+
+  <section class="sheet">
+    <h2>C: A bit of both</h2>
+    <div class="band" id="C"></div>
+    <div class="count" id="C-n"></div>
+    <ul class="facts">
+      <li>The band grows to <b>224</b> units tall, and rows go from 20 to 17 units with the gap between them down to 1. Both lines stay.</li>
+      <li>HOMES shows <b>8</b>, WARPS and PLAYERS show <b>9</b>.</li>
+      <li>With Auto GUI scale on a 1080p screen it draws about 12% smaller than today. At GUI scale 3 or lower it is the same size as now.</li>
+    </ul>
+  </section>
+</div>
+
+<p>All three also get a thin scroll bar at the right of the list when there are more rows than fit, and the wheel stops when the last row reaches the bottom (today it can scroll until only one row is left).</p>
+
+<script>
+const W = 248, LIST_TOP = 30, FOOT_H = 22;
+const OPTS = {
+  A: { H: 250, rowH: 20, gap: 2, one: false, nameY: 3, subY: 12, keyY: 4, iconY: 2, icon: 16 },
+  B: { H: 196, rowH: 14, gap: 1, one: true, nameY: 3, keyY: 1, iconY: 1, icon: 12 },
+  C: { H: 224, rowH: 17, gap: 1, one: false, nameY: 1.5, subY: 10, keyY: 2.5, iconY: 0.5, icon: 16 },
+};
+const HOMES = [
+  ["lava", "BSP-Moongrove  overworld  -1096, -54, 3329"], ["raid", "BSP-Stormfall  overworld  2433, -59, 3329"],
+  ["track", "BSP-Moongrove  overworld  5931, 63, 4912"], ["mint", "BSP-Moongrove  the_end  -2609, 45, -7210"],
+  ["mine", "BSP-Moongrove  overworld  -2773, 69, 1180"], ["base", "overworld  120, 72, -340"],
+  ["farm", "overworld  412, 66, -98"], ["nether hub", "the_nether  14, 70, -22"],
+  ["tower", "BSP-Frostwarf  overworld  -880, 140, 2210"], ["shop", "BSP-Stormfall  overworld  60, 71, 60"],
+  ["slime", "overworld  -1504, 40, 768"], ["portal", "the_nether  -190, 33, 96"],
+];
+const WARPS = [
+  ["spawn", "overworld  0, 70, 0", 0], ["market", "overworld  220, 68, -40", 0], ["arena", "BSP-Stormfall  overworld  0, 80, 500", 500],
+  ["end city", "BSP-Moongrove  the_end  1200, 60, -800", 2000], ["museum", "overworld  -300, 75, 90", 0],
+  ["mines", "BSP-Frostwarf  overworld  -40, 12, 900", 0], ["events", "overworld  600, 90, 600", 0],
+  ["casino", "BSP-Stormfall  overworld  -620, 64, 10", 250], ["docks", "overworld  -40, 63, -800", 0],
+  ["parkour", "BSP-Moongrove  overworld  3000, 200, 0", 0], ["library", "overworld  77, 64, 150", 0],
+];
+const PLAYERS = [
+  ["Alyx_Builds", ""], ["Brick0", "BSP-Stormfall"], ["CinderWolf", ""], ["Dunewalker", "BSP-Frostwarf"], ["EmberQueen", ""],
+  ["Fable_Fox", "BSP-Moongrove"], ["GrimTorch", ""], ["Hollowpine", "BSP-Stormfall"], ["IronMossy", ""], ["Juniper22", "BSP-Frostwarf"],
+];
+const state = {};
+
+function px(n) { return `calc(var(--u) * ${n})`; }
+function el(parent, cls, x, y, w, h, text) {
+  const d = document.createElement("div");
+  d.className = cls;
+  d.style.left = px(x); d.style.top = px(y);
+  if (w != null) d.style.width = px(w);
+  if (h != null) d.style.height = px(h);
+  if (text != null) d.textContent = text;
+  parent.appendChild(d);
+  return d;
+}
+function keyW(label) { return Math.round(label.length * 4.6) + 8; }
+function key(parent, right, y, label, cls) {
+  const w = keyW(label);
+  el(parent, "key s " + cls, right - w, y, w, 12, label);
+  return right - w;
+}
+function bed(parent, x, y, size) {
+  const k = size / 16;
+  el(parent, "", x + 1 * k, y + 6 * k, 14 * k, 6 * k).style.background = "#B02E26";
+  el(parent, "", x + 1 * k, y + 5 * k, 4 * k, 4 * k).style.background = "#E8E8E8";
+  el(parent, "", x + 1 * k, y + 12 * k, 2 * k, 3 * k).style.background = "#6B4A2A";
+  el(parent, "", x + 13 * k, y + 12 * k, 2 * k, 3 * k).style.background = "#6B4A2A";
+}
+function pearl(parent, x, y, size) {
+  const d = el(parent, "", x + size * 0.15, y + size * 0.15, size * 0.7, size * 0.7);
+  d.style.background = "radial-gradient(circle at 35% 35%, #7FE0D0, #136B5E 70%)";
+  d.style.borderRadius = "50%";
+}
+function visible(o, tab) {
+  const bottom = o.H - FOOT_H - (tab === "HOMES" ? 24 : 4);
+  return Math.floor((bottom - LIST_TOP + o.gap) / (o.rowH + o.gap));
+}
+function items(tab) { return tab === "HOMES" ? HOMES : tab === "WARPS" ? WARPS : PLAYERS; }
+
+function draw(id) {
+  const o = OPTS[id], s = state[id], root = document.getElementById(id);
+  root.replaceChildren();
+  root.style.height = px(o.H);
+  const tabs = ["HOMES", "WARPS", "PLAYERS", "TEAM", "MORE"];
+  tabs.forEach((t, i) => {
+    const tx = W - 10 - (tabs.length - i) * 42;
+    const d = el(root, "tab s" + (t === s.tab ? " on" : ""), tx, 5, 40, 13, t);
+    if (t === "HOMES" || t === "WARPS" || t === "PLAYERS") {
+      d.tabIndex = 0; d.setAttribute("role", "button");
+      const pick = () => { s.tab = t; s.scroll = 0; draw(id); };
+      d.addEventListener("click", pick);
+      d.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+    } else {
+      d.style.opacity = 0.55; d.title = "Not part of this change";
+    }
+  });
+  el(root, "s cut", 10, 21, W - 20, 6, "Pick a place. Stand still while it counts down.").style.color = "var(--muted)";
+
+  const list = items(s.tab), fit = visible(o, s.tab);
+  const max = Math.max(0, list.length - fit);
+  s.scroll = Math.min(Math.max(0, s.scroll), max);
+  const withIcon = s.tab !== "PLAYERS";
+  let y = LIST_TOP;
+  for (let i = s.scroll; i < list.length && i < s.scroll + fit; i++) {
+    const [name, sub, cost] = list[i];
+    const row = el(root, "row", 10, y, W - 20, o.rowH);
+    let right = W - 10, keysLeft;
+    if (s.tab === "HOMES") {
+      right = key(root, right, y + o.keyY, "Del", "");
+      keysLeft = key(root, right - 2, y + o.keyY, "Go", "tq");
+    } else if (s.tab === "WARPS") {
+      keysLeft = key(root, right, y + o.keyY, "Go", cost ? "g" : "tq");
+    } else {
+      right = key(root, right, y + o.keyY, "Here", "");
+      keysLeft = key(root, right - 2, y + o.keyY, "Tpa", "tq");
+    }
+    if (withIcon) (s.tab === "HOMES" ? bed : pearl)(root, 13, y + o.iconY, o.icon);
+    const tx = withIcon ? (o.one ? 28 : 32) : 14;
+    const subText = sub + (cost ? `  ${cost.toLocaleString("en-US")} pieces` : "");
+    const subColour = sub.startsWith("BSP-") ? "var(--violet)" : "var(--muted)";
+    if (o.one) {
+      const line = el(root, "line", tx, y + o.nameY, keysLeft - 4 - tx, 8);
+      const n = document.createElement("span"); n.className = "t"; n.textContent = name;
+      const sb = document.createElement("span"); sb.className = "s cut sub"; sb.textContent = subText || "here"; sb.style.color = subColour;
+      line.append(n, sb);
+      row.title = name + "  " + (subText || "on this server");
+    } else {
+      el(root, "t cut", tx, y + o.nameY, keysLeft - 4 - tx, 8, name).style.color = "var(--text)";
+      el(root, "s cut", tx, y + o.subY, keysLeft - 4 - tx, 6, subText).style.color = subColour;
+    }
+    y += o.rowH + o.gap;
+  }
+  if (list.length > fit) {
+    const top = LIST_TOP, h = fit * (o.rowH + o.gap) - o.gap;
+    el(root, "track", W - 7, top, 2, h);
+    const th = Math.max(8, h * fit / list.length);
+    el(root, "thumb", W - 7, top + (h - th) * (s.scroll / max), 2, th);
+  }
+  if (s.tab === "HOMES") {
+    const sy = o.H - FOOT_H - 20;
+    el(root, "box t", 10, sy, 100, 14, "name");
+    key(root, W - 10, sy + 1, "Set home here", "g");
+  }
+  const fy = o.H - FOOT_H + 4;
+  el(root, "", 10, fy - 3, W - 20, 1).style.background = "var(--dim)";
+  el(root, "s", 10, fy, 80, 6, "Ready").style.color = "var(--ok)";
+  el(root, "s", 10, fy + 9, 80, 6, `Homes ${HOMES.length} of ${HOMES.length}`).style.color = "var(--text)";
+  el(root, "s cut", 100, fy, W - 110, 6, "Swift Travel 3: cooldown -75%").style.color = "var(--muted)";
+  el(root, "s cut", 100, fy + 9, W - 110, 6, "All totem home slots unlocked").style.color = "var(--muted)";
+  document.getElementById(id + "-n").textContent =
+    `${s.tab}: rows ${s.scroll + 1} to ${Math.min(list.length, s.scroll + fit)} of ${list.length} (${fit} fit)`;
+}
+
+for (const id of Object.keys(OPTS)) {
+  state[id] = { tab: "HOMES", scroll: 0 };
+  const root = document.getElementById(id);
+  root.addEventListener("wheel", e => {
+    e.preventDefault();
+    state[id].scroll += Math.sign(e.deltaY);
+    draw(id);
+  }, { passive: false });
+  draw(id);
+}
+</script>

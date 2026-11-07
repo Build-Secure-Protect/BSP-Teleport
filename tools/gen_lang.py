@@ -58,7 +58,7 @@ MESSAGES = {
     "warp.list": "Warps: %s",
     "warp.no_permission": "You cannot use the warp %s.",
     "warp.cannot_afford": "This warp costs %s coins and you are carrying %s. Coins must be in your inventory.",
-    "warp.cannot_afford_pieces": "This warp costs %s and your bank holds %s.",
+    "warp.cannot_afford_pieces": "This warp costs %s and you have %s to pay with.",
     "warp.bad_name": "Names are letters, numbers, _ or -, up to 16 long.",
     # Spawn, back, random
     "spawn.name": "spawn",

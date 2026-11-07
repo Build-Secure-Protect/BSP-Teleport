@@ -21,7 +21,13 @@ import java.util.List;
  * teleport closes the screen; the warm-up counts down on the action bar.
  */
 public class BandScreen extends Screen {
-    private static final int W = 248, H = 196, ROW_H = 20, LIST_TOP = 30, FOOT_H = 22;
+    /**
+     * Option C of the 8-row lists (D200): the band is 224 tall and a row 17 with 1 between rows, so before scrolling HOMES
+     * shows 8 rows, WARPS and PLAYERS 9 (8 with a request), and TEAM 8 under its banner (7 under MY TEAM / ALLIES). In a row the name sits at {@link #NAME_Y}, the line under it at
+     * {@link #SUB_Y} and the keys at {@link #KEY_Y}.
+     */
+    private static final int W = 248, H = 224, ROW_H = 17, ROW_GAP = 1, STEP = ROW_H + ROW_GAP, LIST_TOP = 30, FOOT_H = 22;
+    private static final int NAME_Y = 2, SUB_Y = 10, KEY_Y = 2;
     /** B40: the replace question's key rows at most, so the list above keeps three rows even during a raid. */
     private static final int ASK_ROWS = 3;
     private static final int TQ = BandClient.TQ, BG = BandClient.BG, SLOT = BandClient.SLOT, DIM = BandClient.DIM, MUTED = BandClient.MUTED,
@@ -58,6 +64,8 @@ public class BandScreen extends Screen {
     /** D167: the TEAM tab shows the alliance's other teams instead of the player's own. */
     private boolean allySide;
     private int scroll;
+    /** How many rows of the open list fit, from the last frame ({@link #listRows}); the wheel stops at the last row. */
+    private int fitRows = 1;
     private int left, top;
     /** Everything is drawn this many times bigger than vanilla's GUI scale; mouse positions are divided by it. */
     private float scale = 1f;
@@ -212,6 +220,7 @@ public class BandScreen extends Screen {
             small(g, Component.translatable("screen.bsp_teleport.band.no_homes").getString(), left + 10, y + 2, MUTED);
         }
         int i = 0;
+        listRows(g, y, bottom, data.homes().size());
         for (BandData.HomeEntry h : data.homes()) {
             if (i++ < scroll) {
                 continue;
@@ -226,17 +235,17 @@ public class BandScreen extends Screen {
             row(g, y, h.name(), sub, nameColour, h.server().equals(data.server()) ? MUTED : VIO, keysLeft);
             icon(g, y, h.icon(), com.mrgregles.bsp_teleport.util.Icons.DEFAULT_HOME, () -> send(BandAction.HOME_ICON, h.name()));
             int bx = left + W - 10;
-            bx = button(g, bx, y + 4, Component.translatable("screen.bsp_teleport.band.del").getString(), DIM, MUTED, 
+            bx = button(g, bx, y + KEY_Y, Component.translatable("screen.bsp_teleport.band.del").getString(), DIM, MUTED, 
                     () -> confirm = new Confirm(Component.translatable("screen.bsp_teleport.band.confirm_del_home", h.name()).getString(),
                             () -> send(BandAction.DEL_HOME, h.name())));
             if (h.locked()) {
-                button(g, bx - 2, y + 4, Component.translatable("screen.bsp_teleport.band.locked").getString(), DIM, MUTED, null);
+                button(g, bx - 2, y + KEY_Y, Component.translatable("screen.bsp_teleport.band.locked").getString(), DIM, MUTED, null);
             } else if (h.nearRaid()) {
-                button(g, bx - 2, y + 4, Component.translatable("screen.bsp_teleport.band.near_raid").getString(), BAD, BAD, null);
+                button(g, bx - 2, y + KEY_Y, Component.translatable("screen.bsp_teleport.band.near_raid").getString(), BAD, BAD, null);
             } else {
-                button(g, bx - 2, y + 4, Component.translatable("screen.bsp_teleport.band.go").getString(), TQ, TQ, () -> go(BandAction.HOME, h.name()));
+                button(g, bx - 2, y + KEY_Y, Component.translatable("screen.bsp_teleport.band.go").getString(), TQ, TQ, () -> go(BandAction.HOME, h.name()));
             }
-            y += ROW_H + 2;
+            y += STEP;
         }
         // Set home here: name box plus button, above the footer.
         int sy = top + H - FOOT_H - 20;
@@ -375,6 +384,7 @@ public class BandScreen extends Screen {
             small(g, Component.translatable("screen.bsp_teleport.band.no_warps").getString(), left + 10, y + 2, MUTED);
         }
         int i = 0;
+        listRows(g, y, bottom, data.warps().size());
         for (BandData.WarpEntry w : data.warps()) {
             if (i++ < scroll) {
                 continue;
@@ -401,18 +411,18 @@ public class BandScreen extends Screen {
             }
             icon(g, y, w.icon(), com.mrgregles.bsp_teleport.util.Icons.DEFAULT_WARP, null);
             if (w.nearRaid()) {
-                button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.near_raid").getString(), BAD, BAD, null);
+                button(g, left + W - 10, y + KEY_Y, Component.translatable("screen.bsp_teleport.band.near_raid").getString(), BAD, BAD, null);
             } else {
                 boolean afford = w.afford();
                 // A closed warp's key stays pressable but dim: admins pass the hours, and everyone else is told when it opens.
                 // B23: the same for a warp the player cannot pay for: the server says what it costs, where a dead key said nothing.
-                int keyX = button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.go").getString(), closed ? DIM : w.cost() > 0 ? GOLD : TQ,
+                int keyX = button(g, left + W - 10, y + KEY_Y, Component.translatable("screen.bsp_teleport.band.go").getString(), closed ? DIM : w.cost() > 0 ? GOLD : TQ,
                         closed || !afford ? MUTED : w.cost() > 0 ? GOLD : TQ, () -> go(BandAction.WARP, w.name()));
                 if (chip != null) {
-                    button(g, keyX - 2, y + 4, chip, closed ? BAD : OK, closed ? BAD : OK, null);
+                    button(g, keyX - 2, y + KEY_Y, chip, closed ? BAD : OK, closed ? BAD : OK, null);
                 }
             }
-            y += ROW_H + 2;
+            y += STEP;
         }
     }
 
@@ -422,20 +432,21 @@ public class BandScreen extends Screen {
             g.fill(left + 10, y, left + W - 10, y + ROW_H, VIO);
             g.fill(left + 11, y + 1, left + W - 11, y + ROW_H - 1, SLOT);
             String head = Component.translatable(r.here() ? "screen.bsp_teleport.band.request_to" : "screen.bsp_teleport.band.request", r.from()).getString();
-            int bx = button(g, left + W - 14, y + 4, Component.translatable("screen.bsp_teleport.band.deny").getString(), BAD, BAD, () -> send(BandAction.DENY, ""));
-            int ax = button(g, bx - 2, y + 4, Component.translatable("screen.bsp_teleport.band.accept").getString(), OK, OK, () -> go(BandAction.ACCEPT, ""));
+            int bx = button(g, left + W - 14, y + KEY_Y, Component.translatable("screen.bsp_teleport.band.deny").getString(), BAD, BAD, () -> send(BandAction.DENY, ""));
+            int ax = button(g, bx - 2, y + KEY_Y, Component.translatable("screen.bsp_teleport.band.accept").getString(), OK, OK, () -> go(BandAction.ACCEPT, ""));
             // Audit: the request line is small and cut before the keys.
-            small(g, clip(head, ax - (left + 14) - 4), left + 14, y + 3, VIO);
+            small(g, clip(head, ax - (left + 14) - 4), left + 14, y + NAME_Y, VIO);
             // B27: the server comes only for a teammate (or to an admin).
             Component timeLeft = r.server().isEmpty() ? Component.translatable("screen.bsp_teleport.band.request_time_left", r.secondsLeft())
                     : Component.translatable("screen.bsp_teleport.band.request_left", r.server(), r.secondsLeft());
-            small(g, clip(timeLeft.getString(), ax - (left + 14) - 4), left + 14, y + 12, MUTED);
+            small(g, clip(timeLeft.getString(), ax - (left + 14) - 4), left + 14, y + SUB_Y, MUTED);
             y += ROW_H + 4;
         }
         if (data.players().isEmpty()) {
             small(g, Component.translatable("screen.bsp_teleport.band.nobody").getString(), left + 10, y + 2, MUTED);
         }
         int i = 0;
+        listRows(g, y, bottom, data.players().size());
         for (BandData.PlayerEntry p : data.players()) {
             if (i++ < scroll) {
                 continue;
@@ -444,9 +455,9 @@ public class BandScreen extends Screen {
                 break;
             }
             row(g, y, p.name(), p.server(), TEXT, p.server().isEmpty() || p.server().equals(data.server()) ? MUTED : VIO);
-            int bx = button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.here").getString(), DIM, MUTED, () -> send(BandAction.TPA_HERE, p.name()));
-            button(g, bx - 2, y + 4, Component.translatable("screen.bsp_teleport.band.tpa").getString(), TQ, TQ, () -> send(BandAction.TPA, p.name()));
-            y += ROW_H + 2;
+            int bx = button(g, left + W - 10, y + KEY_Y, Component.translatable("screen.bsp_teleport.band.here").getString(), DIM, MUTED, () -> send(BandAction.TPA_HERE, p.name()));
+            button(g, bx - 2, y + KEY_Y, Component.translatable("screen.bsp_teleport.band.tpa").getString(), TQ, TQ, () -> send(BandAction.TPA, p.name()));
+            y += STEP;
         }
     }
 
@@ -471,10 +482,11 @@ public class BandScreen extends Screen {
         long online = team.mates().stream().filter(m -> !"off".equals(m.state())).count() + 1;
         g.fill(left + 10, y, left + W - 10, y + ROW_H, colour);
         g.fill(left + 11, y + 1, left + W - 11, y + ROW_H - 1, SLOT);
-        g.drawString(font, team.name(), left + 14, y + 3, colour, false);
-        small(g, Component.translatable("screen.bsp_teleport.band.team_line", team.leader(), team.mates().size() + 1, online).getString(), left + 14, y + 12, MUTED);
+        g.drawString(font, team.name(), left + 14, y + NAME_Y, colour, false);
+        small(g, Component.translatable("screen.bsp_teleport.band.team_line", team.leader(), team.mates().size() + 1, online).getString(), left + 14, y + SUB_Y, MUTED);
         y += ROW_H + 4;
         int i = 0;
+        listRows(g, y, bottom, team.mates().size());
         for (BandData.MateEntry m : team.mates()) {
             if (i++ < scroll) {
                 continue;
@@ -495,21 +507,21 @@ public class BandScreen extends Screen {
             int subColour = "far".equals(m.state()) ? VIO : "here".equals(m.state()) ? OK : MUTED;
             row(g, y, m.name(), state, off ? MUTED : m.nearRaid() ? BAD : TEXT, m.nearRaid() ? BAD : subColour);
             if (m.leader()) {
-                small(g, Component.translatable("screen.bsp_teleport.band.leader").getString(), left + 14 + font.width(m.name()) + 4, y + 4, GOLD);
+                small(g, Component.translatable("screen.bsp_teleport.band.leader").getString(), left + 14 + font.width(m.name()) + 4, y + NAME_Y + 1, GOLD);
             }
             if (off) {
-                y += ROW_H + 2;
+                y += STEP;
                 continue;
             }
             if (m.nearRaid()) {
-                button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.raid_key").getString(), BAD, BAD, null);
+                button(g, left + W - 10, y + KEY_Y, Component.translatable("screen.bsp_teleport.band.raid_key").getString(), BAD, BAD, null);
             } else if (!m.reachable()) {
-                button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.far").getString(), DIM, MUTED, null);
+                button(g, left + W - 10, y + KEY_Y, Component.translatable("screen.bsp_teleport.band.far").getString(), DIM, MUTED, null);
             } else {
                 int keyColour = "far".equals(m.state()) ? VIO : TQ;
-                button(g, left + W - 10, y + 4, Component.translatable("screen.bsp_teleport.band.go").getString(), keyColour, keyColour, () -> go(BandAction.TEAM_GO, m.uuid()));
+                button(g, left + W - 10, y + KEY_Y, Component.translatable("screen.bsp_teleport.band.go").getString(), keyColour, keyColour, () -> go(BandAction.TEAM_GO, m.uuid()));
             }
-            y += ROW_H + 2;
+            y += STEP;
         }
     }
 
@@ -543,6 +555,7 @@ public class BandScreen extends Screen {
             return;
         }
         int i = 0;
+        listRows(g, y, bottom, allies.size());
         for (BandData.AllyEntry a : allies) {
             if (i++ < scroll) {
                 continue;
@@ -573,18 +586,18 @@ public class BandScreen extends Screen {
             row(g, y, a.name(), where, off ? MUTED : a.nearRaid() ? BAD : TEXT, a.nearRaid() ? BAD : subColour, textRight);
             int tagX = left + 14 + Math.min(font.width(a.name()), textRight - left - 14) + 4;
             if (textRight - tagX > 16) {
-                small(g, clip(a.teamName(), textRight - tagX), tagX, y + 4, 0xFF000000 | a.colour());
+                small(g, clip(a.teamName(), textRight - tagX), tagX, y + NAME_Y + 1, 0xFF000000 | a.colour());
             }
             if (key != null) {
                 if (a.nearRaid()) {
-                    button(g, left + W - 10, y + 4, key, BAD, BAD, null);
+                    button(g, left + W - 10, y + KEY_Y, key, BAD, BAD, null);
                 } else if (!a.reachable()) {
-                    button(g, left + W - 10, y + 4, key, DIM, MUTED, null);
+                    button(g, left + W - 10, y + KEY_Y, key, DIM, MUTED, null);
                 } else {
-                    button(g, left + W - 10, y + 4, key, GOLD, GOLD, () -> go(BandAction.ALLY_ASK, a.uuid()));
+                    button(g, left + W - 10, y + KEY_Y, key, GOLD, GOLD, () -> go(BandAction.ALLY_ASK, a.uuid()));
                 }
             }
-            y += ROW_H + 2;
+            y += STEP;
         }
     }
 
@@ -596,7 +609,16 @@ public class BandScreen extends Screen {
 
     private void drawMore(GuiGraphics g, int y, int bottom) {
         int x = left + 10;
-        y = wide(g, x, y, Component.translatable("screen.bsp_teleport.band.spawn").getString(), data.hasSpawn() ? TQ : DIM, data.hasSpawn() ? () -> go(BandAction.SPAWN, "") : null);
+        // B47: a priced spawn warp shows its cost as a warp row does (D163): gold, the text dim when the player cannot pay; the
+        // key stays pressable so the server says what it costs.
+        String spawn = Component.translatable("screen.bsp_teleport.band.spawn").getString();
+        if (data.spawnCost() > 0) {
+            spawn += "  " + (data.spawnPieces() ? Component.translatable("screen.bsp_teleport.band.pieces", String.format(java.util.Locale.ROOT, "%,d", data.spawnCost()))
+                    : Component.translatable("screen.bsp_teleport.band.coins", data.spawnCost())).getString();
+        }
+        int spawnEdge = !data.hasSpawn() ? DIM : data.spawnCost() > 0 ? GOLD : TQ;
+        y = wide(g, x, y, spawn, spawnEdge, !data.hasSpawn() ? MUTED : data.spawnCost() > 0 && !data.spawnAfford() ? MUTED : spawnEdge,
+                data.hasSpawn() ? () -> go(BandAction.SPAWN, "") : null);
         y = wide(g, x, y, Component.translatable("screen.bsp_teleport.band.back").getString(), data.hasBack() ? TQ : DIM, data.hasBack() ? () -> go(BandAction.BACK, "") : null);
         // B41: the server sends only where /rtp works; its own name in the list stands for "random here".
         if (data.rtpServers().contains(data.server())) {
@@ -698,8 +720,8 @@ public class BandScreen extends Screen {
         while (shown.length() > 3 && font.width(shown) > room) {
             shown = shown.substring(0, shown.length() - 1);
         }
-        g.drawString(font, shown.length() < name.length() ? shown.substring(0, Math.max(1, shown.length() - 2)) + ".." : name, tx, y + 3, nameColour, false);
-        small(g, clip(sub, room), tx, y + 12, subColour);
+        g.drawString(font, shown.length() < name.length() ? shown.substring(0, Math.max(1, shown.length() - 2)) + ".." : name, tx, y + NAME_Y, nameColour, false);
+        small(g, clip(sub, room), tx, y + SUB_Y, subColour);
     }
 
     /** A 1 px edge in {@code colour} round a list row, over the dim one. */
@@ -715,6 +737,17 @@ public class BandScreen extends Screen {
         return (int) (font.width(label.toUpperCase()) * 0.75f) + 8;
     }
 
+    /** {@link #clip} for text drawn at full size. */
+    private String clipFull(String text, int maxWidth) {
+        if (font.width(text) <= maxWidth) {
+            return text;
+        }
+        while (text.length() > 3 && font.width(text + "...") > maxWidth) {
+            text = text.substring(0, text.length() - 1);
+        }
+        return text + "...";
+    }
+
     private String clip(String text, int maxWidth) {
         if (font.width(text) * 0.75f <= maxWidth) {
             return text;
@@ -727,10 +760,33 @@ public class BandScreen extends Screen {
 
     /** The item icon at the row's left; clicking it (when {@code onClick} is given) makes it the held item. */
     private void icon(GuiGraphics g, int y, String icon, String fallback, @Nullable Runnable onClick) {
-        g.renderItem(com.mrgregles.bsp_teleport.util.Icons.stack(icon, fallback), left + 13, y + 2);
+        // Drawn 15 px tall so it sits inside the 17 px row's edge.
+        g.pose().pushPose();
+        g.pose().translate(left + 13, y + 1, 0);
+        g.pose().scale(15 / 16f, 15 / 16f, 1f);
+        g.renderItem(com.mrgregles.bsp_teleport.util.Icons.stack(icon, fallback), 0, 0);
+        g.pose().popPose();
         if (onClick != null) {
-            hits.add(new Hit(left + 12, y + 1, 18, 18, onClick));
+            hits.add(new Hit(left + 12, y, 18, ROW_H, onClick));
         }
+    }
+
+    /**
+     * Before a list's rows are drawn from {@code y}: how many fit above {@code bottom}, kept for the mouse wheel; the scroll
+     * held so the last row stops at the bottom; and, when not all fit, a thin scroll bar right of the rows.
+     */
+    private void listRows(GuiGraphics g, int y, int bottom, int count) {
+        int fit = Math.max(1, (bottom - y + ROW_GAP) / STEP);
+        fitRows = fit;
+        scroll = Math.max(0, Math.min(scroll, count - fit));
+        if (count <= fit) {
+            return;
+        }
+        int h = fit * STEP - ROW_GAP, x = left + W - 7;
+        g.fill(x, y, x + 2, y + h, DIM);
+        int th = Math.max(6, h * fit / count);
+        int ty = y + (h - th) * scroll / (count - fit);
+        g.fill(x, ty, x + 2, ty + th, TQ);
     }
 
     /** A small right-aligned button; returns the x where the next one to its left ends. */
@@ -747,10 +803,15 @@ public class BandScreen extends Screen {
     }
 
     private int wide(GuiGraphics g, int x, int y, String label, int colour, Runnable action) {
+        return wide(g, x, y, label, colour, colour == DIM ? MUTED : colour, action);
+    }
+
+    /** A full-width key with its edge in {@code colour} and its label in {@code textColour}. */
+    private int wide(GuiGraphics g, int x, int y, String label, int colour, int textColour, Runnable action) {
         int w = W - 20;
-        g.fill(x, y, x + w, y + 14, colour == DIM ? DIM : colour);
+        g.fill(x, y, x + w, y + 14, colour);
         g.fill(x + 1, y + 1, x + w - 1, y + 13, SLOT);
-        g.drawString(font, label, x + 5, y + 3, colour == DIM ? MUTED : colour, false);
+        g.drawString(font, clipFull(label, w - 10), x + 5, y + 3, textColour, false);
         if (action != null) {
             hits.add(new Hit(x, y, w, 14, action));
         }
@@ -758,9 +819,12 @@ public class BandScreen extends Screen {
     }
 
     private void small(GuiGraphics g, String text, int x, int y, int colour) {
+        // Placed exactly at (x, y): rounding in the scaled units could lift it up to 0.75 px, onto the name above it in a
+        // 17 px row (T87 audit).
         g.pose().pushPose();
+        g.pose().translate(x, y, 0);
         g.pose().scale(0.75f, 0.75f, 1f);
-        g.drawString(font, text, (int) (x / 0.75f), (int) (y / 0.75f), colour, false);
+        g.drawString(font, text, 0, 0, colour, false);
         g.pose().popPose();
     }
 
@@ -817,7 +881,7 @@ public class BandScreen extends Screen {
             case TEAM -> data.team() == null ? 0 : allySide ? data.team().allies().size() : data.team().mates().size();
             case MORE, ADMIN -> 0;
         };
-        scroll = Math.max(0, Math.min(Math.max(0, count - 1), scroll - (int) Math.signum(delta)));
+        scroll = Math.max(0, Math.min(count - fitRows, scroll - (int) Math.signum(delta)));
         return true;
     }
 

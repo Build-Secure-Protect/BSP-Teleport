@@ -451,7 +451,7 @@
   "message.bsp_teleport.warp.list": "Warps: %s",
   "message.bsp_teleport.warp.no_permission": "You cannot use the warp %s.",
   "message.bsp_teleport.warp.cannot_afford": "This warp costs %s coins and you are carrying %s. Coins must be in your inventory.",
-  "message.bsp_teleport.warp.cannot_afford_pieces": "This warp costs %s and your bank holds %s.",
+  "message.bsp_teleport.warp.cannot_afford_pieces": "This warp costs %s and you have %s to pay with.",
   "message.bsp_teleport.warp.bad_name": "Names are letters, numbers, _ or -, up to 16 long.",
   "message.bsp_teleport.spawn.name": "spawn",
   "message.bsp_teleport.spawn.set": "Spawn set here.",

@@ -521,3 +521,28 @@ BSP-Core 1.14.0 or newer on the server. An admin gives a player a store credit t
 5. Buy an access token in an Access Shop or the access pop-up with a pieces price: the ticket pays first there too. The wallet line in the shop counts the credit with the bank.
 6. Coin prices (a warp costing coins, a COINS rule, `/tpnow`) are paid in coins as before; the ticket is not touched.
 7. With BSP-Core 1.10.1 to 1.13.x on a server: everything is paid from the bank as before, and the log says once "BSP-Core has no store credit (needs 1.14.0)".
+
+## Eight rows on the band's lists (option C, 2026-11-07)
+
+Client and server on the same version (B47 changed the protocol). Have 12 or more homes (or use an admin account with slots raised), and a server with 10 or more warps and players online.
+
+1. Open the band: it is a little taller than before. HOMES shows 8 rows above the name box and SET HOME HERE; each row still has its icon, its name, the server and position under it, and GO and DEL. Nothing overlaps: the icon sits inside the row's edge, the keys sit inside the row, the position line does not touch the name above it (look at a name with g, p or y in it) and is not cut at the bottom. Small text elsewhere (the help line, the footer, the tabs) sits where it did.
+2. Click a home's icon with an item in hand: it still sets the icon.
+3. WARPS and PLAYERS show 9 rows (PLAYERS 8 while a request shows); TEAM shows 8 teammates under the team banner, 7 when the MY TEAM / ALLIES switch is there, and ALLIES 7. A warp with a cost, an OPEN / OPENS chip or a red edge (closed) looks right in the slimmer row; a pending request on PLAYERS still fits its two lines and ACCEPT / DENY.
+4. With more rows than fit, a thin scroll bar shows right of the rows, its turquoise part following the wheel. The wheel stops when the last row reaches the bottom (it used to scroll until one row was left). With fewer rows than fit there is no bar and the wheel does nothing.
+5. Delete homes while scrolled to the end: the list moves up so the bottom row stays filled.
+6. During a raid (red line above the list) and while Set home asks to replace a home (the key rows below the list), the list loses rows but still scrolls to the last one.
+7. On a small window or a high GUI scale the band shrinks to fit the screen as before (at Auto GUI scale on 1080p about 12% smaller than it was); MORE and the admin band's six tabs still look right.
+
+## Spawn pays the spawn warp's price (B47) and credit pays a warp's cost (B48), 2026-11-07
+
+Client and server on the same new version. The network spawn is the warp named `spawn` (or the one `spawn.globalWarp` names). Give it a cost of 500 pieces.
+
+1. As a player (not an admin or operator) with 1,000 pieces: MORE shows "Spawn  500 pieces" with a gold edge. Press it: the countdown runs, you land at the spawn warp, and the bank is 500 lower. `/spawn` does the same.
+2. With fewer than 500 pieces: the key's text is grey (the gold edge stays). Pressing it or typing `/spawn` says the warp costs 500 pieces and how many you have; you do not move.
+3. Give the spawn warp open hours that are closed now: Spawn and `/spawn` are refused with the same message the warp gives. Make it restricted: a player without its permission gets "no permission" from Spawn too.
+4. Set the spawn warp's cost to 0 and no rules: the key is turquoise with no price, and the trip is free.
+5. As an admin or operator: the key shows no price and nothing is taken (as on warps).
+6. Delete the spawn warp and `/setspawn` on this server: Spawn goes to that point, free.
+7. A new player (first time on the network) and a bedless respawn still land at spawn without paying.
+8. B48: empty a player's bank and give them a teleport store credit ticket worth 1,000 (BSP-Core 1.14.0). A warp costing 500 pieces has a gold GO key (not greyed), takes the player there, and 500 comes off the ticket. The same for Spawn with a price.
