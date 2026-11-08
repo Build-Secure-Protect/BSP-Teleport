@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 /** The mod's own channel: the band screen's data down, its actions up. */
 public final class BandPackets {
     /** "2" since T69 and T73 changed packets 2, 11 and added 13; "3" added 14 (B21); "4" since T82 changed the band and core screen data. An older client is told to update instead of misreading them. */
-    private static final String PROTOCOL = "10"; // 10: B47 put the Spawn price in the band data (0); 8: D174 added the Access Shop packets (15 to 17); 9: token prices (D189 to D195) changed 2, 6, 7, 15 to 17 and added 18
+    private static final String PROTOCOL = "11"; // 11: D201 added the MAP tab's packet (19) and band action MAP; 10: B47 put the Spawn price in the band data (0); 8: D174 added the Access Shop packets (15 to 17); 9: token prices (D189 to D195) changed 2, 6, 7, 15 to 17 and added 18
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(new ResourceLocation(BSPTeleport.MODID, "main"), () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals);
 
     private BandPackets() {
@@ -92,6 +92,7 @@ public final class BandPackets {
             buf.writeBoolean(m.full());
             buf.writeBoolean(m.take());
         }, buf -> new OfferBuy(buf.readVarInt(), buf.readVarInt(), buf.readBoolean(), buf.readBoolean()), OfferBuy::handle);
+        CHANNEL.registerMessage(19, MapMsg.class, (m, buf) -> m.data().encode(buf), buf -> new MapMsg(com.mrgregles.bsp_teleport.map.MapData.decode(buf)), MapMsg::handle);
         CHANNEL.registerMessage(3, AdminDo.class, (m, buf) -> buf.writeEnum(m.action()).writeUtf(m.arg()), buf -> new AdminDo(buf.readEnum(AdminAction.class), buf.readUtf()), AdminDo::handle);
     }
 
@@ -352,6 +353,20 @@ public final class BandPackets {
                     PortalScreenService.handle(player, pos, action, arg);
                 }
             });
+            ctx.get().setPacketHandled(true);
+        }
+    }
+
+    /** D201: the server map, for an open band's MAP tab. */
+    public static void sendMap(ServerPlayer player, com.mrgregles.bsp_teleport.map.MapData data) {
+        if (canReceive(player)) {
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new MapMsg(data));
+        }
+    }
+
+    public record MapMsg(com.mrgregles.bsp_teleport.map.MapData data) {
+        void handle(Supplier<NetworkEvent.Context> ctx) {
+            ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> com.mrgregles.bsp_teleport.client.BandClient.showMap(data)));
             ctx.get().setPacketHandled(true);
         }
     }

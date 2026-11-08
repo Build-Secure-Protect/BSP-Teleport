@@ -48,6 +48,10 @@ public final class TeleportConfig {
     public static final ForgeConfigSpec.ConfigValue<String> ACCESS_LOBBY;
     public static final ForgeConfigSpec.IntValue ACCESS_RENT_HOURS;
 
+    /** D201: the band's MAP tab. */
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> MAP_HIDDEN_SERVERS;
+    public static final ForgeConfigSpec.ConfigValue<String> MAP_FIRST_SERVER;
+
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
 
@@ -177,6 +181,14 @@ public final class TeleportConfig {
                 .define("refuseAtLogin", false);
         ACCESS_LOBBY = b.comment("The network's main spawn server, where a player without access is sent. Empty: the server of the global spawn warp, else the server they came from.").define("lobbyServer", "");
         ACCESS_RENT_HOURS = b.comment("Rent length in hours a token grants when its assignment gives none.").defineInRange("rentHours", 168, 1, 8760);
+        b.pop();
+
+        b.push("map");
+        MAP_HIDDEN_SERVERS = b.comment("Servers the band's MAP tab leaves out, by their proxy names (for example a staff-only server). A server whose world",
+                        "border is linked to another stays on the grid of linked worlds anyway.")
+                .defineListAllowEmpty("hiddenServers", List.of(), o -> o instanceof String);
+        MAP_FIRST_SERVER = b.comment("The server drawn top left on the MAP tab's grid of linked worlds. Empty: the first by name.")
+                .define("firstServer", "");
         b.pop();
 
         SPEC = b.build();

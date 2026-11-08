@@ -16,5 +16,7 @@ public enum BandAction {
     /** "old new": a new home here takes the old one's place, after the band asked (B40) */
     REPLACE_HOME,
     /** uuid: ask that ally to let the player come (A-1, D168) */
-    ALLY_ASK
+    ALLY_ASK,
+    /** the MAP tab is open: send the server map (D201) */
+    MAP
 }

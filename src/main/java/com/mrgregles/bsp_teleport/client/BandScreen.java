@@ -33,7 +33,7 @@ public class BandScreen extends Screen {
     private static final int TQ = BandClient.TQ, BG = BandClient.BG, SLOT = BandClient.SLOT, DIM = BandClient.DIM, MUTED = BandClient.MUTED,
             TEXT = BandClient.TEXT, VIO = BandClient.VIO, GOLD = BandClient.GOLD, BAD = BandClient.BAD, OK = BandClient.OK;
 
-    private enum Tab { HOMES, WARPS, PLAYERS, TEAM, MORE, ADMIN }
+    private enum Tab { HOMES, WARPS, PLAYERS, TEAM, MAP, MORE, ADMIN }
 
     /** Ticks between the TEAM tab's refreshes while it is open (D92: every 5 s). */
     private static final int TEAM_POLL_TICKS = 100;
@@ -72,6 +72,12 @@ public class BandScreen extends Screen {
     private final List<Hit> hits = new ArrayList<>();
     private EditBox nameBox;
     private int teamTicks;
+    /** D201: the MAP tab's data, asked for each time the tab opens; null until it arrives. */
+    @Nullable
+    private com.mrgregles.bsp_teleport.map.MapData map;
+    /** The server clicked on the map, shown in the footer; null for none. */
+    @Nullable
+    private String mapSel;
 
     public BandScreen(BandData data) {
         super(Component.translatable("screen.bsp_teleport.band.title"));
@@ -83,6 +89,14 @@ public class BandScreen extends Screen {
         // B40: a question whose reason went away (the home was deleted, a slot came free) closes, and the name comes back.
         if (setAsk != null && !asks(setAsk.name(), setAsk.full())) {
             keepHome();
+        }
+    }
+
+    /** D201: the server sent the map for the MAP tab. */
+    public void updateMap(com.mrgregles.bsp_teleport.map.MapData map) {
+        this.map = map;
+        if (mapSel != null && map.server(mapSel) == null) {
+            mapSel = null;
         }
     }
 
@@ -133,10 +147,24 @@ public class BandScreen extends Screen {
         nameBox.visible = tab == Tab.HOMES && confirm == null && setAsk == null;
         g.fill(left - 1, top - 1, left + W + 1, top + H + 1, TQ);
         g.fill(left, top, left + W, top + H, BG);
-        Tab[] tabs = data.admin() ? Tab.values() : new Tab[] {Tab.HOMES, Tab.WARPS, Tab.PLAYERS, Tab.TEAM, Tab.MORE};
-        int tabW = data.admin() ? 36 : 40;
+        Tab[] tabs = data.admin() ? Tab.values() : new Tab[] {Tab.HOMES, Tab.WARPS, Tab.PLAYERS, Tab.TEAM, Tab.MAP, Tab.MORE};
+        // D201: each tab as wide as its label needs, the spare room shared out (seven tabs for admins with MAP).
+        String[] labels = new String[tabs.length];
+        int[] labelPx = new int[tabs.length];
+        for (int i = 0; i < tabs.length; i++) {
+            labels[i] = Component.translatable("screen.bsp_teleport.band.tab." + tabs[i].name().toLowerCase()).getString().toUpperCase();
+            labelPx[i] = font.width(labels[i]);
+        }
+        int tabGap = 2;
+        int[] tabWs = MapView.tabWidths(labelPx, W - 20, tabGap, 40);
+        int[] tabXs = new int[tabs.length];
+        int tabEnd = left + W - 10;
+        for (int i = tabs.length - 1; i >= 0; i--) {
+            tabXs[i] = tabEnd - tabWs[i];
+            tabEnd = tabXs[i] - tabGap;
+        }
         // The title gives way to the tab row: the short name when the long one would run under the first tab.
-        int firstTab = left + W - 10 - tabs.length * (tabW + 2);
+        int firstTab = tabXs[0];
         String heading = title.getString().toUpperCase();
         if (left + 10 + font.width(heading) > firstTab - 4) {
             heading = Component.translatable("screen.bsp_teleport.band.title_short").getString().toUpperCase();
@@ -145,16 +173,17 @@ public class BandScreen extends Screen {
         if (left + 10 + font.width(heading) <= firstTab - 4) {
             g.drawString(font, heading, left + 10, top + 8, TQ, false);
         }
-        small(g, clip(Component.translatable(tab == Tab.TEAM ? allySide ? "screen.bsp_teleport.band.ally_help" : "screen.bsp_teleport.band.team_help" : "screen.bsp_teleport.band.help").getString(), W - 20), left + 10, top + 19, MUTED);
+        small(g, clip(Component.translatable(tab == Tab.TEAM ? allySide ? "screen.bsp_teleport.band.ally_help" : "screen.bsp_teleport.band.team_help"
+                : tab == Tab.MAP ? "screen.bsp_teleport.band.map_help" : "screen.bsp_teleport.band.help").getString(), W - 20), left + 10, top + 19, MUTED);
 
         for (int i = 0; i < tabs.length; i++) {
-            int tx = left + W - 10 - (tabs.length - i) * (tabW + 2);
+            int tx = tabXs[i], tabW = tabWs[i];
             boolean on = tabs[i] == tab;
             boolean admin = tabs[i] == Tab.ADMIN;
             g.fill(tx, top + 5, tx + tabW, top + 18, on ? TQ : admin ? VIO : DIM);
             g.fill(tx + 1, top + 6, tx + tabW - 1, top + 17, SLOT);
-            String label = Component.translatable("screen.bsp_teleport.band.tab." + tabs[i].name().toLowerCase()).getString().toUpperCase();
-            small(g, label, tx + (tabW - (int) (font.width(label) * 0.75f)) / 2, top + 8, on ? TQ : admin ? VIO : MUTED);
+            String label = labels[i];
+            small(g, label, tx + (tabW - (int) Math.ceil(font.width(label) * 0.75f)) / 2, top + 8, on ? TQ : admin ? VIO : MUTED);
             Tab t = tabs[i];
             hits.add(new Hit(tx, top + 5, tabW, 13, () -> {
                 if (t == Tab.ADMIN) {
@@ -164,6 +193,9 @@ public class BandScreen extends Screen {
                 tab = t;
                 scroll = 0;
                 teamTicks = 0;
+                if (t == Tab.MAP) {
+                    send(BandAction.MAP, ""); // D201: fresh each time the tab opens
+                }
                 setAsk = null;
                 nameBox.visible = tab == Tab.HOMES;
             }));
@@ -179,6 +211,7 @@ public class BandScreen extends Screen {
             case WARPS -> drawWarps(g, y, listBottom);
             case PLAYERS -> drawPlayers(g, y, listBottom);
             case TEAM -> drawTeam(g, y, listBottom);
+            case MAP -> drawMap(g, y, listBottom);
             case MORE -> drawMore(g, y, listBottom);
             case ADMIN -> {
             }
@@ -687,9 +720,100 @@ public class BandScreen extends Screen {
         }
     }
 
+    // The MAP tab (D201, option A of tools/preview/server_map_concepts.html): MapView lays it out, this draws it.
+
+    private static final int FADE = 0x8C;
+
+    private void drawMap(GuiGraphics g, int y, int bottom) {
+        if (map == null) {
+            small(g, Component.translatable("screen.bsp_teleport.band.map_loading").getString(), left + 10, y + 2, MUTED);
+            return;
+        }
+        run(g, MapView.map(map, mapSel, mapTokens(), new MapView.Rect(left + 10, y, W - 20, bottom - y), font::width, BandScreen::words));
+    }
+
+    private void drawMapFooter(GuiGraphics g, int y) {
+        run(g, MapView.footer(map, mapSel, mapTokens(), new MapView.Rect(left + 10, y, W - 20, 16), font::width, BandScreen::words));
+    }
+
+    private static String words(String key, Object... args) {
+        return Component.translatable(key, args).getString();
+    }
+
+    /** The servers this player has no access to, with the token each takes (the band's access entries, D80). */
+    private java.util.Map<String, String> mapTokens() {
+        java.util.Map<String, String> out = new java.util.TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        if (data.accessOn()) {
+            for (BandData.AccessEntry a : data.access()) {
+                if ("none".equals(a.state())) {
+                    out.put(a.server(), a.token() > 0 ? "Token " + com.mrgregles.bsp_teleport.access.TokenAssignment.roman(a.token()) : "-");
+                }
+            }
+        }
+        return out;
+    }
+
+    private void run(GuiGraphics g, List<MapView.Op> ops) {
+        for (MapView.Op op : ops) {
+            if (op instanceof MapView.Box b) {
+                MapView.Rect r = b.r();
+                g.fill(r.x(), r.y(), r.x() + r.w(), r.y() + r.h(), b.edge());
+                g.fill(r.x() + 1, r.y() + 1, r.x() + r.w() - 1, r.y() + r.h() - 1, b.fill());
+            } else if (op instanceof MapView.Fill f) {
+                MapView.Rect r = f.r();
+                g.fill(r.x(), r.y(), r.x() + r.w(), r.y() + r.h(), f.argb());
+            } else if (op instanceof MapView.Fade f) {
+                MapView.Rect r = f.r();
+                boolean across = f.side() == 0 || f.side() == 2;
+                int d = across ? r.h() : r.w();
+                for (int i = 0; i < d; i++) {
+                    int a = FADE * (d - i) / d << 24 | f.rgb();
+                    switch (f.side()) {
+                        case 0 -> g.fill(r.x(), r.y() + r.h() - 1 - i, r.x() + r.w(), r.y() + r.h() - i, a);
+                        case 1 -> g.fill(r.x() + i, r.y(), r.x() + i + 1, r.y() + r.h(), a);
+                        case 2 -> g.fill(r.x(), r.y() + i, r.x() + r.w(), r.y() + i + 1, a);
+                        default -> g.fill(r.x() + r.w() - 1 - i, r.y(), r.x() + r.w() - i, r.y() + r.h(), a);
+                    }
+                }
+            } else if (op instanceof MapView.Label l) {
+                if (l.up()) {
+                    // Reads upwards from (x, y): east and west far-side halves.
+                    g.pose().pushPose();
+                    g.pose().translate(l.x(), l.y(), 0);
+                    g.pose().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-90f));
+                    small(g, l.text(), 0, 0, l.colour());
+                    g.pose().popPose();
+                } else {
+                    small(g, l.text(), l.x(), l.y(), l.colour());
+                }
+            } else if (op instanceof MapView.Dash d) {
+                dashed(g, d.x1(), d.y1(), d.x2(), d.y2(), d.colour());
+            } else if (op instanceof MapView.Hit h) {
+                MapView.Rect r = h.r();
+                String server = h.server();
+                hits.add(new Hit(r.x(), r.y(), r.w(), r.h(), () -> mapSel = server.equals(mapSel) ? null : server));
+            }
+        }
+    }
+
+    /** A dashed line, 3 units on and 2 off. */
+    private static void dashed(GuiGraphics g, int x1, int y1, int x2, int y2, int colour) {
+        int n = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1));
+        for (int i = 0; i <= n; i++) {
+            if (i % 5 < 3) {
+                int x = n == 0 ? x1 : x1 + (x2 - x1) * i / n, y = n == 0 ? y1 : y1 + (y2 - y1) * i / n;
+                g.fill(x, y, x + 1, y + 1, colour);
+            }
+        }
+    }
+
     private void drawFooter(GuiGraphics g) {
         int y = top + H - FOOT_H + 4;
         g.fill(left + 10, y - 3, left + W - 10, y - 2, DIM);
+        if (tab == Tab.MAP) {
+            drawMapFooter(g, y);
+            return;
+        }
         String cd = data.cooldownLeft() > 0 ? Component.translatable("screen.bsp_teleport.band.cooldown", data.cooldownLeft()).getString()
                 : Component.translatable("screen.bsp_teleport.band.ready").getString();
         small(g, cd, left + 10, y, data.cooldownLeft() > 0 ? BAD : OK);
@@ -879,7 +1003,7 @@ public class BandScreen extends Screen {
             case WARPS -> data.warps().size();
             case PLAYERS -> data.players().size();
             case TEAM -> data.team() == null ? 0 : allySide ? data.team().allies().size() : data.team().mates().size();
-            case MORE, ADMIN -> 0;
+            case MAP, MORE, ADMIN -> 0;
         };
         scroll = Math.max(0, Math.min(count - fitRows, scroll - (int) Math.signum(delta)));
         return true;

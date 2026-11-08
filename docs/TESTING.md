@@ -555,3 +555,16 @@ Server only (no protocol change). Give a few warps and the spawn warp a cost of 
 2. Press a priced warp and Spawn with an empty bank: both go, and nothing is taken (admins travel free, B29).
 3. `/warp` with no name lists the priced warps with "(50 pieces)" for the admin too.
 4. As a player who is not an admin: the band looks the same as before, and the trips are charged.
+
+## The band's MAP tab (D201, T88), 2026-11-08
+
+Client and server on the same new version (protocol 11). Until BSP Region Guard ships request TR6, the grid of linked worlds is empty and steps 1 to 5 test the rest; step 6 needs the Region Guard version with TR6.
+
+1. Open the band. The tabs read HOMES, WARPS, PLAYERS, TEAM, MAP, MORE, and ADMIN for an admin. Each tab is as wide as its label needs (PLAYERS is the widest), so they differ a little; no label touches its tab's edge. The ADMIN tab still opens the panel.
+   Pictures of how the tab lays out nine example networks, drawn with the game's font, are written to `build/map-previews/` by `./gradlew test`; the tab in game should match them.
+2. Click MAP: "Loading the map..." shows for a moment, then the servers. The help line reads "The worlds and where their borders lead. Click one." A server with a warp you can use has a gold WARPS tag; one a portal leads to has a violet PORTAL tag; the rest sit under NO ROUTE. Your own server has a gold edge.
+3. Click a server: the footer shows its full name and border size, then "You are here", "No access: Access Token VII", "Offline" or "3 online", and on the second line where its borders lead, its warps ("Warps: bank, market"), or "Portal on BSP-Stormfall". The servers not joined to it dim. Click it again to clear.
+4. In `bsp_teleport-server.toml`, set `[map] hiddenServers = ["BSP-SafeRoom"]` and save. Reopen the MAP tab: SafeRoom is gone.
+5. With the access system on, a server you have no access to shows a red edge (on the grid also "TOKEN VII" in the tile).
+6. With TR6: link Frostwarf east to Boulderbrook west, Moongrove east to Stormfall west, Frostwarf south to Moongrove north, Boulderbrook south to Stormfall north, and the wrap-round ones (Frostwarf north to Moongrove south, Boulderbrook north to Stormfall south, Frostwarf west to Boulderbrook east, Moongrove west to Stormfall east). Set `map.firstServer = "BSP-Frostwarf"`. The MAP tab shows a 2 by 2 grid with Frostwarf top left, teal bridges between neighbours, and a fading half square on every outer side named like "Moongrove north" (east and west ones read upwards). Clicking a half square selects the server it leads to. BSP-Spawn floats on the right with a gold dashed line to the grid; a portal on Stormfall to another server draws a violet line.
+

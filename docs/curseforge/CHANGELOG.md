@@ -1,3 +1,11 @@
+# BSP-Teleport 3.8.0
+
+Minecraft 1.20.1, Forge 47.4, Java 17. Requires BSP-Core 1.10.1 or newer. Needed on the client and the server, and both must run this version (the network protocol changed for the map).
+
+## Added
+
+**MAP tab on the band.** A new tab between TEAM and MORE shows the network's worlds as a grid of squares joined where their borders link (BSP Region Guard's edge links), each with its border size. A crossing to the far side of the grid, on any side, is a half square that fades out, named like "Frostwarf south". Servers off the grid float beside it: a gold line when there are warps there you can use, a violet line for a portal. Servers nothing leads to are listed under NO ROUTE. Your own server has a gold edge, and a world you have no access to shows the token it needs in red. Click a server to see its size, who is online and where its borders lead, or how to get there. Two new server settings: `map.hiddenServers` leaves servers out, `map.firstServer` picks the world drawn top left. Until BSP Region Guard shares its edge links, every server shows off the grid.
+
 # BSP-Teleport 3.7.1
 
 Minecraft 1.20.1, Forge 47.4, Java 17. Requires BSP-Core 1.10.1 or newer. Works with 3.7.0 clients and servers (the network protocol is unchanged); only the servers need it.

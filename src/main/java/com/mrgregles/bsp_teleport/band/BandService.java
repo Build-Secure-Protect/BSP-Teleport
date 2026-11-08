@@ -26,6 +26,7 @@ import java.util.UUID;
 public final class BandService {
     /** T80: when each player's TEAM tab was last rebuilt. */
     private static final java.util.Map<java.util.UUID, Long> TEAM_LAST = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.Map<java.util.UUID, Long> MAP_LAST = new java.util.concurrent.ConcurrentHashMap<>();
     private BandService() {
     }
 
@@ -99,6 +100,16 @@ public final class BandService {
                     com.mrgregles.bsp_teleport.team.AllyTeleports.ask(player, UUID.fromString(arg));
                 } catch (IllegalArgumentException ignored) {
                     // not a uuid; drop
+                }
+            }
+            case MAP -> {
+                // D201: built on asking; a client asking more than once a second gets nothing new.
+                long now = System.currentTimeMillis();
+                Long last = MAP_LAST.get(player.getUUID());
+                if (last == null || now - last >= 1000L) {
+                    MAP_LAST.put(player.getUUID(), now);
+                    MAP_LAST.values().removeIf(t -> now - t > 600_000L);
+                    BandPackets.sendMap(player, com.mrgregles.bsp_teleport.map.MapService.build(player));
                 }
             }
             case TEAM_REFRESH -> {

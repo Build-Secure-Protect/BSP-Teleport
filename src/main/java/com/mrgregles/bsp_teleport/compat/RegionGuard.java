@@ -63,6 +63,14 @@ public final class RegionGuard {
         return PRESENT ? Impl.border(level) : null;
     }
 
+    /**
+     * D201: every server's overworld with its border and the edge links its admin made, for the band's MAP tab. Empty
+     * until Region Guard puts the links on its API (request TR6); the MAP tab then shows every server off the grid.
+     */
+    public static java.util.List<com.mrgregles.bsp_teleport.map.MapLayout.World> edgeWorlds() {
+        return java.util.List.of();
+    }
+
     /** Region Guard's {@code storage.serverId} on this server, or null when unknown. */
     @Nullable
     public static String serverId() {

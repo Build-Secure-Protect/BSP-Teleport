@@ -68,6 +68,13 @@ public final class BandClient {
         }
     }
 
+    /** D201: the server map arrived; an open band shows it on its MAP tab, a closed one ignores it. */
+    public static void showMap(com.mrgregles.bsp_teleport.map.MapData data) {
+        if (Minecraft.getInstance().screen instanceof BandScreen screen) {
+            screen.updateMap(data);
+        }
+    }
+
     public static void open() {
         ClientNet.send(BandAction.OPEN, "");
     }
