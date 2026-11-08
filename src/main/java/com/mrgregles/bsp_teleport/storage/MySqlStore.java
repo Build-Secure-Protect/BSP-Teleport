@@ -519,6 +519,21 @@ final class MySqlStore implements AutoCloseable {
         }
     }
 
+    /** T89 (D205): every server's /setspawn point, by server name; rows that do not parse are skipped. */
+    Map<String, Position> loadSpawns() throws SQLException {
+        Map<String, Position> spawns = new java.util.HashMap<>();
+        try (Statement st = conn().createStatement(); ResultSet rs = st.executeQuery("SELECT server, position FROM " + t("spawns"))) {
+            while (rs.next()) {
+                try {
+                    spawns.put(rs.getString(1), Position.parse(rs.getString(2)));
+                } catch (IllegalArgumentException ignored) {
+                    // a damaged row; the server's next /setspawn writes it again
+                }
+            }
+        }
+        return spawns;
+    }
+
     void saveSpawn(String server, Position spawn) throws SQLException {
         try (PreparedStatement ps = conn().prepareStatement("INSERT INTO " + t("spawns") + " (server, position) VALUES (?, ?) "
                 + "ON DUPLICATE KEY UPDATE position = VALUES(position)")) {

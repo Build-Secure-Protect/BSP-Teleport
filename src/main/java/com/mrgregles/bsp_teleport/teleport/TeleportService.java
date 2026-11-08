@@ -280,6 +280,16 @@ public final class TeleportService implements BspTeleportApi {
         return Messenger.enabled();
     }
 
+    @Override
+    public List<com.mrgregles.bsp_teleport.api.WarpInfo> warps() {
+        return com.mrgregles.bsp_teleport.data.ApiSnapshot.warps();
+    }
+
+    @Override
+    public java.util.Optional<Destination> spawn(String server) {
+        return com.mrgregles.bsp_teleport.data.ApiSnapshot.spawn(server);
+    }
+
     /**
      * The actual departure: off any mount, BSP-Core told (it takes the totems out first, so no snapshot holds one), then
      * BSP-InventorySync told to start the save (T1, when present; its answer does not change anything here), then the
@@ -367,7 +377,9 @@ public final class TeleportService implements BspTeleportApi {
 
     /** Whether a move to {@code destination} goes through the proxy to another server, rather than a move on this one. */
     public static boolean leavesServer(Destination destination) {
-        return destination.crossServer() && !destination.server().equals(TeleportConfig.serverName()) && !TeleportConfig.singlePlayer();
+        // T89 audit: this server's name in any case is a local move, as for landings (PendingLandings.forThisServer);
+        // before, "bsp-spawn" on BSP-Spawn asked the proxy to move the player to the server they were on.
+        return destination.crossServer() && !destination.server().equalsIgnoreCase(TeleportConfig.serverName()) && !TeleportConfig.singlePlayer();
     }
 
     private static void dismount(ServerPlayer player) {

@@ -195,6 +195,7 @@ public class TeleportData extends SavedData {
         warps.clear();
         loaded.forEach(w -> warps.put(w.name(), w));
         setDirty();
+        ApiSnapshot.warpsChanged(warps.values());
     }
 
     // Warps
@@ -211,12 +212,14 @@ public class TeleportData extends SavedData {
     public void setWarp(Warp warp) {
         warps.put(normalise(warp.name()), warp);
         setDirty();
+        ApiSnapshot.warpsChanged(warps.values());
     }
 
     public boolean deleteWarp(String name) {
         boolean removed = warps.remove(normalise(name)) != null;
         if (removed) {
             setDirty();
+            ApiSnapshot.warpsChanged(warps.values());
         }
         return removed;
     }
@@ -231,6 +234,7 @@ public class TeleportData extends SavedData {
     public void setSpawn(@Nullable Position spawn) {
         this.spawn = spawn;
         setDirty();
+        ApiSnapshot.ownSpawnChanged(spawn);
     }
 
     // Portals
@@ -415,6 +419,9 @@ public class TeleportData extends SavedData {
                 data.ignoring.add(uuid);
             }
         }
+        // T89: the API's read-only copy starts from the saved warps and spawn.
+        ApiSnapshot.warpsChanged(data.warps.values());
+        ApiSnapshot.ownSpawnChanged(data.spawn);
         return data;
     }
 }

@@ -114,17 +114,43 @@ public final class PendingLandings {
 
     /**
      * The sending server checked the raid rule against its cache; this server sees its own steals live. A landing
-     * that would now be near the player's totem being stolen (D39, R6) goes to this server's spawn instead, if it has
-     * one, with the same message.
+     * that would now be near the player's totem being stolen (D39, R6) goes to this server's spawn instead, with the
+     * same message.
+     *
+     * <p>B50: "this server's spawn" is {@link NetworkSpawn#localSpot}: its own /setspawn point, else the network spawn
+     * when that warp is on this server, else the overworld's world spawn. Before, it was the network spawn wherever it
+     * was, and on every server but the one holding that warp the player then landed at the raid anyway.
      */
     private static Destination raidChecked(ServerPlayer player, Destination destination) {
         int distance = TeleportConfig.getOr(TeleportConfig.RAID_HOME_DISTANCE, 150);
-        if (!com.mrgregles.bsp_teleport.compat.BspCore.nearRaid(player.server, player.getUUID(), "", destination.world(), destination.x(), destination.z(), distance)) {
+        java.util.function.Predicate<Destination> nearRaid = d -> com.mrgregles.bsp_teleport.compat.BspCore.nearRaid(player.server, player.getUUID(), "",
+                d.world(), d.x(), d.z(), distance);
+        if (!nearRaid.test(destination)) {
             return destination;
         }
         player.displayClientMessage(net.minecraft.network.chat.Component.translatable("message.bsp_teleport.blocked_raid", distance), false);
-        com.mrgregles.bsp_teleport.data.Position spawn = TeleportActions.spawnPosition(player);
-        return spawn != null && spawn.isLocal() ? spawn.toDestination("") : destination;
+        return raidFallback(NetworkSpawn.localSpot(player.server), worldSpawn(player.server), nearRaid, destination.protect());
+    }
+
+    /**
+     * B50: where a landing near a raid goes: this server's own spawn spot when there is one clear of the raid, else
+     * the world spawn. The landing's arrival protection is kept.
+     */
+    public static Destination raidFallback(@Nullable com.mrgregles.bsp_teleport.data.Position localSpot, Destination worldSpawn,
+                                           java.util.function.Predicate<Destination> nearRaid, int protect) {
+        if (localSpot != null && localSpot.isLocal()) {
+            Destination spot = localSpot.toDestination("").withProtect(protect);
+            if (!nearRaid.test(spot)) {
+                return spot;
+            }
+        }
+        return worldSpawn.withProtect(protect);
+    }
+
+    /** The overworld's world spawn, the last place a raid-blocked landing can go. */
+    public static Destination worldSpawn(MinecraftServer server) {
+        net.minecraft.core.BlockPos at = server.overworld().getSharedSpawnPos();
+        return new Destination("", "minecraft:overworld", at.getX() + 0.5, at.getY(), at.getZ() + 0.5, "");
     }
 
     private static void landFromMemory(ServerPlayer player) {

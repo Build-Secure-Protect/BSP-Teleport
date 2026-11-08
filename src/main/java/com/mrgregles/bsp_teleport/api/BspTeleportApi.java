@@ -2,17 +2,20 @@ package com.mrgregles.bsp_teleport.api;
 
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 
 /**
  * What other mods may call. Everything outside this package may change without notice.
  *
- * <p>These are forced moves: no warm-up, cooldown, cost or zone check. They are meant for admin-defined
- * triggers (Region Guard) and other mods' own rules, which have already decided the player must move.
+ * <p>The moves are forced moves: no warm-up, cooldown, cost or zone check. They are meant for admin-defined
+ * triggers (Region Guard), staff tools and other mods' own rules, which have already decided the player must move.
+ * {@code docs/API.md} says what a move to another server does on the way and on arrival.
  */
 public interface BspTeleportApi {
-    /** Raised whenever a method is added or changed. */
-    int API_VERSION = 1;
+    /** Raised whenever a method is added or changed. 2: {@link #warps()} and {@link #spawn(String)}. */
+    int API_VERSION = 2;
 
     static BspTeleportApi get() {
         return BspTeleportApiHolder.INSTANCE;
@@ -44,4 +47,17 @@ public interface BspTeleportApi {
 
     /** Whether Redis messaging is configured and started. */
     boolean messagingAvailable();
+
+    /**
+     * Every warp this server knows, portal warps included, sorted by name (API 2). With the shared database that is
+     * every warp on the network; without it, this world's own. Safe to call from any thread; the list cannot be changed.
+     */
+    List<WarpInfo> warps();
+
+    /**
+     * A server's {@code /setspawn} point (API 2). {@code ""} or this server's name (any case) is this server; another
+     * server's is known only with the shared database. Empty when that server has none, or is unknown. The network
+     * spawn warp is not a fallback: it is in {@link #warps()} under its own name. Safe to call from any thread.
+     */
+    Optional<Destination> spawn(String server);
 }

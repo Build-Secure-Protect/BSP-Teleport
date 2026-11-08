@@ -2,7 +2,6 @@ package com.mrgregles.bsp_teleport.network;
 
 import com.mrgregles.bsp_teleport.BSPTeleport;
 import com.mrgregles.bsp_teleport.TeleportConfig;
-import com.mrgregles.bsp_teleport.api.BspTeleportApi;
 import com.mrgregles.bsp_teleport.api.Destination;
 import com.mrgregles.bsp_teleport.data.Position;
 import com.mrgregles.bsp_teleport.request.TeleportRequests;
@@ -39,6 +38,13 @@ import java.util.function.BiConsumer;
  * list) stay quiet; cross-server teleports themselves only need the database.
  */
 public final class Messenger {
+    /**
+     * D208: the version in the Redis channel name, {@code bsp_teleport:<cluster>:v1}. It changes only when the messages
+     * themselves change, never with {@code BspTeleportApi.API_VERSION} (API 2 added reads only), so servers on 3.8.0 and
+     * later still hear each other.
+     */
+    public static final int WIRE_VERSION = 1;
+
     @Nullable
     private static RedisLink link;
     private static final Map<String, BiConsumer<String, String>> CUSTOM = new ConcurrentHashMap<>();
@@ -65,7 +71,7 @@ public final class Messenger {
         if (!TeleportConfig.redis()) {
             return;
         }
-        String channel = "bsp_teleport:" + TeleportConfig.REDIS_CLUSTER.get() + ":v" + BspTeleportApi.API_VERSION;
+        String channel = "bsp_teleport:" + TeleportConfig.REDIS_CLUSTER.get() + ":v" + WIRE_VERSION;
         RedisLink l = new RedisLink(NetworkConfig.REDIS_HOST.get(), NetworkConfig.REDIS_PORT.get(), NetworkConfig.REDIS_PASSWORD.get(),
                 NetworkConfig.REDIS_SSL.get(), NetworkConfig.REDIS_DB.get(), channel, Messenger::onRaw);
         link = l;
@@ -231,7 +237,10 @@ public final class Messenger {
                 }
             }
             case HOMES_WIPED -> com.mrgregles.bsp_teleport.data.TeleportData.get(server).clearHomes();
-            case WARPS_CHANGED -> Storage.reloadWarps(server);
+            case WARPS_CHANGED -> {
+                Storage.reloadWarps(server);
+                Storage.reloadSpawns(); // D205: a /setspawn somewhere sends this notice too
+            }
             case PORTALS_CHANGED -> Storage.reloadPortals(server);
             case PORTAL_DO -> Portals.applyCommand(server, m.get("id"), m.get("command"));
             case ACCESS_CHANGED -> com.mrgregles.bsp_teleport.access.AccessService.onNotice(server, m.get("uuid"));

@@ -66,6 +66,7 @@ public final class Storage {
     public static void onServerTick(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
         if (event.phase == net.minecraftforge.event.TickEvent.Phase.END && store != null && event.getServer().getTickCount() % 6000 == 0) {
             reloadWarps(event.getServer());
+            reloadSpawns();
             reloadPortals(event.getServer());
         }
     }
@@ -96,7 +97,7 @@ public final class Storage {
         run(() -> {
             s.init();
             s.deleteOldPending(TeleportConfig.getOr(TeleportConfig.LANDING_SECONDS, 120) * 1000L);
-            return new Loaded(s.loadWarps(), s.loadSpawn(TeleportConfig.serverName()), s.loadPortals());
+            return new Loaded(s.loadWarps(), s.loadSpawn(TeleportConfig.serverName()), s.loadPortals(), s.loadSpawns());
         }, loaded -> {
             TeleportData data = TeleportData.get(server);
             data.replaceWarps(loaded.warps());
@@ -104,6 +105,7 @@ public final class Storage {
                 data.setSpawn(loaded.spawn());
             }
             Portals.replaceRows(loaded.portals());
+            com.mrgregles.bsp_teleport.data.ApiSnapshot.replaceSpawns(loaded.spawns());
             status = "mysql: connected to " + s.describe();
             reloadAccessSettings();
             reloadAccessCounts();
@@ -111,7 +113,7 @@ public final class Storage {
         }, e -> status = "mysql: FAILED, " + e.getMessage());
     }
 
-    private record Loaded(List<Warp> warps, @Nullable Position spawn, List<PortalRow> portals) {
+    private record Loaded(List<Warp> warps, @Nullable Position spawn, List<PortalRow> portals, java.util.Map<String, Position> spawns) {
     }
 
     public static void onServerStopping(ServerStoppingEvent event) {
@@ -228,6 +230,15 @@ public final class Storage {
             return;
         }
         run(s::loadWarps, warps -> TeleportData.get(server).replaceWarps(warps), null);
+    }
+
+    /** T89 (D205): re-reads every server's /setspawn point for the API: every 5 minutes and on a WARPS_CHANGED notice. */
+    public static void reloadSpawns() {
+        MySqlStore s = store;
+        if (s == null) {
+            return;
+        }
+        run(s::loadSpawns, com.mrgregles.bsp_teleport.data.ApiSnapshot::replaceSpawns, null);
     }
 
     // Write-through
@@ -349,7 +360,8 @@ public final class Storage {
     }
 
     public static void spawnSaved(Position spawn) {
-        submit(s -> s.saveSpawn(TeleportConfig.serverName(), spawn));
+        // D205: the warps notice tells the other servers to re-read the spawns too (3.8.0 servers just re-read their warps).
+        submit(s -> s.saveSpawn(TeleportConfig.serverName(), spawn), Messenger::warpsChanged);
     }
 
     public static void cooldownSet(UUID uuid, long until) {

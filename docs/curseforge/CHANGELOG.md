@@ -1,3 +1,17 @@
+# BSP-Teleport (next version)
+
+Minecraft 1.20.1, Forge 47.4, Java 17. Requires BSP-Core 1.10.1 or newer. Works with 3.8.x clients and servers (the network protocol and the Redis channel are unchanged); only the servers need it.
+
+## Added
+
+**Warps and spawns for other mods.** API version 2. Other mods can now list every warp on the network, portal warps included, and find a server's `/setspawn` point. Both can be read from any thread. BSP-Server Utilities' staff web panel uses them to move a player to a warp or a server's spawn. `docs/API.md` now also says exactly what a forced teleport to another server does and skips. A `/setspawn` now tells the other servers at once.
+
+## Fixed
+
+**A teleport to another server no longer lands you at your totem while it is being stolen.** When the server you arrived on saw your totem there under attack, it said "nothing can take you within 150 blocks of it" and then landed you there anyway, unless the network spawn was on that server. You now go to that server's own spawn point, the network spawn when it is on that server, or else the world spawn.
+
+**A move to your own server, with its name in a different case, stays on this server.** It used to ask the proxy to send you to the server you were already on.
+
 # BSP-Teleport 3.8.1
 
 Minecraft 1.20.1, Forge 47.4, Java 17. Requires BSP-Core 1.10.1 or newer. Works with 3.8.0 clients and servers (the network protocol is unchanged); only the servers need it. The grid on the MAP tab needs BSP Region Guard 0.7.0 or newer on every server, with its shared storage on.

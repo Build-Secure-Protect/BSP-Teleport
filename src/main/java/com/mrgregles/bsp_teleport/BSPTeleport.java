@@ -86,6 +86,8 @@ public class BSPTeleport {
         // B39: a player without access is refused during the login, so the proxy sends them on with no switch.
         MinecraftForge.EVENT_BUS.addListener(com.mrgregles.bsp_teleport.access.LoginCheck::onNegotiation);
         MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.server.ServerStoppedEvent e) -> com.mrgregles.bsp_teleport.access.LoginCheck.reset());
+        // T89: the API's copy of warps and spawns belongs to the world that just closed.
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.server.ServerStoppedEvent e) -> com.mrgregles.bsp_teleport.data.ApiSnapshot.clear());
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, TeleportService::onPlayerLoggedIn);
         MinecraftForge.EVENT_BUS.addListener(TeleportService::onPlayerLoggedOut);
         MinecraftForge.EVENT_BUS.addListener(TeleportService::onServerTick);
