@@ -64,11 +64,13 @@ public final class RegionGuard {
     }
 
     /**
-     * D201: every server's overworld with its border and the edge links its admin made, for the band's MAP tab. Empty
-     * until Region Guard puts the links on its API (request TR6); the MAP tab then shows every server off the grid.
+     * D201: every server's overworld with its border and the edge links its admin made, for the band's MAP tab (Region
+     * Guard 0.7.0, API version 9, request TR6). Each link appears once, on the world whose admin made it; MapLayout joins
+     * them from both ends. Empty without Region Guard, with an older one, or with its shared storage off; the MAP tab
+     * then shows every server off the grid. Server thread only.
      */
     public static java.util.List<com.mrgregles.bsp_teleport.map.MapLayout.World> edgeWorlds() {
-        return java.util.List.of();
+        return PRESENT ? Impl.edgeWorlds() : java.util.List.of();
     }
 
     /** Region Guard's {@code storage.serverId} on this server, or null when unknown. */
@@ -138,6 +140,29 @@ public final class RegionGuard {
         }
 
         @Nullable
+        /**
+         * An older Region Guard has no {@code edgeWorlds()} (AbstractMethodError) or no {@code EdgeWorld} class
+         * (NoClassDefFoundError): both are LinkageErrors, so it reads as no links. RegionGuardApi.API_VERSION is not
+         * checked: it is a compile-time constant, so this class would carry 9 whatever Region Guard is installed.
+         */
+        static java.util.List<com.mrgregles.bsp_teleport.map.MapLayout.World> edgeWorlds() {
+            try {
+                java.util.List<com.mrgregles.bsp_teleport.map.MapLayout.World> out = new java.util.ArrayList<>();
+                for (com.mrgregles.bsp_region_guard.api.EdgeWorld w : com.mrgregles.bsp_region_guard.api.RegionGuardApi.get().regions().edgeWorlds()) {
+                    java.util.Map<String, String[]> links = new java.util.LinkedHashMap<>();
+                    w.links().forEach((side, t) -> links.put(side, t == null ? null : new String[] {t.server(), t.dimension(), t.side()}));
+                    com.mrgregles.bsp_teleport.map.MapLayout.World world = com.mrgregles.bsp_teleport.map.MapLayout.fromEdges(w.server(), w.dimension(),
+                            w.border() == null ? 0 : w.border().size(), links);
+                    if (world != null) {
+                        out.add(world);
+                    }
+                }
+                return out;
+            } catch (LinkageError | RuntimeException e) {
+                return java.util.List.of();
+            }
+        }
+
         static double[] border(ServerLevel level) {
             try {
                 com.mrgregles.bsp_region_guard.api.Border b = com.mrgregles.bsp_region_guard.api.RegionGuardApi.get().regions().border(level);

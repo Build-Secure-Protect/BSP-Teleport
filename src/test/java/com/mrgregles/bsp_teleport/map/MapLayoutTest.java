@@ -136,4 +136,25 @@ class MapLayoutTest {
         assertTrue(r.stubs().isEmpty());
         assertTrue(MapLayout.layout(List.of()).isEmpty());
     }
+
+    @Test
+    void regionGuardsEdgeWorldsAreTakenForTheOverworldOnly() {
+        // TR6: a link from A's east to B's west shows only on A; B's own row lists none of it.
+        World a = MapLayout.fromEdges("BSP-A", "minecraft:overworld", 8000, Map.of(
+                "east", new String[] {"BSP-B", "minecraft:overworld", "west"},
+                "north", new String[] {"BSP-C", "minecraft:the_nether", "south"},
+                "up", new String[] {"BSP-D", "minecraft:overworld", "west"},
+                "south", new String[] {"BSP-E", "minecraft:overworld", "sideways"}));
+        assertEquals(8000, a.size());
+        assertEquals(Map.of(Side.EAST, new Link("BSP-B", Side.WEST)), a.links(), "only the overworld link with real sides");
+        World b = MapLayout.fromEdges("BSP-B", "minecraft:overworld", 0, Map.of());
+        assertEquals(0, b.size(), "links but no border: size 0");
+        assertTrue(MapLayout.fromEdges("BSP-A", "minecraft:the_nether", 3000, Map.of()) == null, "another dimension is left out");
+
+        Result r = MapLayout.layout(List.of(a, b));
+        at(r, "BSP-A", 0, 0);
+        at(r, "BSP-B", 1, 0);
+        assertEquals(1, r.bridges().size(), "joined from the one end that has the link");
+        assertEquals(1, r.crossings().get("BSP-B").size(), "and B knows its west leads to A");
+    }
 }

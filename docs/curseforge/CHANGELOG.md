@@ -1,3 +1,11 @@
+# BSP-Teleport 3.8.1
+
+Minecraft 1.20.1, Forge 47.4, Java 17. Requires BSP-Core 1.10.1 or newer. Works with 3.8.0 clients and servers (the network protocol is unchanged); only the servers need it. The grid on the MAP tab needs BSP Region Guard 0.7.0 or newer on every server, with its shared storage on.
+
+## Changed
+
+**The MAP tab's grid fills in.** With BSP Region Guard 0.7.0, the MAP tab reads the network's border links and draws the worlds as a grid joined where their borders meet, with each world's border size. With an older Region Guard, or none, every server still shows off the grid as in 3.8.0. A changed link shows the next time the tab opens. A server taken off the network keeps its tile until its rows are removed from Region Guard's shared tables.
+
 # BSP-Teleport 3.8.0
 
 Minecraft 1.20.1, Forge 47.4, Java 17. Requires BSP-Core 1.10.1 or newer. Needed on the client and the server, and both must run this version (the network protocol changed for the map).

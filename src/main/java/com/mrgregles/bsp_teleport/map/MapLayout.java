@@ -57,6 +57,30 @@ public final class MapLayout {
     public record World(String server, int size, Map<Side, Link> links) {
     }
 
+    /** D201: the only dimension the MAP tab draws. */
+    public static final String OVERWORLD = "minecraft:overworld";
+
+    /**
+     * One of Region Guard's edge worlds (TR6) as the map takes it: its overworld only, with the links that end in another
+     * overworld. Each link is {@code side -> {server, dimension, side}} with sides "north" and so on; unknown sides are
+     * skipped. Null for another dimension.
+     *
+     * @param size the border's side in blocks, 0 when the world has links but no border
+     */
+    public static World fromEdges(String server, String dimension, int size, Map<String, String[]> links) {
+        if (!OVERWORLD.equals(dimension) || server == null || server.isEmpty()) {
+            return null;
+        }
+        Map<Side, Link> out = new EnumMap<>(Side.class);
+        links.forEach((side, to) -> {
+            Side here = Side.parse(side), there = to == null || to.length < 3 ? null : Side.parse(to[2]);
+            if (here != null && there != null && OVERWORLD.equals(to[1]) && to[0] != null && !to[0].isEmpty()) {
+                out.put(here, new Link(to[0], there));
+            }
+        });
+        return new World(server, Math.max(0, size), out);
+    }
+
     /** A placed world. */
     public record Cell(String server, int size, int x, int y) {
     }
